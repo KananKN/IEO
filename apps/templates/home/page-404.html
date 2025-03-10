@@ -1,0 +1,27 @@
+{% extends "layouts/base-fullscreen.html" %}
+
+{% block title %} Error 404 {% endblock %} 
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+
+    <div class="error">
+        <div class="error-code">404</div>
+        <div class="error-content">
+            <div class="error-message">We couldn't find it...</div>
+            <div class="error-desc mb-4">
+                The page you're looking for doesn't exist. <br />
+                Perhaps, there pages will help find what you're looking for.
+            </div>
+            <div>
+                <a href="/" class="btn btn-success px-3">Go Home</a>
+            </div>
+        </div>
+    </div>
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}{% endblock javascripts %}

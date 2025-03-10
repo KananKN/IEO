@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1, shrink-to-fit=no"
+        />
+        <title>{% block title %}{% endblock %} | IEO</title>
+
+        <meta
+            content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+            name="viewport"
+        />
+        <meta content="" name="description" />
+        <meta content="" name="author" />
+
+        <!-- ================== BEGIN core-css ================== -->
+        <link
+            href="{{ config.ASSETS_ROOT }}/css/vendor.min.css?v=1.2"
+            rel="stylesheet"
+        />
+        <link
+            href="{{ config.ASSETS_ROOT }}/css/default/app.min.css?v=1.2"
+            rel="stylesheet"
+        />
+        <!-- ================== END core-css ================== -->
+
+        <!-- ================== BEGIN page-css ================== -->
+        <link
+            href="{{ config.ASSETS_ROOT }}/plugins/jvectormap-next/jquery-jvectormap.css"
+            rel="stylesheet"
+        />
+        <link
+            href="{{ config.ASSETS_ROOT }}/plugins/bootstrap-datepicker/dist/css/bootstrap-datepicker.css"
+            rel="stylesheet"
+        />
+        <link
+            href="{{ config.ASSETS_ROOT }}/plugins/gritter/css/jquery.gritter.css"
+            rel="stylesheet"
+        />
+        <!-- ================== END page-css ================== -->
+
+        {% block stylesheets %} {% endblock stylesheets %}
+        <style>
+            .app-header .navbar-nav {
+                flex-wrap: wrap !important;
+            }
+            .mega-active {
+                font-weight: 900;
+                color: #6e166e !important;
+            }
+        </style>
+    </head>
+    <body class="">
+        <!-- BEGIN #loader -->
+        <div id="loader" class="app-loader">
+            <span class="spinner"></span>
+        </div>
+        <!-- END #loader -->
+
+        <!-- BEGIN #app -->
+        <div id="app" class="app app-header-fixed app-sidebar-fixed">
+            <div class="wrapper">
+                {% include 'includes/sidebar.html' %}
+
+                <div class="main-panel">
+                    {% include 'includes/navigation.html' %} {% block content
+                    %}{% endblock content %}
+                </div>
+            </div>
+        </div>
+
+        {% include 'includes/scripts.html' %} {% block javascripts %}{% endblock
+        javascripts %}
+    </body>
+</html>

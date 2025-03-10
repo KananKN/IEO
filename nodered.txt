@@ -1,0 +1,5039 @@
+[
+    {
+        "id": "06f4702caa73e630",
+        "type": "tab",
+        "label": "Flow 1",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "81454bcf1dbd2464",
+        "type": "tab",
+        "label": "Main",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "41585b334d56e59b",
+        "type": "tab",
+        "label": "Patient",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "feed74b494140840",
+        "type": "tab",
+        "label": "Allergy",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "dd182943ae64b0f2",
+        "type": "tab",
+        "label": "Immunization",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "f9a3d2b081c87074",
+        "type": "tab",
+        "label": "Encounter",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "71b2afa6bae80abd",
+        "type": "tab",
+        "label": "Condition",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "570138052c25a9a6",
+        "type": "tab",
+        "label": "Procedure",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "5304d9bc240b041e",
+        "type": "tab",
+        "label": "Medication Statement",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "ea6ae70d536d966e",
+        "type": "tab",
+        "label": "Diagnostic Report",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "9a06950b46e9cc5e",
+        "type": "tab",
+        "label": "Observation",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "3a53292ff1543ab2",
+        "type": "tab",
+        "label": "Vital Signs",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "9fa330854dabc2cf",
+        "type": "tab",
+        "label": "Chronic Disease",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "1c37b4ef99e01c43",
+        "type": "tab",
+        "label": "imed",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "bbad7f50d0f385ea",
+        "type": "global-config",
+        "name": "global-config",
+        "env": [
+            {
+                "name": "SECRET_KEY",
+                "value": "1baKe2yTUL",
+                "type": "str"
+            },
+            {
+                "name": "DATA_LENGTH",
+                "value": "10000",
+                "type": "num"
+            },
+            {
+                "name": "USER",
+                "value": "healthlink",
+                "type": "str"
+            },
+            {
+                "name": "PASS",
+                "value": "vchhealthlinkpassword",
+                "type": "str"
+            }
+        ]
+    },
+    {
+        "id": "9a5e8ed779089409",
+        "type": "postgresdb",
+        "cfgname": "db",
+        "hostname": "localhost",
+        "port": "5432",
+        "db": "healthlink",
+        "ssl": false
+    },
+    {
+        "id": "82c31985e42645e5",
+        "type": "postgresdb",
+        "cfgname": "iMed",
+        "hostname": "192.168.110.110",
+        "port": "5434",
+        "db": "imed_vch",
+        "ssl": false
+    },
+    {
+        "id": "08036a4abf461185",
+        "type": "function",
+        "z": "81454bcf1dbd2464",
+        "name": "function 1",
+        "func": "msg.payload = `select * from patient limit 1;`;\nreturn msg;\n\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 300,
+        "y": 160,
+        "wires": [
+            [
+                "bfc13455f8120b78"
+            ]
+        ]
+    },
+    {
+        "id": "d557470a6a9a36f8",
+        "type": "inject",
+        "z": "81454bcf1dbd2464",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "0",
+        "payloadType": "num",
+        "x": 150,
+        "y": 160,
+        "wires": [
+            [
+                "08036a4abf461185"
+            ]
+        ]
+    },
+    {
+        "id": "365c1a0c4cea104a",
+        "type": "debug",
+        "z": "81454bcf1dbd2464",
+        "name": "debug 12",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 760,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "513e52478b63d612",
+        "type": "function",
+        "z": "81454bcf1dbd2464",
+        "name": "function 2",
+        "func": "let data = msg.payload;\n\nlet secret = env.get(\"SECRET_KEY\");\nlet cryptojs = context.global.cryptojs;\n\ndata.forEach(function (item) {\n    let thisData = item;\n    // decrypt\n    thisData.name_given = cryptojs.AES.decrypt(\n        thisData.name_given,\n        secret\n    ).toString(cryptojs.enc.Utf8);\n    thisData.name_family = cryptojs.AES.decrypt(\n        thisData.name_family,\n        secret\n    ).toString(cryptojs.enc.Utf8);\n    msg.payload = thisData;\n    node.send(msg);\n});\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 600,
+        "y": 160,
+        "wires": [
+            [
+                "365c1a0c4cea104a"
+            ]
+        ]
+    },
+    {
+        "id": "3cd500eae1d45007",
+        "type": "comment",
+        "z": "81454bcf1dbd2464",
+        "name": "Decode example",
+        "info": "",
+        "x": 160,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "bfc13455f8120b78",
+        "type": "postgres",
+        "z": "81454bcf1dbd2464",
+        "postgresdb": "9a5e8ed779089409",
+        "name": "",
+        "output": true,
+        "perrow": false,
+        "rowspermsg": "1",
+        "return_on_error": false,
+        "limit_queries": "0",
+        "limit_by": "payload",
+        "limit_value": "1",
+        "limit_drop_intermediate": false,
+        "limit_drop_if_in_queue": false,
+        "outputs": true,
+        "x": 460,
+        "y": 160,
+        "wires": [
+            [
+                "513e52478b63d612"
+            ]
+        ]
+    },
+    {
+        "id": "0a5dddbb16a70465",
+        "type": "inject",
+        "z": "41585b334d56e59b",
+        "d": true,
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "3600",
+        "crontab": "",
+        "once": false,
+        "onceDelay": "1",
+        "topic": "",
+        "payload": "0",
+        "payloadType": "num",
+        "x": 150,
+        "y": 160,
+        "wires": [
+            [
+                "92f9e7840428555a"
+            ]
+        ]
+    },
+    {
+        "id": "92f9e7840428555a",
+        "type": "function",
+        "z": "41585b334d56e59b",
+        "name": "patient sql",
+        "func": "let offset = msg.payload\n\nif(offset === -1) return\n\nmsg.payload = `select hn,\n    '002393000' as source_id,\n    pid as cid,\n    (\n        case\n            when active = '1' then 'true'\n            when active = '2' then 'false'\n        end\n    ) as active,\n    prename as name_prefix,\n    firstname as name_given,\n    lastname as name_family,\n    (\n        case\n            when fix_gender_id = '1' then 'male'\n            when fix_gender_id = '2' then 'female'\n            when fix_gender_id = '' then 'unknown'\n            when fix_gender_id != '1'\n            and fix_gender_id != '2' then 'other'\n        end\n    ) as gender,\n    birthdate as birth_date,\n    (\n        select visit_date\n        from visit\n        where\n            patient.patient_id = patient_id\n        order by visit_date desc\n        limit 1\n    ) as last_visit_date,\n    CASE\n        WHEN modify_date IS NOT NULL THEN concat(modify_date, ' ', modify_time)\n        ELSE concat(created_date, ' ', created_time)\n    END as last_update_date_time,\n    is_hidden\nfrom patient\nWHERE\n    active in ('1','2')\n    AND is_death <> '1'\n    AND pid <> '' \n    AND pid is not null\norder by pid\n    limit 5000 offset ${offset}`;\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 310,
+        "y": 160,
+        "wires": [
+            [
+                "d54c7dd1206443c1"
+            ]
+        ]
+    },
+    {
+        "id": "cbca5e2f19caca78",
+        "type": "function",
+        "z": "41585b334d56e59b",
+        "name": "Check For Limit Offset",
+        "func": "let offset = context.get(\"offset\");\nif (typeof offset === \"undefined\") {\n    offset = new Map();\n}\nif (typeof offset.get(\"offset\") == \"undefined\"){\n    offset.set(\"offset\", 0);\n    context.set(\"offset\", offset);\n}\nif(msg.payload.length === 0){\n    offset.set(\"offset\", 0);\n    // msg.payload = -1;\n    // return msg;\n    return;\n}\noffset.set(\"offset\", offset.get(\"offset\") + 5000);\ncontext.set(\"offset\", offset);\nmsg.payload = offset.get(\"offset\");\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 260,
+        "y": 240,
+        "wires": [
+            [
+                "ebbea823a53c3db9",
+                "92f9e7840428555a"
+            ]
+        ]
+    },
+    {
+        "id": "ebbea823a53c3db9",
+        "type": "debug",
+        "z": "41585b334d56e59b",
+        "name": "debug 2",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 460,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "85e6cf39154f7eec",
+        "type": "delay",
+        "z": "41585b334d56e59b",
+        "name": "",
+        "pauseType": "delay",
+        "timeout": "1",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 460,
+        "y": 200,
+        "wires": [
+            [
+                "cbca5e2f19caca78"
+            ]
+        ]
+    },
+    {
+        "id": "43f2f920cfcd7cba",
+        "type": "debug",
+        "z": "41585b334d56e59b",
+        "name": "debug 3",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 460,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "4d2587f63cd865ce",
+        "type": "function",
+        "z": "41585b334d56e59b",
+        "name": "Prepare Context",
+        "func": "let data = msg.payload;\nif (data.length === 0) return;\n\nlet patient = context.get(\"patient\");\nif (typeof patient === \"undefined\") {\n    patient = new Map();\n}\nif (typeof patient.get(\"patient\") == \"undefined\") {\n    patient.set(\"patient\", 0);\n    context.set(\"patient\", patient);\n}\nlet old = patient.get(\"patient\");\nold = old + data.length;\npatient.set(\"patient\", old);\ncontext.set(\"patient\", patient);\n\nconst date = new Date();\ndate.setHours(date.getHours() + 7);\nnode.status({\n    fill: \"green\",\n    shape: \"dot\",\n    text: `${old} - ${date.toISOString()}`,\n});\n\nif (data.length < 5000) {\n    // msg.payload = patient.get(\"patient\");\n    patient.set(\"patient\", 0);\n    context.set(\"patient\", patient);\n    // return msg;\n}\n\nmsg.payload = data;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 700,
+        "y": 160,
+        "wires": [
+            [
+                "c9c1f63dfa7927c3",
+                "483304caefd33bab",
+                "211a085f23bfc315",
+                "4ad19abad49a260d"
+            ]
+        ]
+    },
+    {
+        "id": "0a95143f3c01dbf9",
+        "type": "debug",
+        "z": "41585b334d56e59b",
+        "name": "debug 9",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1100,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "211a085f23bfc315",
+        "type": "function",
+        "z": "41585b334d56e59b",
+        "name": "DB update",
+        "func": "let data = msg.payload;\nlet dSql = ``;\nlet cid = [];\nlet cryptojs = context.global.cryptojs;\nlet secret = env.get(\"SECRET_KEY\");\nlet dCount = 0;\ndata.forEach((el) => {\n    if (!cid.includes(el.cid) && el.last_visit_date != null && el.is_hidden != '1') {\n        dCount += 1;\n        let encNameGiven = cryptojs.AES.encrypt(\n            el.name_given,\n            secret\n        ).toString();\n        let encNameFamily = cryptojs.AES.encrypt(\n            el.name_family,\n            secret\n        ).toString();\n        cid.push(el.cid);\n        // (cid, active, name_prefix, name_given, name_family, gender, birth_date, last_visit_date, last_update_date_time)\n        dSql += `('${el.cid}', ${el.active}, '${el.name_prefix}', '${encNameGiven}', '${encNameFamily}','${el.gender}', '${el.birth_date}', '${el.last_visit_date}', '${el.last_update_date_time}'),`;\n    }\n});\ndSql = dSql.slice(0, -1);\n\nlet sql = `INSERT INTO patient (cid, active, name_prefix, name_given,\nname_family, gender, birth_date, last_visit_date, last_update_date_time) VALUES ${dSql}\nON CONFLICT(cid) DO UPDATE SET\nactive = EXCLUDED.active, name_prefix = EXCLUDED.name_prefix, name_given = EXCLUDED.name_given,\nname_family = EXCLUDED.name_family, gender = EXCLUDED.gender, birth_date = EXCLUDED.birth_date,\nlast_visit_date = EXCLUDED.last_visit_date, last_update_date_time = EXCLUDED.last_update_date_time\nreturning *;\n`;\n\nlet patient = context.get(\"patient\");\nif (typeof patient === \"undefined\") {\n    patient = new Map();\n}\nif (typeof patient.get(\"patient\") == \"undefined\") {\n    patient.set(\"patient\", 0);\n    context.set(\"patient\", patient);\n}\nlet old = patient.get(\"patient\");\nold = old + dCount;\npatient.set(\"patient\", old);\ncontext.set(\"patient\", patient);\n\nconst date = new Date();\ndate.setHours(date.getHours() + 7);\nnode.status({\n    fill: \"green\",\n    shape: \"dot\",\n    text: `${old} - ${date.toISOString()}`,\n});\n\nif (data.length < 5000) {\n    // msg.payload = patient.get(\"patient\");\n    patient.set(\"patient\", 0);\n    context.set(\"patient\", patient);\n    // return msg;\n}\n\nmsg.payload = sql;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 710,
+        "y": 220,
+        "wires": [
+            [
+                "5eb2aaa9936862d6"
+            ]
+        ]
+    },
+    {
+        "id": "5eb2aaa9936862d6",
+        "type": "debug",
+        "z": "41585b334d56e59b",
+        "name": "debug 10",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 940,
+        "y": 180,
+        "wires": []
+    },
+    {
+        "id": "c9c1f63dfa7927c3",
+        "type": "function",
+        "z": "41585b334d56e59b",
+        "name": "Duplicate check",
+        "func": "let data = msg.payload;\nlet cid = [];\nlet duplicate = [];\ndata.forEach((el) => {\n    if (!cid.includes(el.cid)) {\n        cid.push(el.cid);\n    } else {\n        duplicate.push(el);\n    }\n});\nmsg.payload = duplicate;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 700,
+        "y": 120,
+        "wires": [
+            [
+                "be26dec48f66ecf9"
+            ]
+        ]
+    },
+    {
+        "id": "be26dec48f66ecf9",
+        "type": "debug",
+        "z": "41585b334d56e59b",
+        "name": "debug 11",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 900,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "16e876cd200143b3",
+        "type": "comment",
+        "z": "41585b334d56e59b",
+        "name": "patient",
+        "info": "",
+        "x": 130,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "483304caefd33bab",
+        "type": "debug",
+        "z": "41585b334d56e59b",
+        "name": "debug 36",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1100,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "4ad19abad49a260d",
+        "type": "function",
+        "z": "41585b334d56e59b",
+        "name": "visit null check",
+        "func": "let data = msg.payload;\nlet nullVisit = [];\ndata.forEach((el) => {\n    if (el.last_visit_date == null) {\n        nullVisit.push(el)\n    }\n});\nmsg.payload = nullVisit;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 720,
+        "y": 280,
+        "wires": [
+            [
+                "5e4a742ec7738dc2"
+            ]
+        ]
+    },
+    {
+        "id": "5e4a742ec7738dc2",
+        "type": "debug",
+        "z": "41585b334d56e59b",
+        "name": "debug 37",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 900,
+        "y": 280,
+        "wires": []
+    },
+    {
+        "id": "7e6da15b1c3942ec",
+        "type": "http in",
+        "z": "41585b334d56e59b",
+        "name": "",
+        "url": "/patient",
+        "method": "post",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 150,
+        "y": 420,
+        "wires": [
+            [
+                "5ed637c207704106"
+            ]
+        ]
+    },
+    {
+        "id": "68fa1a37a348a766",
+        "type": "function",
+        "z": "41585b334d56e59b",
+        "name": "patient sql",
+        "func": "let cid_list = msg.payload.cid_list;\n\nlet cid_list_string = cid_list.map((e) => `'${e}'`).join(\",\");\nlet since = msg.payload.since ? msg.payload.since : null;\n\nmsg.payload = `select hn,\n    '001171400' as source_id,\n    pid as cid,\n    (\n        case\n            when active = '1' then 'true'\n            when active = '2' then 'false'\n        end\n    ) as active,\n    prename as name_prefix,\n    firstname as name_given,\n    lastname as name_family,\n    (\n        case\n            when fix_gender_id = '1' then 'male'\n            when fix_gender_id = '2' then 'female'\n            when fix_gender_id = '' then 'unknown'\n            when fix_gender_id != '1'\n            and fix_gender_id != '2' then 'other'\n        end\n    ) as gender,\n    birthdate as birth_date,\n    (\n        select visit_date\n        from visit\n        where\n            patient.patient_id = patient_id\n        order by visit_date desc\n        limit 1\n    ) as last_visit_date,\n    CASE\n        WHEN modify_date IS NOT NULL THEN concat(modify_date, ' ', modify_time)\n        ELSE concat(created_date, ' ', created_time)\n    END as last_update_date_time,\n    is_hidden\nfrom patient\nWHERE\n    active in ('1','2')\n    AND is_death <> '1'\n    AND pid <> '' \n    AND pid is not null\n    AND pid in (${cid_list_string})\n    ${since\n        ? `AND \n            case \n                when modify_date is null then \n                    concat(\n                        created_date,\n                        ' ',\n                        created_time\n                    )::timestamptz\n                else \n                    concat(\n                        modify_date,\n                        ' ',\n                        modify_time\n                    )::timestamptz\n            end >= '${since}'`\n        : \"\"\n    };`;\n\n// msg.payload = cid_list_string;\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 690,
+        "y": 400,
+        "wires": [
+            [
+                "4b09ebbbed2dcf14"
+            ]
+        ]
+    },
+    {
+        "id": "dd21e2b153220ad1",
+        "type": "http response",
+        "z": "41585b334d56e59b",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 1170,
+        "y": 400,
+        "wires": []
+    },
+    {
+        "id": "9646cea58489a5f5",
+        "type": "function",
+        "z": "41585b334d56e59b",
+        "name": "check",
+        "func": "if(msg.payload.length > 0){\n    msg.payload = msg.payload;\n    return msg;\n}\n\nmsg.payload = [];\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1030,
+        "y": 400,
+        "wires": [
+            [
+                "dd21e2b153220ad1"
+            ]
+        ]
+    },
+    {
+        "id": "85254ce0a6ff664a",
+        "type": "function",
+        "z": "41585b334d56e59b",
+        "name": "function 8",
+        "func": "if(typeof msg.payload.cid_list !== 'undefined'){\n    return msg;\n}\nelse{\n    msg.payload = -1;\n    return msg;\n}",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 380,
+        "y": 420,
+        "wires": [
+            [
+                "071d0c88b00d5ee7"
+            ]
+        ]
+    },
+    {
+        "id": "071d0c88b00d5ee7",
+        "type": "switch",
+        "z": "41585b334d56e59b",
+        "name": "",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "neq",
+                "v": "-1",
+                "vt": "num"
+            },
+            {
+                "t": "eq",
+                "v": "-1",
+                "vt": "num"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 530,
+        "y": 420,
+        "wires": [
+            [
+                "68fa1a37a348a766"
+            ],
+            [
+                "fcd4f3d7a2269d49"
+            ]
+        ]
+    },
+    {
+        "id": "a11d124ce5724196",
+        "type": "http response",
+        "z": "41585b334d56e59b",
+        "name": "",
+        "statusCode": "400",
+        "headers": {},
+        "x": 820,
+        "y": 460,
+        "wires": []
+    },
+    {
+        "id": "fcd4f3d7a2269d49",
+        "type": "function",
+        "z": "41585b334d56e59b",
+        "name": "error",
+        "func": "msg.payload = 'error';\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 670,
+        "y": 460,
+        "wires": [
+            [
+                "a11d124ce5724196"
+            ]
+        ]
+    },
+    {
+        "id": "20ed50840b15f1f6",
+        "type": "comment",
+        "z": "41585b334d56e59b",
+        "name": "API",
+        "info": "",
+        "x": 130,
+        "y": 380,
+        "wires": []
+    },
+    {
+        "id": "0a7109f4ce8a80ad",
+        "type": "http in",
+        "z": "41585b334d56e59b",
+        "name": "",
+        "url": "/get_patients_cid",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 180,
+        "y": 620,
+        "wires": [
+            [
+                "5ba08e926b181eb2",
+                "dcda1e06b8819eb9"
+            ]
+        ]
+    },
+    {
+        "id": "5ba08e926b181eb2",
+        "type": "debug",
+        "z": "41585b334d56e59b",
+        "name": "debug 45",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 180,
+        "y": 680,
+        "wires": []
+    },
+    {
+        "id": "610df6c040988fc7",
+        "type": "function",
+        "z": "41585b334d56e59b",
+        "d": true,
+        "name": "sql",
+        "func": "let page = msg.payload.page ? msg.payload.page : 1;\nlet page_size = msg.payload.page_size ? msg.payload.page_size : 1000;\n\nlet sql = `select pid as cid\nfrom patient\nWHERE\n    active = '1'\n    AND is_death <> '1'\n    AND pid <> ''\n    AND pid is not null\norder by hn\nlimit ${page_size}\noffset ${(page - 1) * page_size}`;\n\nmsg.page = page;\nmsg.page_size = page_size;\nmsg.payload = sql;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 690,
+        "y": 600,
+        "wires": [
+            [
+                "e3792774eea6ecfe"
+            ]
+        ]
+    },
+    {
+        "id": "205ce3a739cd1c9b",
+        "type": "function",
+        "z": "41585b334d56e59b",
+        "name": "error",
+        "func": "msg.payload = 'error';\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 390,
+        "y": 680,
+        "wires": [
+            [
+                "ee97f2124af0c02b"
+            ]
+        ]
+    },
+    {
+        "id": "ee97f2124af0c02b",
+        "type": "http response",
+        "z": "41585b334d56e59b",
+        "name": "",
+        "statusCode": "400",
+        "headers": {},
+        "x": 520,
+        "y": 680,
+        "wires": []
+    },
+    {
+        "id": "e5b3dfcecb6ffc05",
+        "type": "debug",
+        "z": "41585b334d56e59b",
+        "name": "debug 46",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 720,
+        "y": 680,
+        "wires": []
+    },
+    {
+        "id": "d5b14b8734e005c6",
+        "type": "function",
+        "z": "41585b334d56e59b",
+        "name": "prepare",
+        "func": "\nlet since = msg.since ? msg.since.replace(\"_\", \" \") : null;\n\nmsg.data = msg.payload;\nmsg.payload = `select  count(*)  AS full_count\n    from patient\n    WHERE\n    active in ('1', '2')\n    AND is_death <> '1'\n    AND pid <> ''\n    AND pid is not null\n    ${\n        since\n            ? `AND \n            case \n                when modify_date is null then \n                    concat(\n                        created_date,\n                        ' ',\n                        created_time\n                    )::timestamptz\n                else \n                    concat(\n                        modify_date,\n                        ' ',\n                        modify_time\n                    )::timestamptz\n            end >= '${since}'`\n            : \"\"\n    };`;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 860,
+        "y": 600,
+        "wires": [
+            [
+                "6fce0cc213ed9ec6",
+                "fd98dc15e4e35129"
+            ]
+        ]
+    },
+    {
+        "id": "6d84daf9b07842ba",
+        "type": "debug",
+        "z": "41585b334d56e59b",
+        "name": "debug 47",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1080,
+        "y": 640,
+        "wires": []
+    },
+    {
+        "id": "345cfbf51d404ab3",
+        "type": "function",
+        "z": "41585b334d56e59b",
+        "name": "prepare",
+        "func": "// get data from cid key in msg.data\nlet arrayData = msg.data.map((item) => {\n    return item.cid;\n});\n\nlet dataReturn = {\n    page: parseInt(msg.page),\n    page_size: parseInt(msg.page_size),\n    cid_list: arrayData,\n    total: parseInt(msg.payload[0].full_count),\n    total_page: Math.ceil(parseInt(msg.payload[0].full_count) / msg.page_size),\n};\nmsg.payload = dataReturn;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1040,
+        "y": 600,
+        "wires": [
+            [
+                "6d84daf9b07842ba",
+                "02e49f35c8399f95"
+            ]
+        ]
+    },
+    {
+        "id": "02e49f35c8399f95",
+        "type": "http response",
+        "z": "41585b334d56e59b",
+        "name": "",
+        "statusCode": "200",
+        "headers": {},
+        "x": 1220,
+        "y": 600,
+        "wires": []
+    },
+    {
+        "id": "605584346253da67",
+        "type": "debug",
+        "z": "41585b334d56e59b",
+        "name": "debug 48",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1000,
+        "y": 680,
+        "wires": []
+    },
+    {
+        "id": "29fab2ebc06bea27",
+        "type": "function",
+        "z": "41585b334d56e59b",
+        "name": "sql new",
+        "func": "let page = msg.payload.page ? msg.payload.page : 1;\nlet page_size = msg.payload.page_size ? msg.payload.page_size : 1000;\nlet since = msg.payload.since ? msg.payload.since.replace(\"_\", \" \") : null;\n\nlet sql = `select pid as cid\nfrom patient\nWHERE\n    active = '1'\n    AND is_death <> '1'\n    AND pid <> ''\n    AND (\n        pt.is_hidden <> '1'\n        OR pt.is_hidden is NULL\n    )\n    ${\n        since\n            ? `AND \n            case \n                when modify_date is null then \n                    concat(\n                        created_date,\n                        ' ',\n                        created_time\n                    )::timestamptz\n                else \n                    concat(\n                        modify_date,\n                        ' ',\n                        modify_time\n                    )::timestamptz\n            end >= '${since}'`\n            : \"\"\n    }\n    AND pid is not null\norder by hn\nlimit ${page_size}\noffset ${(page - 1) * page_size}`;\n\nmsg.since = since;\nmsg.page = page;\nmsg.page_size = page_size;\nmsg.payload = sql;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 700,
+        "y": 560,
+        "wires": [
+            [
+                "b49fda38b96e9636",
+                "e3792774eea6ecfe"
+            ]
+        ]
+    },
+    {
+        "id": "b49fda38b96e9636",
+        "type": "debug",
+        "z": "41585b334d56e59b",
+        "name": "debug 50",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 880,
+        "y": 560,
+        "wires": []
+    },
+    {
+        "id": "fd98dc15e4e35129",
+        "type": "debug",
+        "z": "41585b334d56e59b",
+        "name": "debug 51",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1040,
+        "y": 560,
+        "wires": []
+    },
+    {
+        "id": "d54c7dd1206443c1",
+        "type": "postgres",
+        "z": "41585b334d56e59b",
+        "postgresdb": "82c31985e42645e5",
+        "name": "",
+        "output": true,
+        "perrow": false,
+        "rowspermsg": "1",
+        "return_on_error": false,
+        "limit_queries": "0",
+        "limit_by": "payload",
+        "limit_value": "1",
+        "limit_drop_intermediate": false,
+        "limit_drop_if_in_queue": false,
+        "outputs": true,
+        "x": 460,
+        "y": 160,
+        "wires": [
+            [
+                "85e6cf39154f7eec",
+                "43f2f920cfcd7cba",
+                "4d2587f63cd865ce"
+            ]
+        ]
+    },
+    {
+        "id": "e99c27270a8c71fc",
+        "type": "postgres",
+        "z": "41585b334d56e59b",
+        "postgresdb": "9a5e8ed779089409",
+        "name": "",
+        "output": true,
+        "perrow": false,
+        "rowspermsg": "1",
+        "return_on_error": false,
+        "limit_queries": "0",
+        "limit_by": "payload",
+        "limit_value": "1",
+        "limit_drop_intermediate": false,
+        "limit_drop_if_in_queue": false,
+        "outputs": true,
+        "x": 940,
+        "y": 220,
+        "wires": [
+            [
+                "0a95143f3c01dbf9"
+            ]
+        ]
+    },
+    {
+        "id": "4b09ebbbed2dcf14",
+        "type": "postgres",
+        "z": "41585b334d56e59b",
+        "postgresdb": "82c31985e42645e5",
+        "name": "",
+        "output": true,
+        "perrow": false,
+        "rowspermsg": "1",
+        "return_on_error": false,
+        "limit_queries": "0",
+        "limit_by": "payload",
+        "limit_value": "1",
+        "limit_drop_intermediate": false,
+        "limit_drop_if_in_queue": false,
+        "outputs": true,
+        "x": 860,
+        "y": 400,
+        "wires": [
+            [
+                "9646cea58489a5f5"
+            ]
+        ]
+    },
+    {
+        "id": "e3792774eea6ecfe",
+        "type": "postgres",
+        "z": "41585b334d56e59b",
+        "postgresdb": "82c31985e42645e5",
+        "name": "",
+        "output": true,
+        "perrow": false,
+        "rowspermsg": "1",
+        "return_on_error": false,
+        "limit_queries": "0",
+        "limit_by": "payload",
+        "limit_value": "1",
+        "limit_drop_intermediate": false,
+        "limit_drop_if_in_queue": false,
+        "outputs": true,
+        "x": 720,
+        "y": 640,
+        "wires": [
+            [
+                "e5b3dfcecb6ffc05",
+                "d5b14b8734e005c6"
+            ]
+        ]
+    },
+    {
+        "id": "6fce0cc213ed9ec6",
+        "type": "postgres",
+        "z": "41585b334d56e59b",
+        "postgresdb": "82c31985e42645e5",
+        "name": "",
+        "output": true,
+        "perrow": false,
+        "rowspermsg": "1",
+        "return_on_error": false,
+        "limit_queries": "0",
+        "limit_by": "payload",
+        "limit_value": "1",
+        "limit_drop_intermediate": false,
+        "limit_drop_if_in_queue": false,
+        "outputs": true,
+        "x": 900,
+        "y": 640,
+        "wires": [
+            [
+                "345cfbf51d404ab3",
+                "605584346253da67"
+            ]
+        ]
+    },
+    {
+        "id": "5ed637c207704106",
+        "type": "http-basic-auth",
+        "z": "41585b334d56e59b",
+        "name": "",
+        "file": "",
+        "multiple": "",
+        "realm": "healthlink",
+        "username": "healthlink",
+        "password": "vchhealthlinkpassword",
+        "x": 290,
+        "y": 480,
+        "wires": [
+            [
+                "85254ce0a6ff664a"
+            ],
+            [
+                "fcd4f3d7a2269d49"
+            ]
+        ]
+    },
+    {
+        "id": "dcda1e06b8819eb9",
+        "type": "http-basic-auth",
+        "z": "41585b334d56e59b",
+        "name": "",
+        "file": "",
+        "multiple": "",
+        "realm": "healthlink",
+        "username": "healthlink",
+        "password": "vchhealthlinkpassword",
+        "x": 470,
+        "y": 620,
+        "wires": [
+            [
+                "610df6c040988fc7",
+                "29fab2ebc06bea27"
+            ],
+            [
+                "205ce3a739cd1c9b"
+            ]
+        ]
+    },
+    {
+        "id": "0e45976fd8585c78",
+        "type": "inject",
+        "z": "feed74b494140840",
+        "d": true,
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "3600",
+        "crontab": "",
+        "once": false,
+        "onceDelay": "1",
+        "topic": "",
+        "payload": "0",
+        "payloadType": "num",
+        "x": 130,
+        "y": 120,
+        "wires": [
+            [
+                "ccbdaa488b127873",
+                "8c12be3e3fa89011"
+            ]
+        ]
+    },
+    {
+        "id": "ccbdaa488b127873",
+        "type": "function",
+        "z": "feed74b494140840",
+        "name": "drug allergy sql",
+        "func": "let offset = msg.payload;\n\nif (offset === -1) return;\n\nmsg.payload = `SELECT\n'001171400' as source_id, da.drug_allergy_id as id, pt.pid as patient_cid, 'active' as clinical_status, case\n    WHEN da.assess_result = '5' THEN 'unconfirmed'\n    WHEN da.assess_result IN ('1', '2', '3', '4') THEN 'confirmed'\n    WHEN da.assess_result NOT IN ('1', '2', '3', '4') THEN 'entered-in-error'\nEND as verification_status, CASE\n    WHEN da.fix_drug_allergy_type = 'A' THEN 'Side Effect'\n    WHEN da.fix_drug_allergy_type = 'B' THEN 'Allergy'\n    ELSE 'Unknown'\nEND as type, 'medication' as category, CASE\n    WHEN da.fix_severity IN ('D') THEN 'low'\n    WHEN da.fix_severity IN ('E', 'F', 'G', 'H', 'I') THEN 'high'\n    ELSE 'unable-to-assess'\nEND as criticality,\nCONCAT(\n    da.trade_name, ',', da.generic_name, ',', da.adr_group_name\n) as code_display, CONCAT(\n    da.trade_name, ',', da.generic_name, ',', da.adr_group_name\n) as code_code, 'โรงพยาบาลวิชัยยุทธ' as code_system,\nconcat(\n    da.modify_date, ' ', da.modify_time\n) as recorded_date, da.symptom as reaction_display, da.symptom as reaction_code, 'โรงพยาบาลวิชัยยุทธ' as reaction_system, 'moderate' as reaction_severity, concat(\n    da.modify_date, ' ', da.modify_time\n) as last_update_date_time,\npt.is_hidden as is_hidden\nFROM drug_allergy da\nLEFT OUTER JOIN patient pt ON pt.patient_id = da.patient_id\nWHERE\n    pt.active = '1'\n    AND pt.is_death != '1'\n    AND pt.pid != '' \n    AND pt.pid is not null\norder by da.drug_allergy_id\n    limit 5000 offset ${offset}`;\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 400,
+        "y": 120,
+        "wires": [
+            [
+                "233ab1f3e078b068"
+            ]
+        ]
+    },
+    {
+        "id": "2b126275bb68291b",
+        "type": "function",
+        "z": "feed74b494140840",
+        "name": "Check For Limit Offset",
+        "func": "let offset = context.get(\"offset\");\nif (typeof offset === \"undefined\") {\n    offset = new Map();\n}\nif (typeof offset.get(\"offset\") == \"undefined\"){\n    offset.set(\"offset\", 0);\n    context.set(\"offset\", offset);\n}\nif(msg.payload.length === 0){\n    offset.set(\"offset\", 0);\n    // msg.payload = -1;\n    // return msg;\n    return;\n}\noffset.set(\"offset\", offset.get(\"offset\") + 5000);\ncontext.set(\"offset\", offset);\nmsg.payload = offset.get(\"offset\");\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 380,
+        "y": 200,
+        "wires": [
+            [
+                "f316cba1a0e6067c",
+                "ccbdaa488b127873"
+            ]
+        ]
+    },
+    {
+        "id": "f316cba1a0e6067c",
+        "type": "debug",
+        "z": "feed74b494140840",
+        "name": "debug 13",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 600,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "d51607ef859885cc",
+        "type": "delay",
+        "z": "feed74b494140840",
+        "name": "",
+        "pauseType": "delay",
+        "timeout": "1",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 600,
+        "y": 160,
+        "wires": [
+            [
+                "2b126275bb68291b"
+            ]
+        ]
+    },
+    {
+        "id": "8ddfa0efe647977c",
+        "type": "debug",
+        "z": "feed74b494140840",
+        "name": "debug 14",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 600,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "020833e8f3e14924",
+        "type": "comment",
+        "z": "feed74b494140840",
+        "name": "allergy",
+        "info": "",
+        "x": 110,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "37a913b56ad70f4f",
+        "type": "function",
+        "z": "feed74b494140840",
+        "name": "Prepare Context",
+        "func": "let data = msg.payload;\nif (data.length === 0) return;\n\nlet drugAllergy = context.get(\"drugAllergy\");\nif (typeof drugAllergy === \"undefined\") {\n    drugAllergy = new Map();\n}\nif (typeof drugAllergy.get(\"drugAllergy\") == \"undefined\") {\n    drugAllergy.set(\"drugAllergy\", 0);\n    context.set(\"drugAllergy\", drugAllergy);\n}\nlet old = drugAllergy.get(\"drugAllergy\");\nold = old + data.length;\ndrugAllergy.set(\"drugAllergy\", old);\ncontext.set(\"drugAllergy\", drugAllergy);\n\nconst date = new Date();\ndate.setHours(date.getHours() + 7);\nnode.status({\n    fill: \"green\",\n    shape: \"dot\",\n    text: `${old} - ${date.toISOString()}`,\n});\n\nif (data.length < 5000) {\n    // msg.payload = drugAllergy.get(\"drugAllergy\");\n    drugAllergy.set(\"drugAllergy\", 0);\n    context.set(\"drugAllergy\", drugAllergy);\n    // return msg;\n}\n\nmsg.payload = data;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 840,
+        "y": 120,
+        "wires": [
+            [
+                "20e6c697ce19f977",
+                "3bd15618ce1e5fce",
+                "7ad0947fa2911c22"
+            ]
+        ]
+    },
+    {
+        "id": "f41b77c3b6424e1f",
+        "type": "debug",
+        "z": "feed74b494140840",
+        "name": "debug 15",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1220,
+        "y": 180,
+        "wires": []
+    },
+    {
+        "id": "7ad0947fa2911c22",
+        "type": "function",
+        "z": "feed74b494140840",
+        "name": "DB update",
+        "func": "let data = msg.payload;\nlet dSql = ``;\nlet id = [];\nlet dCount = 0;\ndata.forEach((el) => {\n    if (!id.includes(el.id) && el.is_hidden != \"1\" && el.last_update_date_time != '0000-00-00 00:00:00') {\n        id.push(el.id);\n        dCount += 1;\n        // if (el.id === \"224012016244584801\") {\n        //     msg.payload = el;\n        //     node.send(msg);\n        // }\n        // row_id, source_id, id, patient_cid, encounter_id, clinical_status, verification_status, type, category, criticality,\n        // code_display, code_code, code_system, recorded_date, reaction_display, reaction_code, reaction_system, reaction_severity,\n        // note, note_date_time, deleted, last_update_date_time\n        let code_display = el.code_display ? el.code_display : \"\";\n        let code_code = el.code_code ? el.code_code : \"\";\n        let code_system = el.code_system ? el.code_system : \"\";\n        let reaction_display = el.reaction_display ? el.reaction_display : \"\";\n        let reaction_code = el.reaction_code ? el.reaction_code : \"\";\n        let reaction_system = el.reaction_system ? el.reaction_system : \"\";\n        let reaction_severity = el.reaction_severity\n            ? el.reaction_severity\n            : \"\";\n        code_display = code_display.replaceAll(\"'\", \"''\");\n        code_code = code_code.replaceAll(\"'\", \"''\");\n        code_system = code_system.replaceAll(\"'\", \"''\");\n        reaction_display = reaction_display.replaceAll(\"'\", \"''\");\n        reaction_code = reaction_code.replaceAll(\"'\", \"''\");\n        reaction_system = reaction_system.replaceAll(\"'\", \"''\");\n        reaction_severity = reaction_severity.replaceAll(\"'\", \"''\");\n        dSql += `('${el.source_id}', '${el.id}', '${el.patient_cid}', null, '${el.clinical_status}', '${el.verification_status}',\n        '${el.type}', '${el.category}', '${el.criticality}', '${code_display}', '${code_code}', '${code_system}', '${el.recorded_date}',\n        '${reaction_display}', '${reaction_code}', '${reaction_system}', '${reaction_severity}', null, null,\n        false, '${el.last_update_date_time}'),`;\n    }\n});\ndSql = dSql.slice(0, -1);\n\nlet sql = `INSERT INTO allergy_intolerance (source_id, id, patient_cid, encounter_id, clinical_status, verification_status, type, category, criticality,\ncode_display, code_code, code_system, recorded_date, reaction_display, reaction_code, reaction_system, reaction_severity,\nnote, note_date_time, deleted, last_update_date_time) VALUES ${dSql}\nON CONFLICT(id) DO UPDATE SET\nsource_id = EXCLUDED.source_id, patient_cid = EXCLUDED.patient_cid, clinical_status = EXCLUDED.clinical_status,\nverification_status = EXCLUDED.verification_status, type = EXCLUDED.type, category = EXCLUDED.category,\ncriticality = EXCLUDED.criticality, deleted = EXCLUDED.deleted, last_update_date_time = EXCLUDED.last_update_date_time\nreturning *;\n`;\n\nlet drugAllergy = context.get(\"drugAllergy\");\nif (typeof drugAllergy === \"undefined\") {\n    drugAllergy = new Map();\n}\nif (typeof drugAllergy.get(\"drugAllergy\") == \"undefined\") {\n    drugAllergy.set(\"drugAllergy\", 0);\n    context.set(\"drugAllergy\", drugAllergy);\n}\nlet old = drugAllergy.get(\"drugAllergy\");\nold = old + dCount;\ndrugAllergy.set(\"drugAllergy\", old);\ncontext.set(\"drugAllergy\", drugAllergy);\n\nconst date = new Date();\ndate.setHours(date.getHours() + 7);\nnode.status({\n    fill: \"green\",\n    shape: \"dot\",\n    text: `${old} - ${date.toISOString()}`,\n});\n\nif (data.length < 5000) {\n    // msg.payload = drugAllergy.get(\"drugAllergy\");\n    drugAllergy.set(\"drugAllergy\", 0);\n    context.set(\"drugAllergy\", drugAllergy);\n    // return msg;\n}\nmsg.payload = sql;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 850,
+        "y": 180,
+        "wires": [
+            [
+                "54c45712a9488439",
+                "8fe05985ec083142"
+            ]
+        ]
+    },
+    {
+        "id": "8fe05985ec083142",
+        "type": "debug",
+        "z": "feed74b494140840",
+        "name": "debug 16",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 840,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "20e6c697ce19f977",
+        "type": "function",
+        "z": "feed74b494140840",
+        "name": "Duplicate check",
+        "func": "let data = msg.payload;\nlet id = [];\nlet duplicate = [];\ndata.forEach((el) => {\n    if (!id.includes(el.id)) {\n        id.push(el.id);\n    } else {\n        duplicate.push(el);\n    }\n});\nmsg.payload = duplicate;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 840,
+        "y": 80,
+        "wires": [
+            [
+                "b4be625370420e11"
+            ]
+        ]
+    },
+    {
+        "id": "b4be625370420e11",
+        "type": "debug",
+        "z": "feed74b494140840",
+        "name": "debug 17",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1040,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "3bd15618ce1e5fce",
+        "type": "debug",
+        "z": "feed74b494140840",
+        "name": "debug 18",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1040,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "8c12be3e3fa89011",
+        "type": "function",
+        "z": "feed74b494140840",
+        "name": "food allergy sql",
+        "func": "let offset = msg.payload;\n\nif (offset === -1) return;\n\nmsg.payload = `SELECT\n    '002393000' as source_id,\n    poa.patient_other_allergy_id as id,\n    pt.pid as patient_cid,\n    'active' as clinical_status,\n    'confirmed' as verification_status,\n    'Allergy' as type,\n    'food' as category,\n    'unable-to-assess' as criticality,\n    boa.description as code_display,\n    boa.description as code_code,\n    'โรงพยาบาลวิชัยยุทธ' as code_system,\n    -- boa.description as code_system,\n    concat(\n        poa.modify_date, ' ', poa.modify_time\n    ) as recorded_date,\n    poa.description as reaction_display,\n    poa.description as reaction_code,\n    'โรงพยาบาลวิชัยยุทธ' as reaction_system,\n    'moderate' as reaction_severity,\n    concat(\n        poa.modify_date, ' ', poa.modify_time\n    ) as last_update_date_time,\n    pt.is_hidden as is_hidden\nfrom\n    patient_other_allergy poa\n    JOIN patient pt ON pt.patient_id = poa.patient_id\n    JOIN base_other_allergy boa ON boa.base_other_allergy_id = poa.base_other_allergy_id\nWHERE\n    pt.active = '1'\n    AND pt.is_death != '1'\n    AND pt.pid != '' \n    AND pt.pid is not null\norder by poa.patient_other_allergy_id\n    limit 5000 offset ${offset}`;\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 400,
+        "y": 280,
+        "wires": [
+            [
+                "3b941a896d18e89a"
+            ]
+        ]
+    },
+    {
+        "id": "4dca18b1700252ae",
+        "type": "function",
+        "z": "feed74b494140840",
+        "name": "Check For Limit Offset",
+        "func": "let offset = context.get(\"offset\");\nif (typeof offset === \"undefined\") {\n    offset = new Map();\n}\nif (typeof offset.get(\"offset\") == \"undefined\"){\n    offset.set(\"offset\", 0);\n    context.set(\"offset\", offset);\n}\nif(msg.payload.length === 0){\n    offset.set(\"offset\", 0);\n    // msg.payload = -1;\n    // return msg;\n    return;\n}\noffset.set(\"offset\", offset.get(\"offset\") + 5000);\ncontext.set(\"offset\", offset);\nmsg.payload = offset.get(\"offset\");\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 380,
+        "y": 360,
+        "wires": [
+            [
+                "4b13b92c554c5df3",
+                "8c12be3e3fa89011"
+            ]
+        ]
+    },
+    {
+        "id": "4b13b92c554c5df3",
+        "type": "debug",
+        "z": "feed74b494140840",
+        "name": "debug 19",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 600,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "2bd05ff1255f5a54",
+        "type": "delay",
+        "z": "feed74b494140840",
+        "name": "",
+        "pauseType": "delay",
+        "timeout": "1",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 600,
+        "y": 320,
+        "wires": [
+            [
+                "4dca18b1700252ae"
+            ]
+        ]
+    },
+    {
+        "id": "fbfd3fc75777a5c0",
+        "type": "debug",
+        "z": "feed74b494140840",
+        "name": "debug 20",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 600,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "2f7b2c6415d4cec9",
+        "type": "function",
+        "z": "feed74b494140840",
+        "name": "Prepare Context",
+        "func": "let data = msg.payload;\nif (data.length === 0) return;\n\nlet drugAllergy = context.get(\"drugAllergy\");\nif (typeof drugAllergy === \"undefined\") {\n    drugAllergy = new Map();\n}\nif (typeof drugAllergy.get(\"drugAllergy\") == \"undefined\") {\n    drugAllergy.set(\"drugAllergy\", 0);\n    context.set(\"drugAllergy\", drugAllergy);\n}\nlet old = drugAllergy.get(\"drugAllergy\");\nold = old + data.length;\ndrugAllergy.set(\"drugAllergy\", old);\ncontext.set(\"drugAllergy\", drugAllergy);\n\nconst date = new Date();\ndate.setHours(date.getHours() + 7);\nnode.status({\n    fill: \"green\",\n    shape: \"dot\",\n    text: `${old} - ${date.toISOString()}`,\n});\n\nif (data.length < 5000) {\n    // msg.payload = drugAllergy.get(\"drugAllergy\");\n    drugAllergy.set(\"drugAllergy\", 0);\n    context.set(\"drugAllergy\", drugAllergy);\n    // return msg;\n}\n\nmsg.payload = data;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 840,
+        "y": 280,
+        "wires": [
+            [
+                "fab65927c2241d3a"
+            ]
+        ]
+    },
+    {
+        "id": "fab65927c2241d3a",
+        "type": "function",
+        "z": "feed74b494140840",
+        "name": "DB update",
+        "func": "let data = msg.payload;\nlet dSql = ``;\nlet id = [];\nlet dCount = 0;\ndata.forEach((el) => {\n    if (!id.includes(el.id) && el.is_hidden != \"1\" && el.last_update_date_time != '0000-00-00 00:00:00') {\n        id.push(el.id);\n        dCount += 1;\n        // if (el.id === \"224012016244584801\") {\n        //     msg.payload = el;\n        //     node.send(msg);\n        // }\n        // row_id, source_id, id, patient_cid, encounter_id, clinical_status, verification_status, type, category, criticality,\n        // code_display, code_code, code_system, recorded_date, reaction_display, reaction_code, reaction_system, reaction_severity,\n        // note, note_date_time, deleted, last_update_date_time\n        let code_display = el.code_display ? el.code_display : \"\";\n        let code_code = el.code_code ? el.code_code : \"\";\n        let code_system = el.code_system ? el.code_system : \"\";\n        let reaction_display = el.reaction_display ? el.reaction_display : \"\";\n        let reaction_code = el.reaction_code ? el.reaction_code : \"\";\n        let reaction_system = el.reaction_system ? el.reaction_system : \"\";\n        let reaction_severity = el.reaction_severity\n            ? el.reaction_severity\n            : \"\";\n        code_display = code_display.replaceAll(\"'\", \"''\");\n        code_code = code_code.replaceAll(\"'\", \"''\");\n        code_system = code_system.replaceAll(\"'\", \"''\");\n        reaction_display = reaction_display.replaceAll(\"'\", \"''\");\n        reaction_code = reaction_code.replaceAll(\"'\", \"''\");\n        reaction_system = reaction_system.replaceAll(\"'\", \"''\");\n        reaction_severity = reaction_severity.replaceAll(\"'\", \"''\");\n        dSql += `('${el.source_id}', '${el.id}', '${el.patient_cid}', null, '${el.clinical_status}', '${el.verification_status}',\n        '${el.type}', '${el.category}', '${el.criticality}', '${code_display}', '${code_code}', '${code_system}', '${el.recorded_date}',\n        '${reaction_display}', '${reaction_code}', '${reaction_system}', '${reaction_severity}', null, null,\n        false, '${el.last_update_date_time}'),`;\n    }\n});\ndSql = dSql.slice(0, -1);\n\nlet sql = `INSERT INTO allergy_intolerance (source_id, id, patient_cid, encounter_id, clinical_status, verification_status, type, category, criticality,\ncode_display, code_code, code_system, recorded_date, reaction_display, reaction_code, reaction_system, reaction_severity,\nnote, note_date_time, deleted, last_update_date_time) VALUES ${dSql}\nON CONFLICT(id) DO UPDATE SET\nsource_id = EXCLUDED.source_id, patient_cid = EXCLUDED.patient_cid, clinical_status = EXCLUDED.clinical_status,\nverification_status = EXCLUDED.verification_status, type = EXCLUDED.type, category = EXCLUDED.category,\ncriticality = EXCLUDED.criticality, deleted = EXCLUDED.deleted, last_update_date_time = EXCLUDED.last_update_date_time\nreturning *;\n`;\n\nlet drugAllergy = context.get(\"drugAllergy\");\nif (typeof drugAllergy === \"undefined\") {\n    drugAllergy = new Map();\n}\nif (typeof drugAllergy.get(\"drugAllergy\") == \"undefined\") {\n    drugAllergy.set(\"drugAllergy\", 0);\n    context.set(\"drugAllergy\", drugAllergy);\n}\nlet old = drugAllergy.get(\"drugAllergy\");\nold = old + dCount;\ndrugAllergy.set(\"drugAllergy\", old);\ncontext.set(\"drugAllergy\", drugAllergy);\n\nconst date = new Date();\ndate.setHours(date.getHours() + 7);\nnode.status({\n    fill: \"green\",\n    shape: \"dot\",\n    text: `${old} - ${date.toISOString()}`,\n});\n\nif (data.length < 5000) {\n    // msg.payload = drugAllergy.get(\"drugAllergy\");\n    drugAllergy.set(\"drugAllergy\", 0);\n    context.set(\"drugAllergy\", drugAllergy);\n    // return msg;\n}\nmsg.payload = sql;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 850,
+        "y": 340,
+        "wires": [
+            [
+                "b38e11b556a59b29",
+                "e61e7abb9e9ae9cb"
+            ]
+        ]
+    },
+    {
+        "id": "11aa43c4adb35309",
+        "type": "debug",
+        "z": "feed74b494140840",
+        "name": "debug 21",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1200,
+        "y": 340,
+        "wires": []
+    },
+    {
+        "id": "b38e11b556a59b29",
+        "type": "debug",
+        "z": "feed74b494140840",
+        "name": "debug 23",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1040,
+        "y": 300,
+        "wires": []
+    },
+    {
+        "id": "8771cdf370ee62a5",
+        "type": "comment",
+        "z": "feed74b494140840",
+        "name": "drug allergy",
+        "info": "",
+        "x": 350,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "7dde1b7634fa5aa4",
+        "type": "comment",
+        "z": "feed74b494140840",
+        "name": "food allergy",
+        "info": "",
+        "x": 350,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "d75b24b4d74c1938",
+        "type": "http in",
+        "z": "feed74b494140840",
+        "name": "",
+        "url": "/allergy_intolerance",
+        "method": "post",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 170,
+        "y": 500,
+        "wires": [
+            [
+                "b33a68cfaba10c76"
+            ]
+        ]
+    },
+    {
+        "id": "1db4970a8937abd1",
+        "type": "function",
+        "z": "feed74b494140840",
+        "name": "sql",
+        "func": "let cid = msg.payload.cid;\nlet since = msg.payload.since ? msg.payload.since : null;\n\nmsg.payload = `SELECT\n'001171400' as source_id, da.drug_allergy_id as id, pt.pid as patient_cid, 'active' as clinical_status, case\n    WHEN da.assess_result = '5' THEN 'unconfirmed'\n    WHEN da.assess_result IN ('1', '2', '3', '4') THEN 'confirmed'\n    WHEN da.assess_result NOT IN ('1', '2', '3', '4') THEN 'unconfirmed'\nEND as verification_status, CASE\n    WHEN da.fix_drug_allergy_type = 'A' THEN 'Side Effect'\n    WHEN da.fix_drug_allergy_type = 'B' THEN 'Allergy'\n    ELSE 'Unknown'\nEND as type, 'medication' as category, CASE\n    WHEN da.fix_severity IN ('D') THEN 'low'\n    WHEN da.fix_severity IN ('E', 'F', 'G', 'H', 'I') THEN 'high'\n    ELSE 'unable-to-assess'\nEND as criticality,\nCONCAT(\n    da.trade_name, ',', da.generic_name, ',', da.adr_group_name\n) as code_display, CONCAT(\n    da.trade_name, ',', da.generic_name, ',', da.adr_group_name\n) as code_code, 'โรงพยาบาลวิชัยยุทธ' as code_system,\nconcat(\n    da.modify_date, ' ', da.modify_time\n) as recorded_date, da.symptom as reaction_display, da.symptom as reaction_code, 'โรงพยาบาลวิชัยยุทธ' as reaction_system, 'moderate' as reaction_severity, concat(\n    da.modify_date, ' ', da.modify_time\n) as last_update_date_time,\npt.is_hidden as is_hidden\nFROM drug_allergy da\nLEFT OUTER JOIN patient pt ON pt.patient_id = da.patient_id\nWHERE\n    pt.active = '1'\n    AND pt.is_death <> '1'\n    AND pt.pid <> '' \n    AND pt.pid is not null\n    AND (\n        pt.is_hidden <> '1'\n        OR pt.is_hidden is NULL\n    )\n    ${\n        since\n            ? `AND concat(\n                da.modify_date,\n                ' ',\n                da.modify_time\n            )::timestamptz >= '${since}'`\n            : \"\"\n    }\n    AND pid = '${cid}';`;\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 690,
+        "y": 480,
+        "wires": [
+            [
+                "cf7b146fc2c9f735"
+            ]
+        ]
+    },
+    {
+        "id": "296411c059cebe90",
+        "type": "http response",
+        "z": "feed74b494140840",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 1290,
+        "y": 480,
+        "wires": []
+    },
+    {
+        "id": "6513603f4dac9ff4",
+        "type": "function",
+        "z": "feed74b494140840",
+        "name": "check",
+        "func": "msg.drug = msg.payload;\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 990,
+        "y": 480,
+        "wires": [
+            [
+                "0cd7b8bb44f92cf1"
+            ]
+        ]
+    },
+    {
+        "id": "fda19fca5d995f14",
+        "type": "function",
+        "z": "feed74b494140840",
+        "name": "check",
+        "func": "if(typeof msg.payload.cid !== 'undefined'){\n    msg.cid = msg.payload.cid;\n    return msg;\n}\nelse{\n    msg.payload = -1;\n    return msg;\n}",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 410,
+        "y": 500,
+        "wires": [
+            [
+                "bdbd860f1fbfb822"
+            ]
+        ]
+    },
+    {
+        "id": "bdbd860f1fbfb822",
+        "type": "switch",
+        "z": "feed74b494140840",
+        "name": "",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "neq",
+                "v": "-1",
+                "vt": "num"
+            },
+            {
+                "t": "eq",
+                "v": "-1",
+                "vt": "num"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 550,
+        "y": 500,
+        "wires": [
+            [
+                "1db4970a8937abd1"
+            ],
+            [
+                "0c9dab26211941e2"
+            ]
+        ]
+    },
+    {
+        "id": "2915be63f3c4a911",
+        "type": "http response",
+        "z": "feed74b494140840",
+        "name": "",
+        "statusCode": "400",
+        "headers": {},
+        "x": 840,
+        "y": 540,
+        "wires": []
+    },
+    {
+        "id": "0c9dab26211941e2",
+        "type": "function",
+        "z": "feed74b494140840",
+        "name": "error",
+        "func": "msg.payload = 'error';\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 690,
+        "y": 540,
+        "wires": [
+            [
+                "2915be63f3c4a911"
+            ]
+        ]
+    },
+    {
+        "id": "0cd7b8bb44f92cf1",
+        "type": "function",
+        "z": "feed74b494140840",
+        "name": "sql",
+        "func": "let cid = msg.cid;\nlet since = msg.payload.since ? msg.payload.since : null;\n\nmsg.payload = `SELECT\n    '001171400' as source_id,\n    poa.patient_other_allergy_id as id,\n    pt.pid as patient_cid,\n    'active' as clinical_status,\n    'confirmed' as verification_status,\n    'Allergy' as type,\n    'food' as category,\n    'unable-to-assess' as criticality,\n    boa.description as code_display,\n    boa.description as code_code,\n    'โรงพยาบาลวิชัยยุทธ' as code_system,\n    -- boa.description as code_system,\n    concat(\n        poa.modify_date, ' ', poa.modify_time\n    ) as recorded_date,\n    poa.description as reaction_display,\n    poa.description as reaction_code,\n    'โรงพยาบาลวิชัยยุทธ' as reaction_system,\n    'moderate' as reaction_severity,\n    concat(\n        poa.modify_date, ' ', poa.modify_time\n    ) as last_update_date_time,\n    pt.is_hidden as is_hidden\nfrom\n    patient_other_allergy poa\n    JOIN patient pt ON pt.patient_id = poa.patient_id\n    JOIN base_other_allergy boa ON boa.base_other_allergy_id = poa.base_other_allergy_id\nWHERE\n    pt.active = '1'\n    AND pt.is_death <> '1'\n    AND pt.pid <> ''\n    AND pt.pid is not null\n    AND (\n        pt.is_hidden <> '1'\n        OR pt.is_hidden is NULL\n    )\n    ${\n    since\n        ? `AND concat(\n                da.modify_date,\n                ' ',\n                da.modify_time\n            )::timestamptz >= '${since}'`\n        : \"\"\n    }\n    AND pid = '${cid}'`;\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1010,
+        "y": 540,
+        "wires": [
+            [
+                "e4a8458f6e61d05d"
+            ]
+        ]
+    },
+    {
+        "id": "3d93b48d392bbfdd",
+        "type": "function",
+        "z": "feed74b494140840",
+        "name": "check",
+        "func": "msg.payload = [ ...msg.drug , ...msg.payload ];\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1170,
+        "y": 480,
+        "wires": [
+            [
+                "296411c059cebe90"
+            ]
+        ]
+    },
+    {
+        "id": "d3c1319e3da89a2b",
+        "type": "debug",
+        "z": "feed74b494140840",
+        "name": "debug 44",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1320,
+        "y": 640,
+        "wires": []
+    },
+    {
+        "id": "4b1be4944453e4da",
+        "type": "comment",
+        "z": "feed74b494140840",
+        "name": "API",
+        "info": "",
+        "x": 110,
+        "y": 460,
+        "wires": []
+    },
+    {
+        "id": "233ab1f3e078b068",
+        "type": "postgres",
+        "z": "feed74b494140840",
+        "postgresdb": "82c31985e42645e5",
+        "name": "",
+        "output": true,
+        "perrow": false,
+        "rowspermsg": "1",
+        "return_on_error": false,
+        "limit_queries": "0",
+        "limit_by": "payload",
+        "limit_value": "1",
+        "limit_drop_intermediate": false,
+        "limit_drop_if_in_queue": false,
+        "outputs": true,
+        "x": 600,
+        "y": 120,
+        "wires": [
+            [
+                "d51607ef859885cc",
+                "8ddfa0efe647977c",
+                "37a913b56ad70f4f"
+            ]
+        ]
+    },
+    {
+        "id": "54c45712a9488439",
+        "type": "postgres",
+        "z": "feed74b494140840",
+        "d": true,
+        "postgresdb": "9a5e8ed779089409",
+        "name": "",
+        "output": true,
+        "perrow": false,
+        "rowspermsg": "1",
+        "return_on_error": false,
+        "limit_queries": "0",
+        "limit_by": "payload",
+        "limit_value": "1",
+        "limit_drop_intermediate": false,
+        "limit_drop_if_in_queue": false,
+        "outputs": true,
+        "x": 1040,
+        "y": 180,
+        "wires": [
+            [
+                "f41b77c3b6424e1f"
+            ]
+        ]
+    },
+    {
+        "id": "3b941a896d18e89a",
+        "type": "postgres",
+        "z": "feed74b494140840",
+        "postgresdb": "82c31985e42645e5",
+        "name": "",
+        "output": true,
+        "perrow": false,
+        "rowspermsg": "1",
+        "return_on_error": false,
+        "limit_queries": "0",
+        "limit_by": "payload",
+        "limit_value": "1",
+        "limit_drop_intermediate": false,
+        "limit_drop_if_in_queue": false,
+        "outputs": true,
+        "x": 600,
+        "y": 280,
+        "wires": [
+            [
+                "2bd05ff1255f5a54",
+                "fbfd3fc75777a5c0",
+                "2f7b2c6415d4cec9"
+            ]
+        ]
+    },
+    {
+        "id": "e61e7abb9e9ae9cb",
+        "type": "postgres",
+        "z": "feed74b494140840",
+        "d": true,
+        "postgresdb": "9a5e8ed779089409",
+        "name": "",
+        "output": true,
+        "perrow": false,
+        "rowspermsg": "1",
+        "return_on_error": false,
+        "limit_queries": "0",
+        "limit_by": "payload",
+        "limit_value": "1",
+        "limit_drop_intermediate": false,
+        "limit_drop_if_in_queue": false,
+        "outputs": true,
+        "x": 1040,
+        "y": 340,
+        "wires": [
+            [
+                "11aa43c4adb35309"
+            ]
+        ]
+    },
+    {
+        "id": "cf7b146fc2c9f735",
+        "type": "postgres",
+        "z": "feed74b494140840",
+        "postgresdb": "82c31985e42645e5",
+        "name": "",
+        "output": true,
+        "perrow": false,
+        "rowspermsg": "1",
+        "return_on_error": false,
+        "limit_queries": "0",
+        "limit_by": "payload",
+        "limit_value": "1",
+        "limit_drop_intermediate": false,
+        "limit_drop_if_in_queue": false,
+        "outputs": true,
+        "x": 840,
+        "y": 480,
+        "wires": [
+            [
+                "6513603f4dac9ff4"
+            ]
+        ]
+    },
+    {
+        "id": "e4a8458f6e61d05d",
+        "type": "postgres",
+        "z": "feed74b494140840",
+        "postgresdb": "82c31985e42645e5",
+        "name": "",
+        "output": true,
+        "perrow": false,
+        "rowspermsg": "1",
+        "return_on_error": false,
+        "limit_queries": "0",
+        "limit_by": "payload",
+        "limit_value": "1",
+        "limit_drop_intermediate": false,
+        "limit_drop_if_in_queue": false,
+        "outputs": true,
+        "x": 1140,
+        "y": 540,
+        "wires": [
+            [
+                "3d93b48d392bbfdd",
+                "d3c1319e3da89a2b"
+            ]
+        ]
+    },
+    {
+        "id": "b33a68cfaba10c76",
+        "type": "http-basic-auth",
+        "z": "feed74b494140840",
+        "name": "",
+        "file": "",
+        "multiple": "",
+        "realm": "healthlink",
+        "username": "healthlink",
+        "password": "vchhealthlinkpassword",
+        "x": 370,
+        "y": 560,
+        "wires": [
+            [
+                "fda19fca5d995f14"
+            ],
+            [
+                "0c9dab26211941e2"
+            ]
+        ]
+    },
+    {
+        "id": "432956ed9bf04de2",
+        "type": "comment",
+        "z": "dd182943ae64b0f2",
+        "name": "immunization",
+        "info": "immunization",
+        "x": 130,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "acdad08829d7d15c",
+        "type": "inject",
+        "z": "dd182943ae64b0f2",
+        "d": true,
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "3600",
+        "crontab": "",
+        "once": false,
+        "onceDelay": "1",
+        "topic": "",
+        "payload": "0",
+        "payloadType": "num",
+        "x": 130,
+        "y": 120,
+        "wires": [
+            [
+                "7e1107de719c8993"
+            ]
+        ]
+    },
+    {
+        "id": "7e1107de719c8993",
+        "type": "function",
+        "z": "dd182943ae64b0f2",
+        "name": "query",
+        "func": "let offset = msg.payload;\n\nif (offset === -1) return;\n\nmsg.payload = `SELECT\n    '002393000' as source_id,\n    vh.vaccine_history_id as id,\n    pt.pid as patient_cid,\n    CASE\n        WHEN oi.fix_order_status_id is NULL THEN 'entered-in-error'\n        WHEN oi.fix_order_status_id = '' THEN 'entered-in-error'\n        WHEN oi.fix_order_status_id = '3' THEN 'completed'\n        ELSE 'not-done'\n    END as status,\n    vh.vaccine_name as vaccine_display,\n    vh.vaccine_name as vaccine_code,\n    'โรงพยาบาลวิชัยยุทธ' as vaccine_system,\n    CASE\n        WHEN oi.dispense_date IS NOT NULL THEN concat(\n            oi.dispense_date, ' ', oi.dispense_time\n        )\n        ELSE concat(\n            vh.modify_date, ' ', vh.modify_time\n        )\n    END as occurrence_date_time,\n    CASE\n        WHEN oi.order_item_id IS NOT NULL THEN '002393000'\n        ELSE ''\n    END as performer,\n    concat(\n        vh.modify_date, ' ', vh.modify_time\n    ) as last_update_date_time,\n    pt.is_hidden as is_hidden\nFROM\n    vaccine_history vh\n    LEFT OUTER JOIN patient pt ON pt.patient_id = vh.patient_id\n    LEFT OUTER JOIN order_item oi ON oi.order_item_id = vh.order_item_id\nWHERE\n    pt.active = '1'\n    AND pt.is_death != '1'\n    AND oi.fix_order_status_id = '3'\n    AND pt.pid != '' \n    AND pt.pid is not null\norder by vh.vaccine_history_id\n    limit 5000 offset ${offset}`;\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 370,
+        "y": 120,
+        "wires": [
+            [
+                "394424828494300a"
+            ]
+        ]
+    },
+    {
+        "id": "975ff165befba29a",
+        "type": "function",
+        "z": "dd182943ae64b0f2",
+        "name": "Check For Limit Offset",
+        "func": "let offset = context.get(\"offset\");\nif (typeof offset === \"undefined\") {\n    offset = new Map();\n}\nif (typeof offset.get(\"offset\") == \"undefined\"){\n    offset.set(\"offset\", 0);\n    context.set(\"offset\", offset);\n}\nif(msg.payload.length === 0){\n    offset.set(\"offset\", 0);\n    // msg.payload = -1;\n    // return msg;\n    return;\n}\noffset.set(\"offset\", offset.get(\"offset\") + 5000);\ncontext.set(\"offset\", offset);\nmsg.payload = offset.get(\"offset\");\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 380,
+        "y": 200,
+        "wires": [
+            [
+                "9092b447f7250f5e",
+                "7e1107de719c8993"
+            ]
+        ]
+    },
+    {
+        "id": "9092b447f7250f5e",
+        "type": "debug",
+        "z": "dd182943ae64b0f2",
+        "name": "debug 24",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 600,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "77359ece904ba67b",
+        "type": "delay",
+        "z": "dd182943ae64b0f2",
+        "name": "",
+        "pauseType": "delay",
+        "timeout": "1",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 600,
+        "y": 160,
+        "wires": [
+            [
+                "975ff165befba29a"
+            ]
+        ]
+    },
+    {
+        "id": "a4ca913491503a60",
+        "type": "debug",
+        "z": "dd182943ae64b0f2",
+        "name": "debug 25",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 600,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "53ac6b2cf7ea534d",
+        "type": "function",
+        "z": "dd182943ae64b0f2",
+        "name": "Prepare Context",
+        "func": "let data = msg.payload;\nif (data.length === 0) return;\n\nlet immunization = context.get(\"immunization\");\nif (typeof immunization === \"undefined\") {\n    immunization = new Map();\n}\nif (typeof immunization.get(\"immunization\") == \"undefined\") {\n    immunization.set(\"immunization\", 0);\n    context.set(\"immunization\", immunization);\n}\nlet old = immunization.get(\"immunization\");\nold += data.length;\nimmunization.set(\"immunization\", old);\ncontext.set(\"immunization\", immunization);\nconst date = new Date();\ndate.setHours(date.getHours() + 7);\nnode.status({\n    fill: \"green\",\n    shape: \"dot\",\n    text: `${old} - ${date.toISOString()}`,\n});\n\nif (data.length < 5000) {\n    // msg.payload = immunization.get(\"immunization\");\n    immunization.set(\"immunization\", 0);\n    context.set(\"immunization\", immunization);\n    // return msg;\n}\n\nmsg.payload = data;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 860,
+        "y": 120,
+        "wires": [
+            [
+                "47437f1166280469",
+                "0af3f4caec9b1789",
+                "16fe0d8b46cb9be2"
+            ]
+        ]
+    },
+    {
+        "id": "6a1df238fef70b82",
+        "type": "debug",
+        "z": "dd182943ae64b0f2",
+        "name": "debug 26",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1220,
+        "y": 180,
+        "wires": []
+    },
+    {
+        "id": "16fe0d8b46cb9be2",
+        "type": "function",
+        "z": "dd182943ae64b0f2",
+        "name": "DB update",
+        "func": "let data = msg.payload;\nlet dSql = ``;\nlet id = [];\nlet dCount = 0;\ndata.forEach((el) => {\n    if (!id.includes(el.id) && el.is_hidden != '1') {\n        dCount += 1;\n        id.push(el.id);\n        // source_id, id, patient_cid, encounter_id, status, vaccine_display,\n        // vaccine_code, vaccine_system, occurrence_date_time, performer, note, note_date_time,\n        // deleted, last_update_date_time\n        dSql += `('${el.source_id}', '${el.id}', '${el.patient_cid}', null, '${el.status}', '${el.vaccine_display}',\n        '${el.vaccine_code}', '${el.vaccine_system}', '${el.occurrence_date_time}', '${el.performer}', null, null,\n        false, '${el.last_update_date_time}'),`;\n    }\n});\ndSql = dSql.slice(0, -1);\n\nlet sql = `INSERT INTO immunization (source_id, id, patient_cid, encounter_id, status, vaccine_display, vaccine_code, \n    vaccine_system, occurrence_date_time, performer, note, note_date_time, deleted, last_update_date_time) VALUES ${dSql}\nON CONFLICT(id) DO UPDATE SET\nsource_id = EXCLUDED.source_id, patient_cid = EXCLUDED.patient_cid, status = EXCLUDED.status,\nvaccine_display = EXCLUDED.vaccine_display, vaccine_code = EXCLUDED.vaccine_code, vaccine_system = EXCLUDED.vaccine_system,\noccurrence_date_time = EXCLUDED.occurrence_date_time, performer = EXCLUDED.performer, deleted = EXCLUDED.deleted, last_update_date_time = EXCLUDED.last_update_date_time\nreturning *;\n`;\n\nlet counting = context.get(\"counting\");\nif (typeof counting === \"undefined\") {\n    counting = new Map();\n}\nif (typeof counting.get(\"counting\") == \"undefined\") {\n    counting.set(\"counting\", 0);\n    context.set(\"counting\", counting);\n}\nlet old = counting.get(\"counting\");\nold = old + dCount;\ncounting.set(\"counting\", old);\ncontext.set(\"counting\", counting);\n\nconst date = new Date();\ndate.setHours(date.getHours() + 7);\nnode.status({\n    fill: \"green\",\n    shape: \"dot\",\n    text: `${old} - ${date.toISOString()}`,\n});\n\nif (data.length < 5000) {\n    counting.set(\"counting\", 0);\n    context.set(\"counting\", counting);\n}\n\nmsg.payload = sql;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 870,
+        "y": 180,
+        "wires": [
+            [
+                "038c24267b0edb34",
+                "878e02d60ed56878"
+            ]
+        ]
+    },
+    {
+        "id": "878e02d60ed56878",
+        "type": "debug",
+        "z": "dd182943ae64b0f2",
+        "name": "debug 27",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 860,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "0af3f4caec9b1789",
+        "type": "function",
+        "z": "dd182943ae64b0f2",
+        "name": "Duplicate check",
+        "func": "let data = msg.payload;\nlet id = [];\nlet duplicate = [];\ndata.forEach((el) => {\n    if (!id.includes(el.id)) {\n        id.push(el.id);\n    } else {\n        duplicate.push(el);\n    }\n});\nmsg.payload = duplicate;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 860,
+        "y": 80,
+        "wires": [
+            [
+                "5fd108e1d878a664"
+            ]
+        ]
+    },
+    {
+        "id": "5fd108e1d878a664",
+        "type": "debug",
+        "z": "dd182943ae64b0f2",
+        "name": "debug 28",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1060,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "47437f1166280469",
+        "type": "debug",
+        "z": "dd182943ae64b0f2",
+        "name": "debug 29",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1060,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "b0a1f9b54971aff6",
+        "type": "http in",
+        "z": "dd182943ae64b0f2",
+        "name": "",
+        "url": "/immunization",
+        "method": "post",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 170,
+        "y": 340,
+        "wires": [
+            [
+                "0c362896465c461f"
+            ]
+        ]
+    },
+    {
+        "id": "18f6bb851419c3d2",
+        "type": "function",
+        "z": "dd182943ae64b0f2",
+        "name": "sql",
+        "func": "let cid = msg.payload.cid;\nlet since = msg.payload.since ? msg.payload.since : null;\n\nmsg.payload = `SELECT\n    '001171400' as source_id,\n    vh.vaccine_history_id as id,\n    pt.pid as patient_cid,\n    CASE\n        WHEN oi.fix_order_status_id is NULL THEN 'entered-in-error'\n        WHEN oi.fix_order_status_id = '' THEN 'entered-in-error'\n        WHEN oi.fix_order_status_id = '3' THEN 'completed'\n        ELSE 'not-done'\n    END as status,\n    vh.vaccine_name as vaccine_display,\n    vh.vaccine_name as vaccine_code,\n    'โรงพยาบาลวิชัยยุทธ' as vaccine_system,\n    CASE\n        WHEN oi.dispense_date IS NOT NULL THEN concat(\n            oi.dispense_date, ' ', oi.dispense_time\n        )\n        ELSE concat(\n            vh.modify_date, ' ', vh.modify_time\n        )\n    END as occurrence_date_time,\n    CASE\n        WHEN oi.order_item_id IS NOT NULL THEN '001171400'\n        ELSE ''\n    END as performer,\n    concat(\n        vh.modify_date, ' ', vh.modify_time\n    ) as last_update_date_time\nFROM\n    vaccine_history vh\n    LEFT OUTER JOIN patient pt ON pt.patient_id = vh.patient_id\n    LEFT OUTER JOIN order_item oi ON oi.order_item_id = vh.order_item_id\nWHERE\n    pt.active = '1'\n    AND pt.is_death <> '1'\n    AND pt.pid <> '' \n    AND pt.pid is not null\n    AND (\n        pt.is_hidden <> '1'\n        OR pt.is_hidden is NULL\n    )\n    AND oi.fix_order_status_id = '3'\n    ${\n        since\n            ? `AND concat(\n                vh.modify_date,\n                ' ',\n                vh.modify_time\n            )::timestamptz >= '${since}'`\n            : \"\"\n    }\n    AND pid = '${cid}';`;\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 650,
+        "y": 320,
+        "wires": [
+            [
+                "09aec6585dccac20"
+            ]
+        ]
+    },
+    {
+        "id": "2a6eca980248f2d3",
+        "type": "http response",
+        "z": "dd182943ae64b0f2",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 1090,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "5d71a74a154adb85",
+        "type": "function",
+        "z": "dd182943ae64b0f2",
+        "name": "check",
+        "func": "if(msg.payload.length > 0){\n    msg.payload = msg.payload;\n    return msg;\n}\n\nmsg.payload = [];\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 950,
+        "y": 320,
+        "wires": [
+            [
+                "2a6eca980248f2d3"
+            ]
+        ]
+    },
+    {
+        "id": "5c922c426d3bfdca",
+        "type": "function",
+        "z": "dd182943ae64b0f2",
+        "name": "function 4",
+        "func": "if(typeof msg.payload.cid !== 'undefined'){\n    return msg;\n}\nelse{\n    msg.payload = -1;\n    return msg;\n}",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 360,
+        "y": 340,
+        "wires": [
+            [
+                "724a42cf8ffebcf2"
+            ]
+        ]
+    },
+    {
+        "id": "724a42cf8ffebcf2",
+        "type": "switch",
+        "z": "dd182943ae64b0f2",
+        "name": "",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "neq",
+                "v": "-1",
+                "vt": "num"
+            },
+            {
+                "t": "eq",
+                "v": "-1",
+                "vt": "num"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 510,
+        "y": 340,
+        "wires": [
+            [
+                "18f6bb851419c3d2"
+            ],
+            [
+                "b389b04d16982928"
+            ]
+        ]
+    },
+    {
+        "id": "56e48c71aa7b4cb7",
+        "type": "http response",
+        "z": "dd182943ae64b0f2",
+        "name": "",
+        "statusCode": "400",
+        "headers": {},
+        "x": 800,
+        "y": 380,
+        "wires": []
+    },
+    {
+        "id": "b389b04d16982928",
+        "type": "function",
+        "z": "dd182943ae64b0f2",
+        "name": "error",
+        "func": "msg.payload = 'error';\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 650,
+        "y": 380,
+        "wires": [
+            [
+                "56e48c71aa7b4cb7"
+            ]
+        ]
+    },
+    {
+        "id": "8f143e7b8b123bb0",
+        "type": "comment",
+        "z": "dd182943ae64b0f2",
+        "name": "API",
+        "info": "",
+        "x": 130,
+        "y": 300,
+        "wires": []
+    },
+    {
+        "id": "394424828494300a",
+        "type": "postgres",
+        "z": "dd182943ae64b0f2",
+        "postgresdb": "82c31985e42645e5",
+        "name": "",
+        "output": true,
+        "perrow": false,
+        "rowspermsg": "1",
+        "return_on_error": false,
+        "limit_queries": "0",
+        "limit_by": "payload",
+        "limit_value": "1",
+        "limit_drop_intermediate": false,
+        "limit_drop_if_in_queue": false,
+        "outputs": true,
+        "x": 600,
+        "y": 120,
+        "wires": [
+            [
+                "77359ece904ba67b",
+                "a4ca913491503a60",
+                "53ac6b2cf7ea534d"
+            ]
+        ]
+    },
+    {
+        "id": "038c24267b0edb34",
+        "type": "postgres",
+        "z": "dd182943ae64b0f2",
+        "d": true,
+        "postgresdb": "9a5e8ed779089409",
+        "name": "",
+        "output": true,
+        "perrow": false,
+        "rowspermsg": "1",
+        "return_on_error": false,
+        "limit_queries": "0",
+        "limit_by": "payload",
+        "limit_value": "1",
+        "limit_drop_intermediate": false,
+        "limit_drop_if_in_queue": false,
+        "outputs": true,
+        "x": 1060,
+        "y": 180,
+        "wires": [
+            [
+                "6a1df238fef70b82"
+            ]
+        ]
+    },
+    {
+        "id": "09aec6585dccac20",
+        "type": "postgres",
+        "z": "dd182943ae64b0f2",
+        "postgresdb": "82c31985e42645e5",
+        "name": "",
+        "output": true,
+        "perrow": false,
+        "rowspermsg": "1",
+        "return_on_error": false,
+        "limit_queries": "0",
+        "limit_by": "payload",
+        "limit_value": "1",
+        "limit_drop_intermediate": false,
+        "limit_drop_if_in_queue": false,
+        "outputs": true,
+        "x": 800,
+        "y": 320,
+        "wires": [
+            [
+                "5d71a74a154adb85"
+            ]
+        ]
+    },
+    {
+        "id": "0c362896465c461f",
+        "type": "http-basic-auth",
+        "z": "dd182943ae64b0f2",
+        "name": "",
+        "file": "",
+        "multiple": "",
+        "realm": "healthlink",
+        "username": "healthlink",
+        "password": "vchhealthlinkpassword",
+        "x": 330,
+        "y": 400,
+        "wires": [
+            [
+                "5c922c426d3bfdca"
+            ],
+            [
+                "b389b04d16982928"
+            ]
+        ]
+    },
+    {
+        "id": "3bad6ce449f74b21",
+        "type": "comment",
+        "z": "f9a3d2b081c87074",
+        "name": "encounter",
+        "info": "",
+        "x": 80,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "c29be74ea0dc8884",
+        "type": "inject",
+        "z": "f9a3d2b081c87074",
+        "d": true,
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "3600",
+        "crontab": "",
+        "once": false,
+        "onceDelay": "1",
+        "topic": "",
+        "payload": "0",
+        "payloadType": "num",
+        "x": 90,
+        "y": 120,
+        "wires": [
+            [
+                "169811df26d1eca1"
+            ]
+        ]
+    },
+    {
+        "id": "169811df26d1eca1",
+        "type": "function",
+        "z": "f9a3d2b081c87074",
+        "name": "query",
+        "func": "let offset = msg.payload;\n\nif (offset === -1) return;\n\nmsg.payload = `SELECT\n    '002393000' as source_id,\n    vs.visit_id as id,\n    pt.pid as patient_cid,\n    CASE\n        WHEN vs.financial_discharge_date IS NOT NULL\n        OR vs.financial_discharge_date <> '' THEN 'complete'\n    END as status,\n    CASE\n        WHEN vs.fix_emergency_type_id in ('1', '2', '3') THEN 'EMER'\n        WHEN vs.fix_emergency_type_id not in ('1', '2', '3')\n        OR vs.fix_emergency_type_id is null THEN CASE\n            WHEN vs.fix_visit_type_id = '0' THEN 'AMB'\n            WHEN vs.fix_visit_type_id = '1' THEN 'IMP'\n        END\n    END as class,\n    concat(\n        vs.visit_date, ' ', vs.visit_time\n    ) as period_start,\n    concat(\n        vs.financial_discharge_date, ' ', vs.financial_discharge_time\n    ) as period_end,\n    '002393000' as service_provider,\n    concat(\n        vs.modify_date, ' ', vs.modify_time\n    ) as last_update_date_time,\n    pt.is_hidden as is_hidden\nFROM visit vs\n    LEFT OUTER JOIN patient pt ON pt.patient_id = vs.patient_id\nWHERE\n    pt.active = '1'\n    AND pt.is_death != '1'\n    AND pt.pid != '' \n    AND pt.pid is not null\n    AND vs.financial_discharge_date <> ''\norder by vs.visit_id\n    limit 5000 offset ${offset}`;\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 330,
+        "y": 120,
+        "wires": [
+            [
+                "9e47bdeaf0f371a7"
+            ]
+        ]
+    },
+    {
+        "id": "5a5e2cc6c09bd13e",
+        "type": "function",
+        "z": "f9a3d2b081c87074",
+        "name": "Check For Limit Offset",
+        "func": "let offset = context.get(\"offset\");\nif (typeof offset === \"undefined\") {\n    offset = new Map();\n}\nif (typeof offset.get(\"offset\") == \"undefined\"){\n    offset.set(\"offset\", 0);\n    context.set(\"offset\", offset);\n}\nif(msg.payload.length === 0){\n    offset.set(\"offset\", 0);\n    // msg.payload = -1;\n    // return msg;\n    return;\n}\noffset.set(\"offset\", offset.get(\"offset\") + 5000);\ncontext.set(\"offset\", offset);\nmsg.payload = offset.get(\"offset\");\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 340,
+        "y": 200,
+        "wires": [
+            [
+                "8f1b68620652c1e8",
+                "169811df26d1eca1"
+            ]
+        ]
+    },
+    {
+        "id": "8f1b68620652c1e8",
+        "type": "debug",
+        "z": "f9a3d2b081c87074",
+        "name": "debug 30",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 560,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "1339533779ec0c2d",
+        "type": "delay",
+        "z": "f9a3d2b081c87074",
+        "name": "",
+        "pauseType": "delay",
+        "timeout": "1",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 560,
+        "y": 160,
+        "wires": [
+            [
+                "5a5e2cc6c09bd13e"
+            ]
+        ]
+    },
+    {
+        "id": "4465e54bfba9daa9",
+        "type": "debug",
+        "z": "f9a3d2b081c87074",
+        "name": "debug 31",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 560,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "8de25750544c85fc",
+        "type": "function",
+        "z": "f9a3d2b081c87074",
+        "name": "Prepare Context",
+        "func": "let data = msg.payload;\nif (data.length === 0) return;\n\nlet visit = context.get(\"visit\");\nif (typeof visit === \"undefined\") {\n    visit = new Map();\n}\nif (typeof visit.get(\"visit\") == \"undefined\") {\n    visit.set(\"visit\", 0);\n    context.set(\"visit\", visit);\n}\nlet old = visit.get(\"visit\");\nold += data.length;\n\nvisit.set(\"visit\", old);\ncontext.set(\"visit\", visit);\nconst date = new Date();\ndate.setHours(date.getHours() + 7);\nnode.status({\n    fill: \"green\",\n    shape: \"dot\",\n    text: `${old} - ${date.toISOString()}`,\n});\n\nif (data.length < 5000) {\n    // msg.payload = visit.get(\"visit\");\n    visit.set(\"visit\", 0);\n    context.set(\"visit\", visit);\n    // return msg;\n}\nmsg.payload = data;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 820,
+        "y": 120,
+        "wires": [
+            [
+                "d289cb043a9a6e82",
+                "be39069d5585dab7",
+                "d5d1cfe4874c2537"
+            ]
+        ]
+    },
+    {
+        "id": "48d9a96ec1c58590",
+        "type": "debug",
+        "z": "f9a3d2b081c87074",
+        "name": "debug 32",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1200,
+        "y": 180,
+        "wires": []
+    },
+    {
+        "id": "d5d1cfe4874c2537",
+        "type": "function",
+        "z": "f9a3d2b081c87074",
+        "name": "DB update",
+        "func": "let data = msg.payload;\nlet dSql = ``;\nlet id = [];\nlet dCount = 0;\ndata.forEach((el) => {\n    if (!id.includes(el.id) && el.is_hidden != '1') {\n        dCount++;\n        id.push(el.id);\n        // source_id, id, patient_cid, encounter_id, status, vaccine_display,\n        // vaccine_code, vaccine_system, occurrence_date_time, performer, note, note_date_time,\n        // deleted, last_update_date_time\n        dSql += `('${el.source_id}', '${el.id}', '${el.patient_cid}', '${el.status}', '${el.class}', null, null, null, \n        null, null, null,'${el.period_start}', '${el.period_end}', null, null, null, '${el.service_provider}',\n        false, '${el.last_update_date_time}'),`;\n        // let data = {\n        //     source_id: \"002393000\",\n        //     id: \"120100107404521801\",\n        //     patient_cid: \"1347986183751\",\n        //     status: \"complete\",\n        //     class: \"EMER\",\n        //     period_start: \"2020-10-01 07:40:45\",\n        //     period_end: \"2020-10-01 07:52:10\",\n        //     service_provider: \"002393000\",\n        //     last_update_date_time: \"2020-10-01 07:40:45\",\n        //     is_hidden: \"0\",\n        // };\n    }\n});\ndSql = dSql.slice(0, -1);\n\nlet sql = `INSERT INTO encounter (source_id, id, patient_cid, status, class, type_display, type_code, type_system, \n    service_type_display, service_type_code, service_type_system, period_start, period_end, reason_display, reason_code, \n    reason_system, service_provider, deleted, last_update_date_time) VALUES ${dSql}\nON CONFLICT(id) DO UPDATE SET\nsource_id = EXCLUDED.source_id, patient_cid = EXCLUDED.patient_cid, status = EXCLUDED.status,\nclass = EXCLUDED.class, type_display = EXCLUDED.type_display, type_code = EXCLUDED.type_code,\ntype_system = EXCLUDED.type_system, period_start = EXCLUDED.period_start, period_end = EXCLUDED.period_end, \nreason_display = EXCLUDED.reason_display, reason_code = EXCLUDED.reason_code, reason_system = EXCLUDED.reason_system,\nservice_provider = EXCLUDED.service_provider, deleted = EXCLUDED.deleted, last_update_date_time = EXCLUDED.last_update_date_time\nreturning *;\n`;\n\nlet counting = context.get(\"counting\");\nif (typeof counting === \"undefined\") {\n    counting = new Map();\n}\nif (typeof counting.get(\"counting\") == \"undefined\") {\n    counting.set(\"counting\", 0);\n    context.set(\"counting\", counting);\n}\nlet old = counting.get(\"counting\");\nold = old + dCount;\ncounting.set(\"counting\", old);\ncontext.set(\"counting\", counting);\n\nconst date = new Date();\ndate.setHours(date.getHours() + 7);\nnode.status({\n    fill: \"green\",\n    shape: \"dot\",\n    text: `${old} - ${date.toISOString()}`,\n});\nif (data.length < 5000) {\n    counting.set(\"counting\", 0);\n    context.set(\"counting\", counting);\n}\nmsg.payload = sql;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 830,
+        "y": 180,
+        "wires": [
+            [
+                "d952989b96d46041",
+                "b499eb1fb52fafea"
+            ]
+        ]
+    },
+    {
+        "id": "b499eb1fb52fafea",
+        "type": "debug",
+        "z": "f9a3d2b081c87074",
+        "name": "debug 33",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 820,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "be39069d5585dab7",
+        "type": "function",
+        "z": "f9a3d2b081c87074",
+        "name": "Duplicate check",
+        "func": "let data = msg.payload;\nlet id = [];\nlet duplicate = [];\ndata.forEach((el) => {\n    if (!id.includes(el.id)) {\n        id.push(el.id);\n    } else {\n        duplicate.push(el);\n    }\n});\nmsg.payload = duplicate;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 820,
+        "y": 80,
+        "wires": [
+            [
+                "5783c4ce15bb14b2"
+            ]
+        ]
+    },
+    {
+        "id": "5783c4ce15bb14b2",
+        "type": "debug",
+        "z": "f9a3d2b081c87074",
+        "name": "debug 34",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1020,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "d289cb043a9a6e82",
+        "type": "debug",
+        "z": "f9a3d2b081c87074",
+        "name": "debug 35",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1020,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "6f7f8f7c99f8c625",
+        "type": "http in",
+        "z": "f9a3d2b081c87074",
+        "name": "",
+        "url": "/encounter",
+        "method": "post",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 100,
+        "y": 360,
+        "wires": [
+            [
+                "986b2a62b6c4efba"
+            ]
+        ]
+    },
+    {
+        "id": "ea724c69a80bd49d",
+        "type": "function",
+        "z": "f9a3d2b081c87074",
+        "name": "sql",
+        "func": "let cid = msg.payload.cid;\nlet since = msg.payload.since ? msg.payload.since : null;\n\nmsg.payload = `SELECT\n    '001171400' as source_id,\n    vs.visit_id as id,\n    pt.pid as patient_cid,\n    CASE\n        WHEN vs.financial_discharge_date IS NOT NULL\n        OR vs.financial_discharge_date <> '' THEN 'finished'\n    END as status,\n    CASE\n        WHEN vs.fix_emergency_type_id in ('1', '2', '3') THEN 'EMER'\n        WHEN vs.fix_emergency_type_id not in ('1', '2', '3')\n        OR vs.fix_emergency_type_id is null THEN CASE\n            WHEN vs.fix_visit_type_id = '0' THEN 'AMB'\n            WHEN vs.fix_visit_type_id = '1' THEN 'IMP'\n        END\n    END as class,\n    concat(\n        vs.visit_date, ' ', vs.visit_time\n    ) as period_start,\n    concat(\n        vs.financial_discharge_date, ' ', vs.financial_discharge_time\n    ) as period_end,\n    '001171400' as service_provider,\n    concat(\n        vs.modify_date, ' ', vs.modify_time\n    ) as last_update_date_time,\n    pt.is_hidden as is_hidden\nFROM visit vs\n    LEFT OUTER JOIN patient pt ON pt.patient_id = vs.patient_id\nWHERE\n    pt.active = '1'\n    AND pt.is_death <> '1'\n    AND pt.pid <> '' \n    AND pt.pid is not null\n    AND (\n        pt.is_hidden <> '1'\n        OR pt.is_hidden is NULL\n    )\n    AND vs.financial_discharge_date <> ''\n    ${\n        since\n            ? `AND concat(\n                vs.modify_date,\n                ' ',\n                vs.modify_time\n            )::timestamptz >= '${since}'`\n            : \"\"\n    }\n    AND pid = '${cid}';`\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 590,
+        "y": 340,
+        "wires": [
+            [
+                "d6ee74a6c3b9af5c"
+            ]
+        ]
+    },
+    {
+        "id": "73e9d460b84369ab",
+        "type": "http response",
+        "z": "f9a3d2b081c87074",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 1030,
+        "y": 340,
+        "wires": []
+    },
+    {
+        "id": "edbf3ee67bb0cc69",
+        "type": "function",
+        "z": "f9a3d2b081c87074",
+        "name": "check",
+        "func": "if(msg.payload.length > 0){\n    return msg;\n}\n\nmsg.payload = [];\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 890,
+        "y": 340,
+        "wires": [
+            [
+                "73e9d460b84369ab"
+            ]
+        ]
+    },
+    {
+        "id": "235355866007e0df",
+        "type": "function",
+        "z": "f9a3d2b081c87074",
+        "name": "function 5",
+        "func": "if(typeof msg.payload.cid !== 'undefined'){\n    return msg;\n}\nelse{\n    msg.payload = -1;\n    return msg;\n}",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 300,
+        "y": 360,
+        "wires": [
+            [
+                "57575f8f0d8a35b9"
+            ]
+        ]
+    },
+    {
+        "id": "57575f8f0d8a35b9",
+        "type": "switch",
+        "z": "f9a3d2b081c87074",
+        "name": "",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "neq",
+                "v": "-1",
+                "vt": "num"
+            },
+            {
+                "t": "eq",
+                "v": "-1",
+                "vt": "num"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 450,
+        "y": 360,
+        "wires": [
+            [
+                "ea724c69a80bd49d"
+            ],
+            [
+                "7bbb9537aa4672ee"
+            ]
+        ]
+    },
+    {
+        "id": "b9347068d675c9bf",
+        "type": "http response",
+        "z": "f9a3d2b081c87074",
+        "name": "",
+        "statusCode": "400",
+        "headers": {},
+        "x": 740,
+        "y": 400,
+        "wires": []
+    },
+    {
+        "id": "7bbb9537aa4672ee",
+        "type": "function",
+        "z": "f9a3d2b081c87074",
+        "name": "error",
+        "func": "msg.payload = 'error';\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 590,
+        "y": 400,
+        "wires": [
+            [
+                "b9347068d675c9bf"
+            ]
+        ]
+    },
+    {
+        "id": "56b24d7760276647",
+        "type": "comment",
+        "z": "f9a3d2b081c87074",
+        "name": "API",
+        "info": "",
+        "x": 70,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "9e47bdeaf0f371a7",
+        "type": "postgres",
+        "z": "f9a3d2b081c87074",
+        "postgresdb": "82c31985e42645e5",
+        "name": "",
+        "output": true,
+        "perrow": false,
+        "rowspermsg": "1",
+        "return_on_error": false,
+        "limit_queries": "0",
+        "limit_by": "payload",
+        "limit_value": "1",
+        "limit_drop_intermediate": false,
+        "limit_drop_if_in_queue": false,
+        "outputs": true,
+        "x": 560,
+        "y": 120,
+        "wires": [
+            [
+                "1339533779ec0c2d",
+                "4465e54bfba9daa9",
+                "8de25750544c85fc"
+            ]
+        ]
+    },
+    {
+        "id": "d952989b96d46041",
+        "type": "postgres",
+        "z": "f9a3d2b081c87074",
+        "d": true,
+        "postgresdb": "9a5e8ed779089409",
+        "name": "",
+        "output": true,
+        "perrow": false,
+        "rowspermsg": "1",
+        "return_on_error": false,
+        "limit_queries": "0",
+        "limit_by": "payload",
+        "limit_value": "1",
+        "limit_drop_intermediate": false,
+        "limit_drop_if_in_queue": false,
+        "outputs": true,
+        "x": 1020,
+        "y": 180,
+        "wires": [
+            [
+                "48d9a96ec1c58590"
+            ]
+        ]
+    },
+    {
+        "id": "d6ee74a6c3b9af5c",
+        "type": "postgres",
+        "z": "f9a3d2b081c87074",
+        "postgresdb": "82c31985e42645e5",
+        "name": "",
+        "output": true,
+        "perrow": false,
+        "rowspermsg": "1",
+        "return_on_error": false,
+        "limit_queries": "0",
+        "limit_by": "payload",
+        "limit_value": "1",
+        "limit_drop_intermediate": false,
+        "limit_drop_if_in_queue": false,
+        "outputs": true,
+        "x": 740,
+        "y": 340,
+        "wires": [
+            [
+                "edbf3ee67bb0cc69"
+            ]
+        ]
+    },
+    {
+        "id": "986b2a62b6c4efba",
+        "type": "http-basic-auth",
+        "z": "f9a3d2b081c87074",
+        "name": "",
+        "file": "",
+        "multiple": "",
+        "realm": "healthlink",
+        "username": "healthlink",
+        "password": "vchhealthlinkpassword",
+        "x": 230,
+        "y": 420,
+        "wires": [
+            [
+                "235355866007e0df"
+            ],
+            [
+                "7bbb9537aa4672ee"
+            ]
+        ]
+    },
+    {
+        "id": "ccf76af832555460",
+        "type": "comment",
+        "z": "71b2afa6bae80abd",
+        "name": "Condition",
+        "info": "",
+        "x": 120,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "37710a518977c107",
+        "type": "inject",
+        "z": "71b2afa6bae80abd",
+        "d": true,
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "3600",
+        "crontab": "",
+        "once": false,
+        "onceDelay": "1",
+        "topic": "",
+        "payload": "0",
+        "payloadType": "num",
+        "x": 130,
+        "y": 140,
+        "wires": [
+            [
+                "5ab4384640e2d4a3"
+            ]
+        ]
+    },
+    {
+        "id": "5ab4384640e2d4a3",
+        "type": "function",
+        "z": "71b2afa6bae80abd",
+        "name": "query",
+        "func": "let offset = msg.payload;\n\nif (offset === -1) return;\n\nmsg.payload = `SELECT\n    '002393000' as source_id,\n    d.diagnosis_icd10_id as id,\n    pt.pid as patient_cid,\n    d.visit_id as encounter_id,\n    'active' as clinical_status,\n    concat(\n        diagnosis_date, ' ', diagnosis_time\n    ) as recorded_date,\n    'confirmed' as verification_status,\n    'diagnosis' as category,\n    d.icd10_description as code_display,\n    d.icd10_code as code_code,\n    'ICD-10-TM' as code_system,\n    fdt.description as diagnosis_display,\n    fdt.fix_diagnosis_type_id as diagnosis_code,\n    'โรงพยาบาลวิชัยยุทธ' as diagnosis_system,\n    '1' as diagnosis_rank,\n    concat(\n        d.modify_date, ' ', d.modify_time\n    ) as last_update_date_time,\n    pt.is_hidden as is_hidden\nFROM\n    diagnosis_icd10 d\n    LEFT OUTER JOIN visit vs ON vs.visit_id = d.visit_id\n    LEFT OUTER JOIN patient pt ON pt.patient_id = vs.patient_id\n    LEFT OUTER JOIN fix_diagnosis_type fdt ON fdt.fix_diagnosis_type_id = d.fix_diagnosis_type_id\nWHERE\n    d.is_secret != '1'\n    and pt.active = '1'\n    AND pt.is_death != '1'\n    AND pt.pid <> '' \n    AND pt.pid is not null\n    AND d.diagnosis_date != ''\norder by vs.visit_id\n    limit 10000 offset ${offset}`;\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 370,
+        "y": 140,
+        "wires": [
+            [
+                "587f3471c19d892d"
+            ]
+        ]
+    },
+    {
+        "id": "1ca115017138dbf5",
+        "type": "function",
+        "z": "71b2afa6bae80abd",
+        "name": "Check For Limit Offset",
+        "func": "let offset = context.get(\"offset\");\nif (typeof offset === \"undefined\") {\n    offset = new Map();\n}\nif (typeof offset.get(\"offset\") == \"undefined\"){\n    offset.set(\"offset\", 0);\n    context.set(\"offset\", offset);\n}\nif(msg.payload.length === 0){\n    offset.set(\"offset\", 0);\n    // msg.payload = -1;\n    // return msg;\n    return;\n}\noffset.set(\"offset\", offset.get(\"offset\") + 10000);\ncontext.set(\"offset\", offset);\nmsg.payload = offset.get(\"offset\");\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 380,
+        "y": 220,
+        "wires": [
+            [
+                "08423dda16123388",
+                "5ab4384640e2d4a3"
+            ]
+        ]
+    },
+    {
+        "id": "08423dda16123388",
+        "type": "debug",
+        "z": "71b2afa6bae80abd",
+        "name": "debug 38",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 600,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "074d2eb74fe5a7d1",
+        "type": "delay",
+        "z": "71b2afa6bae80abd",
+        "name": "",
+        "pauseType": "delay",
+        "timeout": "1",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 600,
+        "y": 180,
+        "wires": [
+            [
+                "1ca115017138dbf5"
+            ]
+        ]
+    },
+    {
+        "id": "58f92601bbebd229",
+        "type": "debug",
+        "z": "71b2afa6bae80abd",
+        "name": "debug 39",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 600,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "66938b72c956ad07",
+        "type": "function",
+        "z": "71b2afa6bae80abd",
+        "name": "Prepare Context",
+        "func": "let data = msg.payload;\nif (data.length === 0) return;\n\nlet condition = context.get(\"condition\");\nif (typeof condition === \"undefined\") {\n    condition = new Map();\n}\nif (typeof condition.get(\"condition\") == \"undefined\") {\n    condition.set(\"condition\", 0);\n    context.set(\"condition\", condition);\n}\nlet old = condition.get(\"condition\");\nold += data.length;\n\ncondition.set(\"condition\", old);\ncontext.set(\"condition\", condition);\nconst date = new Date();\ndate.setHours(date.getHours() + 7);\nnode.status({\n    fill: \"green\",\n    shape: \"dot\",\n    text: `${old} - ${date.toISOString()}`,\n});\n\nif (data.length < 10000) {\n    // msg.payload = condition.get(\"condition\");\n    condition.set(\"condition\", 0);\n    context.set(\"condition\", condition);\n    // return msg;\n}\nmsg.payload = data;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 860,
+        "y": 140,
+        "wires": [
+            [
+                "fbeef61622079dd3",
+                "89b8ece494316f73",
+                "0a3f351f869d9c5d"
+            ]
+        ]
+    },
+    {
+        "id": "cefc6f4f8e068e1a",
+        "type": "debug",
+        "z": "71b2afa6bae80abd",
+        "name": "debug 40",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1240,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "0a3f351f869d9c5d",
+        "type": "function",
+        "z": "71b2afa6bae80abd",
+        "name": "DB update",
+        "func": "let data = msg.payload;\nlet dSql = ``;\nlet id = [];\nlet dCount = 0;\ndata.forEach((el) => {\n    if (!id.includes(el.id) && el.is_hidden != \"1\") {\n        dCount++;\n        id.push(el.id);\n        // let data = {\n        //     source_id: \"002393000\",\n        //     id: \"223120207181321701\",\n        //     patient_cid: \"1100800489311\",\n        //     encounter_id: \"223120207030042901\",\n        //     clinical_status: \"active\",\n        //     recorded_date: \"2023-12-02 07:17:00\",\n        //     verification_status: \"confirmed\",\n        //     category: \"diagnosis\",\n        //     code_display: \"Laboratory examination\",\n        //     code_code: \"Z01.7\",\n        //     code_system: \"ICD-10-TM\",\n        //     diagnosis_display: \"Primary Diagnosis\",\n        //     diagnosis_code: \"1\",\n        //     diagnosis_system: \"โรงพยาบาลวิชัยยุทธ\",\n        //     diagnosis_rank: \"1\",\n        //     last_update_date_time: \"2023-12-02 07:18:13\",\n        // };\n\n        let code_display = el.code_display ? el.code_display : \"\";\n        let code_code = el.code_code ? el.code_code : \"\";\n        let code_system = el.code_system ? el.code_system : \"\";\n\n        let diagnosis_display = el.diagnosis_display\n            ? el.diagnosis_display\n            : \"\";\n        let diagnosis_code = el.diagnosis_code ? el.diagnosis_code : \"\";\n        let diagnosis_system = el.diagnosis_system ? el.diagnosis_system : \"\";\n\n        code_display = code_display.replaceAll(\"'\", \"''\");\n        code_code = code_code.replaceAll(\"'\", \"''\");\n        code_system = code_system.replaceAll(\"'\", \"''\");\n\n        diagnosis_display = diagnosis_display.replaceAll(\"'\", \"''\");\n        diagnosis_code = diagnosis_code.replaceAll(\"'\", \"''\");\n        diagnosis_system = diagnosis_system.replaceAll(\"'\", \"''\");\n\n        dSql += `('${el.source_id}', '${el.id}', '${el.patient_cid}', '${el.encounter_id}', '${el.clinical_status}', '${el.verification_status}', '${el.category}', null, \n        '${code_display}', '${code_code}', '${code_system}', null, null, '${el.recorded_date}', null, null, '${diagnosis_display}', '${diagnosis_code}', '${diagnosis_system}',\n        false, '${el.last_update_date_time}'),`;\n    }\n});\ndSql = dSql.slice(0, -1);\n\nlet sql = `INSERT INTO condition (source_id, id, patient_cid, encounter_id, clinical_status, verification_status, category, severity, code_display, code_code, code_system, \n    body_site_display, body_site_code, recorded_date, note, note_date_time, diagnosis_display, diagnosis_code, diagnosis_system, deleted, last_update_date_time) VALUES ${dSql}\nON CONFLICT(id) DO UPDATE SET\n\nsource_id = EXCLUDED.source_id, \npatient_cid = EXCLUDED.patient_cid, \nclinical_status = EXCLUDED.clinical_status,\nverification_status = EXCLUDED.verification_status, \ncategory = EXCLUDED.category, \nseverity = EXCLUDED.severity,\ncode_display = EXCLUDED.code_display, \ncode_code = EXCLUDED.code_code, \ncode_system = EXCLUDED.code_system, \nbody_site_display = EXCLUDED.body_site_display, \nbody_site_code = EXCLUDED.body_site_code, \nrecorded_date = EXCLUDED.recorded_date,\nnote = EXCLUDED.note, \nnote_date_time = EXCLUDED.note_date_time,\ndeleted = EXCLUDED.deleted, \nlast_update_date_time = EXCLUDED.last_update_date_time\nreturning *;\n`;\n\nlet counting = context.get(\"counting\");\nif (typeof counting === \"undefined\") {\n    counting = new Map();\n}\nif (typeof counting.get(\"counting\") == \"undefined\") {\n    counting.set(\"counting\", 0);\n    context.set(\"counting\", counting);\n}\nlet old = counting.get(\"counting\");\nold = old + dCount;\ncounting.set(\"counting\", old);\ncontext.set(\"counting\", counting);\n\nconst date = new Date();\ndate.setHours(date.getHours() + 7);\nnode.status({\n    fill: \"green\",\n    shape: \"dot\",\n    text: `${old} - ${date.toISOString()}`,\n});\nif (data.length < 10000) {\n    counting.set(\"counting\", 0);\n    context.set(\"counting\", counting);\n}\nmsg.payload = sql;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 870,
+        "y": 200,
+        "wires": [
+            [
+                "2743a5c40300910e",
+                "ad129b25c6e60a2a"
+            ]
+        ]
+    },
+    {
+        "id": "ad129b25c6e60a2a",
+        "type": "debug",
+        "z": "71b2afa6bae80abd",
+        "name": "debug 41",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 860,
+        "y": 260,
+        "wires": []
+    },
+    {
+        "id": "89b8ece494316f73",
+        "type": "function",
+        "z": "71b2afa6bae80abd",
+        "name": "Duplicate check",
+        "func": "let data = msg.payload;\nlet id = [];\nlet duplicate = [];\ndata.forEach((el) => {\n    if (!id.includes(el.id)) {\n        id.push(el.id);\n    } else {\n        duplicate.push(el);\n    }\n});\nmsg.payload = duplicate;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 860,
+        "y": 100,
+        "wires": [
+            [
+                "830daa8a96b23ca0"
+            ]
+        ]
+    },
+    {
+        "id": "830daa8a96b23ca0",
+        "type": "debug",
+        "z": "71b2afa6bae80abd",
+        "name": "debug 42",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1060,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "fbeef61622079dd3",
+        "type": "debug",
+        "z": "71b2afa6bae80abd",
+        "name": "debug 43",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1060,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "6bb4aefb91f7e008",
+        "type": "http in",
+        "z": "71b2afa6bae80abd",
+        "name": "",
+        "url": "/condition",
+        "method": "post",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 180,
+        "y": 400,
+        "wires": [
+            [
+                "6f1e2ce5938850cd"
+            ]
+        ]
+    },
+    {
+        "id": "6c57d15ce3d7a8d6",
+        "type": "function",
+        "z": "71b2afa6bae80abd",
+        "name": "sql",
+        "func": "let cid = msg.payload.cid;\nlet since = msg.payload.since ? msg.payload.since : null;\n\nmsg.payload = `SELECT\n    '001171400' as source_id,\n    d.diagnosis_icd10_id as id,\n    pt.pid as patient_cid,\n    d.visit_id as encounter_id,\n    'active' as clinical_status,\n    concat(\n        diagnosis_date, ' ', diagnosis_time\n    ) as recorded_date,\n    'confirmed' as verification_status,\n    'encounter-diagnosis' as category,\n    d.icd10_description as code_display,\n    d.icd10_code as code_code,\n    'icd10-tm' as code_system,\n    fdt.description as diagnosis_display,\n    fdt.fix_diagnosis_type_id as diagnosis_code,\n    'โรงพยาบาลวิชัยยุทธ' as diagnosis_system,\n    '1' as diagnosis_rank,\n    concat(\n        d.modify_date, ' ', d.modify_time\n    ) as last_update_date_time,\n    pt.is_hidden as is_hidden\nFROM\n    diagnosis_icd10 d\n    LEFT OUTER JOIN visit vs ON vs.visit_id = d.visit_id\n    LEFT OUTER JOIN patient pt ON pt.patient_id = vs.patient_id\n    LEFT OUTER JOIN fix_diagnosis_type fdt ON fdt.fix_diagnosis_type_id = d.fix_diagnosis_type_id\nWHERE\n    d.is_secret != '1'\n    and pt.active = '1'\n    AND pt.is_death != '1'\n    AND pt.pid <> '' \n    AND pt.pid is not null\n    AND (\n        pt.is_hidden <> '1'\n        OR pt.is_hidden is NULL\n    )\n    AND d.diagnosis_date != ''\n    ${\n        since\n            ? `AND concat(\n                d.modify_date,\n                ' ',\n                d.modify_time\n            )::timestamptz >= '${since}'`\n            : \"\"\n    }\n    AND pid = '${cid}'\n    AND d.icd10_code <> '';`\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 670,
+        "y": 380,
+        "wires": [
+            [
+                "20eafaa963f140b9"
+            ]
+        ]
+    },
+    {
+        "id": "719b738140d6d211",
+        "type": "http response",
+        "z": "71b2afa6bae80abd",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 1110,
+        "y": 380,
+        "wires": []
+    },
+    {
+        "id": "6624adce605c018f",
+        "type": "function",
+        "z": "71b2afa6bae80abd",
+        "name": "check",
+        "func": "if(msg.payload.length > 0){\n    return msg;\n}\n\nmsg.payload = [];\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 970,
+        "y": 380,
+        "wires": [
+            [
+                "719b738140d6d211"
+            ]
+        ]
+    },
+    {
+        "id": "a248489201ea9180",
+        "type": "function",
+        "z": "71b2afa6bae80abd",
+        "name": "function 6",
+        "func": "if(typeof msg.payload.cid !== 'undefined'){\n    return msg;\n}\nelse{\n    msg.payload = -1;\n    return msg;\n}",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 380,
+        "y": 400,
+        "wires": [
+            [
+                "e8cbee1e967d869d"
+            ]
+        ]
+    },
+    {
+        "id": "e8cbee1e967d869d",
+        "type": "switch",
+        "z": "71b2afa6bae80abd",
+        "name": "",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "neq",
+                "v": "-1",
+                "vt": "num"
+            },
+            {
+                "t": "eq",
+                "v": "-1",
+                "vt": "num"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 530,
+        "y": 400,
+        "wires": [
+            [
+                "6c57d15ce3d7a8d6"
+            ],
+            [
+                "6f8142dc94877313"
+            ]
+        ]
+    },
+    {
+        "id": "5f7b98b0b3e4b4c1",
+        "type": "http response",
+        "z": "71b2afa6bae80abd",
+        "name": "",
+        "statusCode": "400",
+        "headers": {},
+        "x": 820,
+        "y": 440,
+        "wires": []
+    },
+    {
+        "id": "6f8142dc94877313",
+        "type": "function",
+        "z": "71b2afa6bae80abd",
+        "name": "error",
+        "func": "msg.payload = 'error';\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 670,
+        "y": 440,
+        "wires": [
+            [
+                "5f7b98b0b3e4b4c1"
+            ]
+        ]
+    },
+    {
+        "id": "136e415bced41b7b",
+        "type": "comment",
+        "z": "71b2afa6bae80abd",
+        "name": "API",
+        "info": "",
+        "x": 150,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "587f3471c19d892d",
+        "type": "postgres",
+        "z": "71b2afa6bae80abd",
+        "postgresdb": "82c31985e42645e5",
+        "name": "",
+        "output": true,
+        "perrow": false,
+        "rowspermsg": "1",
+        "return_on_error": false,
+        "limit_queries": "0",
+        "limit_by": "payload",
+        "limit_value": "1",
+        "limit_drop_intermediate": false,
+        "limit_drop_if_in_queue": false,
+        "outputs": true,
+        "x": 600,
+        "y": 140,
+        "wires": [
+            [
+                "074d2eb74fe5a7d1",
+                "58f92601bbebd229",
+                "66938b72c956ad07"
+            ]
+        ]
+    },
+    {
+        "id": "2743a5c40300910e",
+        "type": "postgres",
+        "z": "71b2afa6bae80abd",
+        "postgresdb": "9a5e8ed779089409",
+        "name": "",
+        "output": true,
+        "perrow": false,
+        "rowspermsg": "1",
+        "return_on_error": false,
+        "limit_queries": "0",
+        "limit_by": "payload",
+        "limit_value": "1",
+        "limit_drop_intermediate": false,
+        "limit_drop_if_in_queue": false,
+        "outputs": true,
+        "x": 1060,
+        "y": 200,
+        "wires": [
+            [
+                "cefc6f4f8e068e1a"
+            ]
+        ]
+    },
+    {
+        "id": "20eafaa963f140b9",
+        "type": "postgres",
+        "z": "71b2afa6bae80abd",
+        "postgresdb": "82c31985e42645e5",
+        "name": "",
+        "output": true,
+        "perrow": false,
+        "rowspermsg": "1",
+        "return_on_error": false,
+        "limit_queries": "0",
+        "limit_by": "payload",
+        "limit_value": "1",
+        "limit_drop_intermediate": false,
+        "limit_drop_if_in_queue": false,
+        "outputs": true,
+        "x": 820,
+        "y": 380,
+        "wires": [
+            [
+                "6624adce605c018f"
+            ]
+        ]
+    },
+    {
+        "id": "6f1e2ce5938850cd",
+        "type": "http-basic-auth",
+        "z": "71b2afa6bae80abd",
+        "name": "",
+        "file": "",
+        "multiple": "",
+        "realm": "healthlink",
+        "username": "healthlink",
+        "password": "vchhealthlinkpassword",
+        "x": 310,
+        "y": 460,
+        "wires": [
+            [
+                "a248489201ea9180"
+            ],
+            [
+                "6f8142dc94877313"
+            ]
+        ]
+    },
+    {
+        "id": "09dc3852c35be64f",
+        "type": "http in",
+        "z": "570138052c25a9a6",
+        "name": "",
+        "url": "/procedure",
+        "method": "post",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 160,
+        "y": 120,
+        "wires": [
+            [
+                "3b536c30d6b07f07"
+            ]
+        ]
+    },
+    {
+        "id": "bdd3d7778f3fd2aa",
+        "type": "function",
+        "z": "570138052c25a9a6",
+        "name": "sql",
+        "func": "let cid = msg.payload.cid;\nlet since = msg.payload.since ? msg.payload.since : null;\n\nmsg.payload = `SELECT\n    '001171400' as source_id,\n    d.diagnosis_icd9_id as id,\n    pt.pid as patient_cid,\n    d.visit_id as encounter_id,\n    'completed' as status,\n    f.description as category_display,\n    f.description as category_code,\n    d.icd9_description as code_display,\n    d.icd9_code as code_code,\n    'icd9-cm' as code_system,\n    concat(\n        d.date_in, ' ', CASE\n            WHEN d.time_in is null\n            OR d.time_in = '' THEN '00:00:00'\n            ELSE d.time_in\n        END\n    ) as performed_date_time,\n    '001171400' as performer,\n    concat(\n        d.modify_date, ' ', d.modify_time\n    ) as last_update_date_time\nFROM\n    diagnosis_icd9 d\n    INNER JOIN fix_operation_type f on f.\"fix_operation_type_id\" = d.\"fix_operation_type_id\"\n    INNER JOIN visit v ON v.visit_id = d.visit_id\n    INNER JOIN patient pt ON pt.patient_id = v.patient_id\nWHERE\n    pt.active = '1'\n    AND pt.is_death <> '1'\n     AND (\n        pt.is_hidden <> '1'\n        OR pt.is_hidden is NULL\n    )\n    ${\n        since\n            ? `AND concat(\n                d.modify_date,\n                ' ',\n                d.modify_time\n            )::timestamptz >= '${since}'`\n            : \"\"\n    }\n    AND pt.pid = '${cid}'\n    AND d.icd9_code <> '';`\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 650,
+        "y": 100,
+        "wires": [
+            [
+                "ccf73d94f5f3611e"
+            ]
+        ]
+    },
+    {
+        "id": "b2c2b8c157a83068",
+        "type": "http response",
+        "z": "570138052c25a9a6",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 1090,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "08667b9930dc9ddd",
+        "type": "function",
+        "z": "570138052c25a9a6",
+        "name": "check",
+        "func": "if(msg.payload.length > 0){\n    return msg;\n}\n\nmsg.payload = [];\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 950,
+        "y": 100,
+        "wires": [
+            [
+                "b2c2b8c157a83068"
+            ]
+        ]
+    },
+    {
+        "id": "71aa23d979d55eb4",
+        "type": "function",
+        "z": "570138052c25a9a6",
+        "name": "function 7",
+        "func": "if(typeof msg.payload.cid !== 'undefined'){\n    return msg;\n}\nelse{\n    msg.payload = -1;\n    return msg;\n}",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 360,
+        "y": 120,
+        "wires": [
+            [
+                "4ecdbc12ffec28e3"
+            ]
+        ]
+    },
+    {
+        "id": "4ecdbc12ffec28e3",
+        "type": "switch",
+        "z": "570138052c25a9a6",
+        "name": "",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "neq",
+                "v": "-1",
+                "vt": "num"
+            },
+            {
+                "t": "eq",
+                "v": "-1",
+                "vt": "num"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 510,
+        "y": 120,
+        "wires": [
+            [
+                "bdd3d7778f3fd2aa"
+            ],
+            [
+                "47fde8197e6dd237"
+            ]
+        ]
+    },
+    {
+        "id": "4a9c0adb157caa25",
+        "type": "http response",
+        "z": "570138052c25a9a6",
+        "name": "",
+        "statusCode": "400",
+        "headers": {},
+        "x": 800,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "47fde8197e6dd237",
+        "type": "function",
+        "z": "570138052c25a9a6",
+        "name": "error",
+        "func": "msg.payload = 'error';\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 650,
+        "y": 160,
+        "wires": [
+            [
+                "4a9c0adb157caa25"
+            ]
+        ]
+    },
+    {
+        "id": "ccf73d94f5f3611e",
+        "type": "postgres",
+        "z": "570138052c25a9a6",
+        "postgresdb": "82c31985e42645e5",
+        "name": "",
+        "output": true,
+        "perrow": false,
+        "rowspermsg": "1",
+        "return_on_error": false,
+        "limit_queries": "0",
+        "limit_by": "payload",
+        "limit_value": "1",
+        "limit_drop_intermediate": false,
+        "limit_drop_if_in_queue": false,
+        "outputs": true,
+        "x": 800,
+        "y": 100,
+        "wires": [
+            [
+                "08667b9930dc9ddd"
+            ]
+        ]
+    },
+    {
+        "id": "3b536c30d6b07f07",
+        "type": "http-basic-auth",
+        "z": "570138052c25a9a6",
+        "name": "",
+        "file": "",
+        "multiple": "",
+        "realm": "healthlink",
+        "username": "healthlink",
+        "password": "vchhealthlinkpassword",
+        "x": 290,
+        "y": 180,
+        "wires": [
+            [
+                "71aa23d979d55eb4"
+            ],
+            [
+                "47fde8197e6dd237"
+            ]
+        ]
+    },
+    {
+        "id": "6506b68607e344e5",
+        "type": "http in",
+        "z": "570138052c25a9a6",
+        "name": "",
+        "url": "/test",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 260,
+        "y": 340,
+        "wires": [
+            [
+                "3a54f3290fa7488f",
+                "f9377292850e5c5b"
+            ]
+        ]
+    },
+    {
+        "id": "3a54f3290fa7488f",
+        "type": "debug",
+        "z": "570138052c25a9a6",
+        "name": "debug 55",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 380,
+        "y": 300,
+        "wires": []
+    },
+    {
+        "id": "f9377292850e5c5b",
+        "type": "http response",
+        "z": "570138052c25a9a6",
+        "name": "",
+        "statusCode": "200",
+        "headers": {},
+        "x": 560,
+        "y": 340,
+        "wires": []
+    },
+    {
+        "id": "90c52db839d04698",
+        "type": "http in",
+        "z": "5304d9bc240b041e",
+        "name": "",
+        "url": "/medication_statement",
+        "method": "post",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 200,
+        "y": 120,
+        "wires": [
+            [
+                "00f6ad9c57c0869d"
+            ]
+        ]
+    },
+    {
+        "id": "1085603e3b4c0287",
+        "type": "function",
+        "z": "5304d9bc240b041e",
+        "name": "sql",
+        "func": "let cid = msg.payload.cid;\nlet since = msg.payload.since ? msg.payload.since : null;\n\nmsg.payload = `SELECT\n    '001171400' as source_id,\n    o.order_item_id as id,\n    pt.pid as patient_cid,\n    o.visit_id as encounter_id,\n    CASE\n        WHEN o.take_home = '1' THEN 'active'\n        ELSE 'completed'\n    END as status,\n    concat(\n        o.\"dose_quantity\", o.\"base_dose_unit_id\", ' ', o.\"quantity\", ' ', o.\"base_unit_id\"\n    ) as extension_string,\n    concat(\n        o.\"dose_quantity\", o.\"base_dose_unit_id\"\n    ) as extension_drug_strength,\n    o.quantity as extension_drug_qty,\n    o.base_unit_id as extension_drug_unit,\n    o.\"item_name\" as medication_display,\n    o.\"item_name\" as medication_code,\n    'โรงพยาบาลวิชัยยุทธ' as medication_system,\n    concat(\n        o.\"dispense_date\", ' ', o.\"dispense_time\"\n    ) as effective_date_time,\n    '001171400' as performer,\n    o.description as note,\n    concat(\n        o.\"instruction_text_line1\", ' ', o.\"instruction_text_line2\", ' ', o.\"instruction_text_line3\"\n    ) as dosage_text,\n    base_drug_frequency_id as dosage_timing_frequency,\n    concat(\n        o.\"modify_date\", ' ', o.\"modify_time\"\n    ) as last_update_date_time\nFROM\n    order_item o\n    LEFT OUTER JOIN visit vs ON vs.visit_id = o.visit_id\n    LEFT OUTER JOIN patient pt ON pt.patient_id = vs.patient_id\n    LEFT OUTER JOIN item i ON i.item_id = o.item_id\nWHERE\n    o.fix_item_type_id = '0'\n    and o.fix_order_status_id = '3'\n    and pt.active = '1'\n    AND pt.is_death <> '1'\n    AND (\n        pt.is_hidden <> '1'\n        OR pt.is_hidden is NULL\n    )\n    ${\n        since\n            ? `AND concat(\n                o.modify_date,\n                ' ',\n                o.modify_time\n            )::timestamptz >= '${since}'`\n            : \"\"\n    }\n    AND pt.pid = '${cid}';`\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 710,
+        "y": 100,
+        "wires": [
+            [
+                "cff0a6b05b02cfac"
+            ]
+        ]
+    },
+    {
+        "id": "4dcf0552197a53ed",
+        "type": "http response",
+        "z": "5304d9bc240b041e",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 1150,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "a3f64a27b63a51c2",
+        "type": "function",
+        "z": "5304d9bc240b041e",
+        "name": "check",
+        "func": "if(msg.payload.length > 0){\n    return msg;\n}\n\nmsg.payload = [];\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1010,
+        "y": 100,
+        "wires": [
+            [
+                "4dcf0552197a53ed"
+            ]
+        ]
+    },
+    {
+        "id": "7a22d2a8c134f879",
+        "type": "function",
+        "z": "5304d9bc240b041e",
+        "name": "function 9",
+        "func": "if(typeof msg.payload.cid !== 'undefined'){\n    return msg;\n}\nelse{\n    msg.payload = -1;\n    return msg;\n}",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 420,
+        "y": 120,
+        "wires": [
+            [
+                "181022c17f5ead6c"
+            ]
+        ]
+    },
+    {
+        "id": "181022c17f5ead6c",
+        "type": "switch",
+        "z": "5304d9bc240b041e",
+        "name": "",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "neq",
+                "v": "-1",
+                "vt": "num"
+            },
+            {
+                "t": "eq",
+                "v": "-1",
+                "vt": "num"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 570,
+        "y": 120,
+        "wires": [
+            [
+                "1085603e3b4c0287"
+            ],
+            [
+                "e6deb505027b20b5"
+            ]
+        ]
+    },
+    {
+        "id": "7954b8f6bb0acff6",
+        "type": "http response",
+        "z": "5304d9bc240b041e",
+        "name": "",
+        "statusCode": "400",
+        "headers": {},
+        "x": 860,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "e6deb505027b20b5",
+        "type": "function",
+        "z": "5304d9bc240b041e",
+        "name": "error",
+        "func": "msg.payload = 'error';\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 710,
+        "y": 160,
+        "wires": [
+            [
+                "7954b8f6bb0acff6"
+            ]
+        ]
+    },
+    {
+        "id": "cff0a6b05b02cfac",
+        "type": "postgres",
+        "z": "5304d9bc240b041e",
+        "postgresdb": "82c31985e42645e5",
+        "name": "",
+        "output": true,
+        "perrow": false,
+        "rowspermsg": "1",
+        "return_on_error": false,
+        "limit_queries": "0",
+        "limit_by": "payload",
+        "limit_value": "1",
+        "limit_drop_intermediate": false,
+        "limit_drop_if_in_queue": false,
+        "outputs": true,
+        "x": 860,
+        "y": 100,
+        "wires": [
+            [
+                "a3f64a27b63a51c2"
+            ]
+        ]
+    },
+    {
+        "id": "00f6ad9c57c0869d",
+        "type": "http-basic-auth",
+        "z": "5304d9bc240b041e",
+        "name": "",
+        "file": "",
+        "multiple": "",
+        "realm": "healthlink",
+        "username": "healthlink",
+        "password": "vchhealthlinkpassword",
+        "x": 350,
+        "y": 180,
+        "wires": [
+            [
+                "7a22d2a8c134f879"
+            ],
+            [
+                "e6deb505027b20b5"
+            ]
+        ]
+    },
+    {
+        "id": "5b62f090d2da80ad",
+        "type": "http in",
+        "z": "ea6ae70d536d966e",
+        "name": "",
+        "url": "/diagnostic_report",
+        "method": "post",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 170,
+        "y": 100,
+        "wires": [
+            [
+                "c3616b0da88173a5"
+            ]
+        ]
+    },
+    {
+        "id": "ee6be302c284e868",
+        "type": "function",
+        "z": "ea6ae70d536d966e",
+        "name": "sql",
+        "func": "let cid = msg.payload.cid;\nlet since = msg.payload.since ? msg.payload.since : null;\n\nmsg.payload = `SELECT\n    '001171400' as source_id,\n    o.order_item_id as id,\n    pt.pid as patient_cid,\n    o.visit_id as encounter_id,\n    'final' as status,\n    blt.description as category_display,\n    blt.\"base_lab_type_id\" as category_code,\n    'โรงพยาบาลวิชัยยุทธ' as category_system,\n    i.\"common_name\" as code_display,\n    isc.\"item_code\" as code_code,\n    LOWER(isc.\"item_standard_code_type\") as code_system,\n    concat(\n        o.\"execute_date\", ' ', o.\"execute_time\"\n    ) as effective_date_time,\n    '001171400' as performer,\n    concat(\n        o.\"modify_date\", ' ', o.\"modify_time\"\n    ) as last_update_date_time\nFROM\n    order_item o\n    INNER JOIN item i ON i.item_id = o.item_id\n    LEFT OUTER JOIN \"base_lab_type\" blt ON blt.\"base_lab_type_id\" = i.\"base_lab_type_id\"\n    LEFT OUTER JOIN \"item_standard_code\" isc ON (\n        isc.item_id = i.item_id\n        AND isc.\"item_standard_code_type\" = 'TMLT'\n    )\n    LEFT OUTER JOIN visit vs ON vs.visit_id = o.visit_id\n    LEFT OUTER JOIN patient pt ON pt.patient_id = vs.patient_id\n    LEFT OUTER JOIN \"lab_result\" l ON o.\"item_id\" = l.\"item_id\"\n    and vs.visit_id = l.visit_id\nWHERE\n    o.fix_item_type_id = '1'\n    AND o.fix_assign_status_id = '4'\n    AND l.\"secret_status\" = '0'\n    and pt.active = '1'\n    AND pt.is_death <> '1'\n    AND pt.is_hidden <> '1'\n    ${\n        since\n            ? `AND concat(\n                o.modify_date,\n                ' ',\n                o.modify_time\n            )::timestamptz >= '${since}'`\n            : \"\"\n    }\n    AND pt.pid = '${cid}';`\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 690,
+        "y": 80,
+        "wires": [
+            [
+                "1845371f32a0a813"
+            ]
+        ]
+    },
+    {
+        "id": "085413cbb9150653",
+        "type": "http response",
+        "z": "ea6ae70d536d966e",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 1130,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "79acea107c7cb7b4",
+        "type": "function",
+        "z": "ea6ae70d536d966e",
+        "name": "check",
+        "func": "if(msg.payload.length > 0){\n    return msg;\n}\n\nmsg.payload = [];\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 990,
+        "y": 80,
+        "wires": [
+            [
+                "085413cbb9150653"
+            ]
+        ]
+    },
+    {
+        "id": "790c4e2a4d952449",
+        "type": "function",
+        "z": "ea6ae70d536d966e",
+        "name": "function 10",
+        "func": "if(typeof msg.payload.cid !== 'undefined'){\n    return msg;\n}\nelse{\n    msg.payload = -1;\n    return msg;\n}",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 400,
+        "y": 100,
+        "wires": [
+            [
+                "ee0b27156fc7f927"
+            ]
+        ]
+    },
+    {
+        "id": "ee0b27156fc7f927",
+        "type": "switch",
+        "z": "ea6ae70d536d966e",
+        "name": "",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "neq",
+                "v": "-1",
+                "vt": "num"
+            },
+            {
+                "t": "eq",
+                "v": "-1",
+                "vt": "num"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 550,
+        "y": 100,
+        "wires": [
+            [
+                "0888b61dd4ed2f94"
+            ],
+            [
+                "2e15255a08ae3130"
+            ]
+        ]
+    },
+    {
+        "id": "be26eca788d01901",
+        "type": "http response",
+        "z": "ea6ae70d536d966e",
+        "name": "",
+        "statusCode": "400",
+        "headers": {},
+        "x": 840,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "2e15255a08ae3130",
+        "type": "function",
+        "z": "ea6ae70d536d966e",
+        "name": "error",
+        "func": "msg.payload = 'error';\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 690,
+        "y": 140,
+        "wires": [
+            [
+                "be26eca788d01901"
+            ]
+        ]
+    },
+    {
+        "id": "1845371f32a0a813",
+        "type": "postgres",
+        "z": "ea6ae70d536d966e",
+        "postgresdb": "82c31985e42645e5",
+        "name": "",
+        "output": true,
+        "perrow": false,
+        "rowspermsg": "1",
+        "return_on_error": false,
+        "limit_queries": "0",
+        "limit_by": "payload",
+        "limit_value": "1",
+        "limit_drop_intermediate": false,
+        "limit_drop_if_in_queue": false,
+        "outputs": true,
+        "x": 840,
+        "y": 80,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "c3616b0da88173a5",
+        "type": "http-basic-auth",
+        "z": "ea6ae70d536d966e",
+        "name": "",
+        "file": "",
+        "multiple": "",
+        "realm": "healthlink",
+        "username": "healthlink",
+        "password": "vchhealthlinkpassword",
+        "x": 330,
+        "y": 160,
+        "wires": [
+            [
+                "790c4e2a4d952449"
+            ],
+            [
+                "2e15255a08ae3130"
+            ]
+        ]
+    },
+    {
+        "id": "0888b61dd4ed2f94",
+        "type": "function",
+        "z": "ea6ae70d536d966e",
+        "name": "sql",
+        "func": "let cid = msg.payload.cid;\nlet since = msg.payload.since ? msg.payload.since : null;\n\nmsg.payload = `SELECT distinct on (o.order_item_id)\n    '001171400' as source_id,\n    o.order_item_id as id,\n    pt.pid as patient_cid,\n    o.visit_id as encounter_id,\n    'final' as status,\n    blt.description as category_display,\n    blt.\"base_lab_type_id\" as category_code,\n    'โรงพยาบาลวิชัยยุทธ' as category_system,\n    i.\"common_name\" as code_display,\n    isc.\"item_code\" as code_code,\n    LOWER(isc.\"item_standard_code_type\") as code_system,\n    concat(\n        o.\"verify_date\", ' ', o.\"verify_time\"\n    ) as effective_date_time,\n    '001171400' as performer,\n    concat(\n        o.\"modify_date\", ' ', o.\"modify_time\"\n    ) as last_update_date_time\nFROM\n    order_item o\n    INNER JOIN item i ON i.item_id = o.item_id\n    LEFT OUTER JOIN \"base_lab_type\" blt ON blt.\"base_lab_type_id\" = i.\"base_lab_type_id\"\n    LEFT OUTER JOIN \"item_standard_code\" isc ON (\n        isc.item_id = i.item_id\n        AND isc.\"item_standard_code_type\" = 'TMLT'\n    )\n    LEFT OUTER JOIN visit vs ON vs.visit_id = o.visit_id\n    LEFT OUTER JOIN patient pt ON pt.patient_id = vs.patient_id\n    LEFT OUTER JOIN \"lab_result\" l ON o.\"item_id\" = l.\"item_id\"\n    and vs.visit_id = l.visit_id\nWHERE\n    o.fix_item_type_id = '1'\n    AND o.fix_assign_status_id = '4'\n    AND l.\"secret_status\" = '0'\n    and pt.active = '1'\n    AND pt.is_death <> '1'\n    AND (\n        pt.is_hidden <> '1'\n        OR pt.is_hidden is NULL\n    )\n    ${\n        since\n            ? `AND concat(\n                o.modify_date,\n                ' ',\n                o.modify_time\n            )::timestamptz >= '${since}'`\n            : \"\"\n    }\n    AND pt.pid = '${cid}';`\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 710,
+        "y": 220,
+        "wires": [
+            [
+                "e6a14f8c200cce70"
+            ]
+        ]
+    },
+    {
+        "id": "e6a14f8c200cce70",
+        "type": "postgres",
+        "z": "ea6ae70d536d966e",
+        "postgresdb": "82c31985e42645e5",
+        "name": "",
+        "output": true,
+        "perrow": false,
+        "rowspermsg": "1",
+        "return_on_error": false,
+        "limit_queries": "0",
+        "limit_by": "payload",
+        "limit_value": "1",
+        "limit_drop_intermediate": false,
+        "limit_drop_if_in_queue": false,
+        "outputs": true,
+        "x": 840,
+        "y": 220,
+        "wires": [
+            [
+                "397b9a3105d59355",
+                "79acea107c7cb7b4"
+            ]
+        ]
+    },
+    {
+        "id": "397b9a3105d59355",
+        "type": "debug",
+        "z": "ea6ae70d536d966e",
+        "name": "debug 56",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 980,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "1b4c8cab1a23d091",
+        "type": "http in",
+        "z": "9a06950b46e9cc5e",
+        "name": "",
+        "url": "/observation",
+        "method": "post",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 150,
+        "y": 80,
+        "wires": [
+            [
+                "98ddd4a46b458f65"
+            ]
+        ]
+    },
+    {
+        "id": "2efe889dffbdc01a",
+        "type": "function",
+        "z": "9a06950b46e9cc5e",
+        "name": "sql",
+        "func": "let cid = msg.payload.cid;\nlet since = msg.payload.since ? msg.payload.since : null;\n\nmsg.payload = `SELECT\n    lt.lab_test_id as id,\n    pt.pid as patient_cid,\n    lt.name as code_display,\n    vs.visit_id as encounter_id,\n    lt.order_item_id as diagnostic_report_id,\n    'final' as status,\n    blt.description as category,\n    '001171400' as performer,\n    case\n        when lt.\"value\" ~ '^[0-9\\.]+$' then null\n        else lt.\"value\"\n    end as value_string,\n    case\n        when lt.\"value\" ~ '^[0-9\\.]+$' then lt.\"value\"\n        else null\n    end as value_qty,\n    lt.\"unit_text\" as value_unit,\n    concat(\n        oi.\"modify_date\", ' ', oi.\"modify_time\"\n    ) as last_update_date_time,\n    concat(\n        ls.\"start_date\", ' ', ls.\"start_time\"\n    ) as effective_date_time,\n    concat(\n        ls.\"start_date\", ' ', ls.\"start_time\"\n    ) as effective_period_start,\n    concat(\n        ls.\"finish_date\", ' ', ls.\"finish_time\"\n    ) as effective_period_end\nfrom\n    lab_test lt\n    INNER JOIN lab_result ls ON ls.order_item_id = lt.order_item_id\n    INNER JOIN base_lab_type blt ON blt.base_lab_type_id = ls.base_lab_type_id\n    INNER JOIN visit vs ON vs.visit_id = ls.visit_id\n    INNER JOIN patient pt ON pt.patient_id = vs.patient_id\n    INNER JOIN order_item oi ON oi.order_item_id = lt.order_item_id\nWHERE\n    ls.finish_date IS NOT NULL\n    and pt.active = '1'\n    AND pt.is_death <> '1'\n    AND (\n        pt.is_hidden <> '1'\n        OR pt.is_hidden is NULL\n    )\n    ${\n        since\n            ? `AND concat(\n                oi.modify_date,\n                ' ',\n                oi.modify_time\n            )::timestamptz >= '${since}'`\n            : \"\"\n    }\n    AND pt.pid = '${cid}';`\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 690,
+        "y": 60,
+        "wires": [
+            [
+                "887f915f89583eef"
+            ]
+        ]
+    },
+    {
+        "id": "f7e1d76589a6b104",
+        "type": "http response",
+        "z": "9a06950b46e9cc5e",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 1130,
+        "y": 60,
+        "wires": []
+    },
+    {
+        "id": "560e210ebc3c6267",
+        "type": "function",
+        "z": "9a06950b46e9cc5e",
+        "name": "check",
+        "func": "if(msg.payload.length > 0){\n    return msg;\n}\n\nmsg.payload = [];\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 990,
+        "y": 60,
+        "wires": [
+            [
+                "f7e1d76589a6b104"
+            ]
+        ]
+    },
+    {
+        "id": "4c1d3a1c522449c9",
+        "type": "function",
+        "z": "9a06950b46e9cc5e",
+        "name": "function 11",
+        "func": "if(typeof msg.payload.cid !== 'undefined'){\n    return msg;\n}\nelse{\n    msg.payload = -1;\n    return msg;\n}",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 400,
+        "y": 80,
+        "wires": [
+            [
+                "041c7f0d4ff5687e"
+            ]
+        ]
+    },
+    {
+        "id": "041c7f0d4ff5687e",
+        "type": "switch",
+        "z": "9a06950b46e9cc5e",
+        "name": "",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "neq",
+                "v": "-1",
+                "vt": "num"
+            },
+            {
+                "t": "eq",
+                "v": "-1",
+                "vt": "num"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 550,
+        "y": 80,
+        "wires": [
+            [
+                "2efe889dffbdc01a"
+            ],
+            [
+                "d4dc2475fa78c043"
+            ]
+        ]
+    },
+    {
+        "id": "efeb495a8976796c",
+        "type": "http response",
+        "z": "9a06950b46e9cc5e",
+        "name": "",
+        "statusCode": "400",
+        "headers": {},
+        "x": 840,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "d4dc2475fa78c043",
+        "type": "function",
+        "z": "9a06950b46e9cc5e",
+        "name": "error",
+        "func": "msg.payload = 'error';\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 690,
+        "y": 120,
+        "wires": [
+            [
+                "efeb495a8976796c"
+            ]
+        ]
+    },
+    {
+        "id": "887f915f89583eef",
+        "type": "postgres",
+        "z": "9a06950b46e9cc5e",
+        "postgresdb": "82c31985e42645e5",
+        "name": "",
+        "output": true,
+        "perrow": false,
+        "rowspermsg": "1",
+        "return_on_error": false,
+        "limit_queries": "0",
+        "limit_by": "payload",
+        "limit_value": "1",
+        "limit_drop_intermediate": false,
+        "limit_drop_if_in_queue": false,
+        "outputs": true,
+        "x": 840,
+        "y": 60,
+        "wires": [
+            [
+                "560e210ebc3c6267"
+            ]
+        ]
+    },
+    {
+        "id": "98ddd4a46b458f65",
+        "type": "http-basic-auth",
+        "z": "9a06950b46e9cc5e",
+        "name": "",
+        "file": "",
+        "multiple": "",
+        "realm": "healthlink",
+        "username": "healthlink",
+        "password": "vchhealthlinkpassword",
+        "x": 290,
+        "y": 140,
+        "wires": [
+            [
+                "4c1d3a1c522449c9"
+            ],
+            [
+                "d4dc2475fa78c043"
+            ]
+        ]
+    },
+    {
+        "id": "2c151c9745b19b63",
+        "type": "http in",
+        "z": "3a53292ff1543ab2",
+        "name": "",
+        "url": "/vital_signs",
+        "method": "post",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 120,
+        "y": 80,
+        "wires": [
+            [
+                "5bedc79e5440710d"
+            ]
+        ]
+    },
+    {
+        "id": "f09423d57bf067e8",
+        "type": "function",
+        "z": "3a53292ff1543ab2",
+        "name": "sql",
+        "func": "let cid = msg.payload.cid;\nlet since = msg.payload.since ? msg.payload.since : null;\n\nmsg.payload = `SELECT\n    '001171400' as source_id,\n    pt.pid as patient_cid,\n    vso.vital_sign_opd_id as id,\n    vso.visit_id as encounter_id,\n    'final' as status,\n    'vital-signs' as category,\n    vso.vital_sign_opd_id,\n    vso.visit_id,\n    vso.weight,\n    vso.height,\n    vso.pressure_max,\n    vso.pressure_min,\n    vso.temperature,\n    vso.pulse,\n    vso.respiration,\n    vso.bmi,\n    vso.abnormal_pressure,\n    vso.abnormal_pulse,\n    vso.measure_eid,\n    case\n        when vso.measure_date >= '3000-01-01' then vso.modify_date\n        else vso.measure_date\n    end as measure_date,\n    vso.measure_time,\n    vso.modify_eid,\n    vso.modify_date,\n    vso.modify_time,\n    vso.sat_o2,\n    vso.measure_spid,\n    vso.waist_width,\n    vso.nurse_note,\n    vso.dtx,\n    vso.hct,\n    vso.body_surface,\n    vso.child_head_circumference,\n    vso.sat_o2_condition,\n    vso.sat_o2_oxygen,\n    vso.chest_circum_in,\n    vso.chest_circum_out,\n    vso.et_co2,\n    vso.no_weight_reason,\n    vso.sat_o2_oxygen_type,\n    vso.pressure_mean,\n    vso.chest,\n    concat(\n        vso.modify_date, ' ', vso.modify_time\n    ) as effective_date_time,\n    '001171400' as performer\nFROM\n    \"vital_sign_opd\" vso\n    INNER JOIN visit vi ON vso.visit_id = vi.visit_id\n    INNER JOIN patient pt ON vi.hn = pt.hn\nWHERE\n    pt.active = '1'\n    AND pt.is_death <> '1'\n    AND (\n        pt.is_hidden <> '1'\n        OR pt.is_hidden is NULL\n    )\n    ${\n        since\n            ? `AND concat(\n                vso.modify_date,\n                ' ',\n                vso.modify_time\n            )::timestamptz >= '${since}'`\n            : \"\"\n    }\n    AND pt.pid = '${cid}';`;\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 680,
+        "y": 60,
+        "wires": [
+            [
+                "b6680c57bd820497"
+            ]
+        ]
+    },
+    {
+        "id": "84a2d2920bf248b8",
+        "type": "http response",
+        "z": "3a53292ff1543ab2",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 980,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "1eeac4de6798a567",
+        "type": "function",
+        "z": "3a53292ff1543ab2",
+        "name": "check",
+        "func": "if(msg.payload.length > 0){\n    return msg;\n}\n\nmsg.payload = [];\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 980,
+        "y": 60,
+        "wires": [
+            [
+                "84a2d2920bf248b8"
+            ]
+        ]
+    },
+    {
+        "id": "97da808cb1b71b56",
+        "type": "function",
+        "z": "3a53292ff1543ab2",
+        "name": "function 12",
+        "func": "if(typeof msg.payload.cid !== 'undefined'){\n    return msg;\n}\nelse{\n    msg.payload = -1;\n    return msg;\n}",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 390,
+        "y": 80,
+        "wires": [
+            [
+                "b051adc15878f02d"
+            ]
+        ]
+    },
+    {
+        "id": "b051adc15878f02d",
+        "type": "switch",
+        "z": "3a53292ff1543ab2",
+        "name": "",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "neq",
+                "v": "-1",
+                "vt": "num"
+            },
+            {
+                "t": "eq",
+                "v": "-1",
+                "vt": "num"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 540,
+        "y": 80,
+        "wires": [
+            [
+                "f09423d57bf067e8"
+            ],
+            [
+                "c170aa880fa0ac36"
+            ]
+        ]
+    },
+    {
+        "id": "89cd1e8e4a9716cc",
+        "type": "http response",
+        "z": "3a53292ff1543ab2",
+        "name": "",
+        "statusCode": "400",
+        "headers": {},
+        "x": 830,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "c170aa880fa0ac36",
+        "type": "function",
+        "z": "3a53292ff1543ab2",
+        "name": "error",
+        "func": "msg.payload = 'error';\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 680,
+        "y": 120,
+        "wires": [
+            [
+                "89cd1e8e4a9716cc"
+            ]
+        ]
+    },
+    {
+        "id": "8460bc74557747d3",
+        "type": "debug",
+        "z": "3a53292ff1543ab2",
+        "name": "debug 52",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1000,
+        "y": 180,
+        "wires": []
+    },
+    {
+        "id": "b6680c57bd820497",
+        "type": "postgres",
+        "z": "3a53292ff1543ab2",
+        "postgresdb": "82c31985e42645e5",
+        "name": "",
+        "output": true,
+        "perrow": false,
+        "rowspermsg": "1",
+        "return_on_error": false,
+        "limit_queries": "0",
+        "limit_by": "payload",
+        "limit_value": "1",
+        "limit_drop_intermediate": false,
+        "limit_drop_if_in_queue": false,
+        "outputs": true,
+        "x": 830,
+        "y": 60,
+        "wires": [
+            [
+                "1eeac4de6798a567",
+                "8460bc74557747d3"
+            ]
+        ]
+    },
+    {
+        "id": "5bedc79e5440710d",
+        "type": "http-basic-auth",
+        "z": "3a53292ff1543ab2",
+        "name": "",
+        "file": "",
+        "multiple": "",
+        "realm": "healthlink",
+        "username": "healthlink",
+        "password": "vchhealthlinkpassword",
+        "x": 270,
+        "y": 140,
+        "wires": [
+            [
+                "97da808cb1b71b56"
+            ],
+            [
+                "c170aa880fa0ac36"
+            ]
+        ]
+    },
+    {
+        "id": "6147176fd722ad3f",
+        "type": "http in",
+        "z": "9fa330854dabc2cf",
+        "name": "",
+        "url": "/chronic_disease",
+        "method": "post",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 200,
+        "y": 240,
+        "wires": [
+            [
+                "2529f3cfd310065a"
+            ]
+        ]
+    },
+    {
+        "id": "5af6377017afc5eb",
+        "type": "function",
+        "z": "9fa330854dabc2cf",
+        "name": "sql",
+        "func": "let cid = msg.payload.cid;\nlet since = msg.payload.since ? msg.payload.since : null;\n\nmsg.payload = `SELECT\n    '002393000' as source_id,\n    p.personal_illness_id as id,\n    pt.pid as patient_cid,\n    'active' as clinical_status,\n    'confirmed' as verification_status,\n    'problem-list-item' as category,\n    p.icd10_des as code_display,\n    p.icd10_code as code_code,\n    'icd10-tm' as code_system,\n    p.note as note,\n    concat(\n        p.modify_date,\n        ' ',\n        p.modify_time\n    ) as recorded_date,\n    concat(\n        p.modify_date,\n        ' ',\n        p.modify_time\n    ) as last_update_date_time\nFROM\n    personal_illness p\n    INNER JOIN patient pt ON pt.patient_id = p.patient_id\nWHERE\n    pt.active = '1'\n    AND pt.is_death != '1'\n    AND pt.pid <> ''\n    AND pt.pid is not null\n    AND (\n        pt.is_hidden <> '1'\n        OR pt.is_hidden is NULL\n    )\n    ${\n        since\n            ? `AND concat(\n                p.modify_date,\n                ' ',\n                p.modify_time\n            )::timestamptz >= '${since}'`\n            : \"\"\n    }\n    AND pt.pid = '${cid}'\n    AND p.icd10_code <> '';`\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 690,
+        "y": 220,
+        "wires": [
+            [
+                "f9732909f512c04a"
+            ]
+        ]
+    },
+    {
+        "id": "c49359c348c09a65",
+        "type": "http response",
+        "z": "9fa330854dabc2cf",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 1130,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "d36d0cc2891814f0",
+        "type": "function",
+        "z": "9fa330854dabc2cf",
+        "name": "check",
+        "func": "if(msg.payload.length > 0){\n    return msg;\n}\n\nmsg.payload = [];\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 990,
+        "y": 220,
+        "wires": [
+            [
+                "c49359c348c09a65"
+            ]
+        ]
+    },
+    {
+        "id": "2db58cbfa9c4182f",
+        "type": "function",
+        "z": "9fa330854dabc2cf",
+        "name": "function 15",
+        "func": "if(typeof msg.payload.cid !== 'undefined'){\n    return msg;\n}\nelse{\n    msg.payload = -1;\n    return msg;\n}",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 410,
+        "y": 240,
+        "wires": [
+            [
+                "ce9c5a4eb0d777c4"
+            ]
+        ]
+    },
+    {
+        "id": "ce9c5a4eb0d777c4",
+        "type": "switch",
+        "z": "9fa330854dabc2cf",
+        "name": "",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "neq",
+                "v": "-1",
+                "vt": "num"
+            },
+            {
+                "t": "eq",
+                "v": "-1",
+                "vt": "num"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 550,
+        "y": 240,
+        "wires": [
+            [
+                "5af6377017afc5eb"
+            ],
+            [
+                "2806c4446d35e189"
+            ]
+        ]
+    },
+    {
+        "id": "fc506d8a36302ca0",
+        "type": "http response",
+        "z": "9fa330854dabc2cf",
+        "name": "",
+        "statusCode": "400",
+        "headers": {},
+        "x": 840,
+        "y": 280,
+        "wires": []
+    },
+    {
+        "id": "2806c4446d35e189",
+        "type": "function",
+        "z": "9fa330854dabc2cf",
+        "name": "error",
+        "func": "msg.payload = 'error';\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 690,
+        "y": 280,
+        "wires": [
+            [
+                "fc506d8a36302ca0"
+            ]
+        ]
+    },
+    {
+        "id": "c6c5c63ad4d69c0e",
+        "type": "comment",
+        "z": "9fa330854dabc2cf",
+        "name": "API",
+        "info": "",
+        "x": 170,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "f9732909f512c04a",
+        "type": "postgres",
+        "z": "9fa330854dabc2cf",
+        "postgresdb": "82c31985e42645e5",
+        "name": "",
+        "output": true,
+        "perrow": false,
+        "rowspermsg": "1",
+        "return_on_error": false,
+        "limit_queries": "0",
+        "limit_by": "payload",
+        "limit_value": "1",
+        "limit_drop_intermediate": false,
+        "limit_drop_if_in_queue": false,
+        "outputs": true,
+        "x": 840,
+        "y": 220,
+        "wires": [
+            [
+                "d36d0cc2891814f0"
+            ]
+        ]
+    },
+    {
+        "id": "2529f3cfd310065a",
+        "type": "http-basic-auth",
+        "z": "9fa330854dabc2cf",
+        "name": "",
+        "file": "",
+        "multiple": "",
+        "realm": "healthlink",
+        "username": "healthlink",
+        "password": "vchhealthlinkpassword",
+        "x": 330,
+        "y": 300,
+        "wires": [
+            [
+                "2db58cbfa9c4182f"
+            ],
+            [
+                "2806c4446d35e189"
+            ]
+        ]
+    },
+    {
+        "id": "98cf835295668a7b",
+        "type": "http in",
+        "z": "1c37b4ef99e01c43",
+        "name": "",
+        "url": "/imed/order_represent_doctor",
+        "method": "post",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 200,
+        "y": 120,
+        "wires": [
+            [
+                "3c0628fc6a9ec73f",
+                "bb99d83f5f63e924"
+            ]
+        ]
+    },
+    {
+        "id": "3c0628fc6a9ec73f",
+        "type": "debug",
+        "z": "1c37b4ef99e01c43",
+        "name": "debug 53",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 500,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "41a2a65e5021f124",
+        "type": "http response",
+        "z": "1c37b4ef99e01c43",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 830,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "bb99d83f5f63e924",
+        "type": "function",
+        "z": "1c37b4ef99e01c43",
+        "name": "function 13",
+        "func": "let start = msg.payload.start;\nlet end = msg.payload.end;\n\nlet sql = `SELECT\n    concat(\n        oi.verify_date,\n        ' ',\n        oi.verify_time\n    ) as verify_datetime,\n    p.hn,\n    CASE\n        WHEN v.an <> '' THEN v.an\n        ELSE v.vn\n    END AS an_vn,\n    concat(\n        p.prename,\n        p.firstname,\n        ' ',\n        p.lastname\n    ) AS patient_name,\n    concat(\n        bsp.base_department_id,\n        ' ',\n        bd.description\n    ) AS service_point_name,\n    concat(\n        ord.approve_date,\n        ' ',\n        ord.approve_time\n    ) as approve_notapprove_datetime,\n    CASE\n        WHEN oi.fix_item_type_id = '0' THEN 'ยา'\n        WHEN oi.fix_item_type_id = '1' THEN 'แลป'\n        WHEN oi.fix_item_type_id = '2' THEN 'เอ็กซเรย์'\n        WHEN oi.fix_item_type_id = '3' THEN 'ค่าบริการ/รายการไม่ตัดstock'\n        WHEN oi.fix_item_type_id = '4' THEN 'เวชภัณฑ์มิใช่ยา'\n        WHEN oi.fix_item_type_id = '6' THEN 'ทันตกรรม'\n        WHEN oi.fix_item_type_id = '7' THEN 'หัตถการ'\n        WHEN oi.fix_item_type_id = '8' THEN 'ค่าอาหาร'\n        WHEN oi.fix_item_type_id = '10' THEN 'ค่าแพทย์'\n        WHEN oi.fix_item_type_id = '11' THEN 'เลือด'\n        ELSE 'ไม่ทราบ'\n    END as item_type,\n    i.item_code as item_code,\n    i.common_name as item_name,\n    ord.fix_represent_doctor_status as status,\n    oi.dispense_eid AS by_code,\n    concat(\n        s.prename,\n        s.firstname,\n        ' ',\n        s.lastname\n    ) AS by_name,\n    ord.order_doctor_eid as doctor_code,\n    concat(\n        doctor.prename,\n        doctor.firstname,\n        ' ',\n        doctor.lastname\n    ) as doctor\nFROM\n    order_represent_doctor ord\n    INNER JOIN order_item oi ON oi.order_item_id = ord.order_item_id\n    INNER JOIN item i ON oi.item_id = i.item_id\n    INNER JOIN visit v ON oi.visit_id = v.visit_id\n    INNER JOIN patient p ON v.patient_id = p.patient_id\n    LEFT OUTER JOIN base_service_point bsp ON oi.verify_spid = bsp.base_service_point_id\n    LEFT OUTER JOIN base_department bd ON bsp.base_department_id = bd.base_department_id\n    LEFT OUTER JOIN staff s ON oi.verify_eid = s.staff_id\n    LEFT OUTER JOIN staff doctor ON ord.order_doctor_eid = doctor.staff_id\nWHERE\n    oi.verify_date BETWEEN '${start}' AND '${end}' ORDER BY oi.verify_date, oi.verify_time;`\nmsg.payload = sql;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 390,
+        "y": 240,
+        "wires": [
+            [
+                "49209684446a6e61"
+            ]
+        ]
+    },
+    {
+        "id": "dff56a527de7abb1",
+        "type": "debug",
+        "z": "1c37b4ef99e01c43",
+        "name": "debug 54",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 820,
+        "y": 440,
+        "wires": []
+    },
+    {
+        "id": "1f65a906d1cb5435",
+        "type": "function",
+        "z": "1c37b4ef99e01c43",
+        "name": "function 14",
+        "func": "msg.payload = {data: msg.payload};\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 690,
+        "y": 320,
+        "wires": [
+            [
+                "dff56a527de7abb1",
+                "41a2a65e5021f124"
+            ]
+        ]
+    },
+    {
+        "id": "49209684446a6e61",
+        "type": "postgres",
+        "z": "1c37b4ef99e01c43",
+        "postgresdb": "82c31985e42645e5",
+        "name": "",
+        "output": true,
+        "perrow": false,
+        "rowspermsg": "1",
+        "return_on_error": false,
+        "limit_queries": "0",
+        "limit_by": "payload",
+        "limit_value": "1",
+        "limit_drop_intermediate": false,
+        "limit_drop_if_in_queue": false,
+        "outputs": true,
+        "x": 560,
+        "y": 240,
+        "wires": [
+            [
+                "1f65a906d1cb5435"
+            ]
+        ]
+    }
+]

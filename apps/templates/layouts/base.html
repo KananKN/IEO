@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en" id="whole">
+    <head>
+        <meta charset="utf-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1, shrink-to-fit=no"
+        />
+        <title>{% block title %}{% endblock %} | IEO</title>
+
+        <meta
+            content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+            name="viewport"
+        />
+        <meta content="" name="description" />
+        <meta content="" name="author" />
+
+        <!-- ================== BEGIN core-css ================== -->
+        <link
+            href="{{ config.ASSETS_ROOT }}/css/vendor.min.css?v=1.2"
+            rel="stylesheet"
+        />
+        <link
+            href="{{ config.ASSETS_ROOT }}/css/material/app.min.css?v=1.2"
+            rel="stylesheet"
+        />
+        <!-- ================== END core-css ================== -->
+
+        <!-- ================== BEGIN page-css ================== -->
+        <link
+            href="{{ config.ASSETS_ROOT }}/plugins/jvectormap-next/jquery-jvectormap.css"
+            rel="stylesheet"
+        />
+        <link
+            href="{{ config.ASSETS_ROOT }}/plugins/bootstrap-datepicker/dist/css/bootstrap-datepicker.css"
+            rel="stylesheet"
+        />
+        <link
+            href="{{ config.ASSETS_ROOT }}/plugins/gritter/css/jquery.gritter.css"
+            rel="stylesheet"
+        />
+
+        <!-- <link href="{{ config.ASSETS_ROOT }}/plugins/select2/dist/css/select2.min.css" rel="stylesheet" /> -->
+        <link
+            href="{{ config.ASSETS_ROOT }}/plugins/select-picker/dist/picker.min.css"
+            rel="stylesheet"
+        />
+
+        <link
+            href="{{ config.ASSETS_ROOT }}/plugins/select-picker/dist/picker.min.css"
+            rel="stylesheet"
+        />
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Kanit:ital,wght@0,500;0,600;0,700;1,300&display=swap" rel="stylesheet">
+
+        
+
+        <!-- jQuery (โหลดก่อน Bootstrap JS) -->
+        <link href="{{ config.ASSETS_ROOT }}/css/style.css" rel="stylesheet"  />
+
+        <!-- ================== END page-css ================== -->
+
+        {% block stylesheets %} {% endblock stylesheets %}
+    </head>
+    <body class="theme-blue">
+        <!-- BEGIN #loader -->
+        <div id="loader" class="app-loader">
+            <div class="material-loader">
+                <svg class="circular" viewBox="25 25 50 50">
+                    <circle
+                        class="path"
+                        cx="50"
+                        cy="50"
+                        r="20"
+                        fill="none"
+                        stroke-width="2"
+                        stroke-miterlimit="10"
+                    ></circle>
+                </svg>
+                <div class="message">Loading...</div>
+            </div>
+        </div>
+        <!-- END #loader -->
+
+        <!-- BEGIN #app -->
+        <div
+            id="app"
+            class="app app-header-fixed app-sidebar-fixed app-with-wide-sidebar"
+        >
+            <div class="wrapper">
+                <div class="main-panel">
+                    {% include 'includes/navigation.html' %} {% include
+                    'includes/sidebar.html' %} {% block content %}{% endblock
+                    content %}
+                </div>
+            </div>
+        </div>
+
+        {% include 'includes/scripts.html' %} {% block javascripts %} {%
+        endblock javascripts %}
+        <script src="{{ config.ASSETS_ROOT }}/plugins/select-picker/dist/picker.min.js"></script>
+        <script src="{{ config.ASSETS_ROOT }}/plugins/sweetalert/dist/sweetalert.min.js"></script>
+        <!-- Bootstrap JavaScript (ต้องโหลด bundle.min.js) -->
+
+        <script>
+            function check_fail(text) {
+                swal({
+                    text: text,
+                    icon: "error",
+                    buttonsStyling: false,
+                    confirmButtonText: "Ok, got it!",
+                    customClass: {
+                        confirmButton: "btn font-weight-bold btn-light"
+                    }
+                });
+            }
+        </script> 
+    </body>
+</html>

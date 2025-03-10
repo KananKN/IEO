@@ -1,0 +1,181 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Product for Sales {% endblock %} 
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}
+
+<link href="{{ config.ASSETS_ROOT }}/plugins/datatables.net-bs5/css/dataTables.bootstrap5.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/datatables.net-responsive-bs5/css/responsive.bootstrap5.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/select2/dist/css/select2.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/tag-it/css/jquery.tagit.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/select-picker/dist/picker.min.css" rel="stylesheet" />
+{% endblock stylesheets %}
+
+{% block content %}
+
+<div id="content" class="app-content">
+    <!-- BEGIN breadcrumb -->
+    <!-- <ol class="breadcrumb float-xl-end">
+        <li class="breadcrumb-item"><a href="javascript:;">Resource</a></li>
+    </ol>-->
+    <!-- END breadcrumb -->
+    <!-- BEGIN page-header -->
+   
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <!-- ฝั่งซ้าย: รายการอุปกรณ์ + ปุ่มบวก -->
+            <div class="d-flex align-items-center">
+                <h6 class="page-header m-0">Product for Sales</h6>
+                {% if current_user.has_permission('write_resource') %}
+                    <a href="/product/createProductSales" class="btn btn-success ms-3 shadow-sm  bg-gradient" >
+                            <i class="fa fa-plus"></i> เพิ่ม
+                    </a> 
+                {% endif %}
+            </div>
+
+            
+        </div>
+
+    
+    <div class="row">
+        <div class="col-xl-12">
+            <div class="panel panel-inverse">
+                <div class="panel-heading">
+                    <h4 class="panel-title">Product for Sales</h4>
+                    <div class="panel-heading-btn">
+                        <a href="javascript:;" class="btn btn-xs btn-icon btn-default" data-toggle="panel-expand"><i class="fa fa-expand"></i></a>
+                        <a href="javascript:;" class="btn btn-xs btn-icon btn-success" data-toggle="panel-reload"><i class="fa fa-redo"></i></a>
+                        <a href="javascript:;" class="btn btn-xs btn-icon btn-warning" data-toggle="panel-collapse"><i class="fa fa-minus"></i></a>
+                        <a href="javascript:;" class="btn btn-xs btn-icon btn-danger" data-toggle="panel-remove"><i class="fa fa-times"></i></a>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for categorie, message in messages %}
+                                <div class="alert alert-{{categorie}} alert-dismissible fade show mb-2 mt-1">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}                    
+                        {% endif %}
+                    {% endwith %}
+                    <table id="data-table-responsive" width="100%" class="table table-striped table-bordered align-middle text-nowrap">
+                        <thead>
+                            <tr>
+                                <th class="text-center" width="1%"></th>
+                                <th class="text-nowrap"width="40%">Product for Sales
+                                </th>
+                               
+                                <th class="text-nowrap text-center"  width="10%">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for data in datas %}
+                                <tr class="odd gradeX">
+                                    <td width="1%" class="fw-bold text-dark">{{loop.index}}</td>
+                                    <td width="40%">{{data.name}}</td>
+                                   
+                                    <td  class="with-btn text-center" width="10%">
+                                        {% if current_user.has_permission('write_resource') %}
+                                            <a  class=" btn btn-dark btn-icon btn-circle btn-lg" href="/product/EditProductSales/{{data.id}}" >
+                                                <i class="fa fa-pencil-alt"></i>
+                                            </a>
+                                            
+                                        {% endif %}
+                                        {% if current_user.has_permission('delete_resource') %}
+                                            <a  onclick="sweetAlertDel({{ data.id }})" class=" btn btn-danger btn-icon btn-circle btn-lg">
+                                                <i class="fa fa-trash"></i>
+                                            </a>
+                                            <a  onclick="sweetAlertDel_all({{ data.id }})" class=" btn btn-danger btn-icon btn-circle btn-lg" hidden>
+                                                <i class="fa fa-trash"></i>
+                                            </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<a href="javascript:;" class="btn btn-icon btn-circle btn-primary btn-scroll-to-top" data-toggle="scroll-to-top"><i class="fa fa-angle-up"></i></a>
+
+
+<div class="modal fade" id="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form  method="POST" data-parsley-validate="true">
+                <div class="modal-header">
+                    <h4 class="modal-title">Add Product Category</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3" hidden>
+                        <label class="form-label col-form-label col-md-4">id</label>
+                        <div class="col-md-8">
+                            <input type="hidden"  class="form-control" name="id" id="id-update" data-parsley-required="true"/>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <label class="form-label col-form-label col-md-4">Product Category</label>
+                        <div class="col-md-8">
+                            <input type="text" class="form-control" placeholder="" name="name_product" data-parsley-required="true"/>
+                        </div>
+                    </div>
+                   
+                    
+                
+                   
+                </div>
+                <div class="modal-footer">
+                    <a href="javascript:;" class="btn btn-white" data-bs-dismiss="modal">Close</a>
+                    <button type="button" class="btn btn-success c_add" onclick="func_save('add',$(this))">Submit</button>
+                    <button type="button" class="btn btn-success c_edit" onclick="func_save('edit',$(this))">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}
+<script src="{{ config.ASSETS_ROOT }}/plugins/datatables.net/js/dataTables.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/datatables.net-bs5/js/dataTables.bootstrap5.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/datatables.net-responsive/js/dataTables.responsive.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/datatables.net-responsive-bs5/js/responsive.bootstrap5.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/js/demo/table-manage-responsive.demo.js"></script>
+
+<script src="{{ config.ASSETS_ROOT }}/plugins/moment/min/moment.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/bootstrap-daterangepicker/daterangepicker.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/select2/dist/js/select2.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/bootstrap-datepicker/dist/js/bootstrap-datepicker.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/bootstrap-timepicker/js/bootstrap-timepicker.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/ion-rangeslider/js/ion.rangeSlider.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/jquery.maskedinput/src/jquery.maskedinput.js"></script>
+
+<script src="{{ config.ASSETS_ROOT }}/plugins/jquery-migrate/dist/jquery-migrate.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/tag-it/js/tag-it.min.js"></script>
+
+<script src="{{ config.ASSETS_ROOT }}/plugins/clipboard/dist/clipboard.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/spectrum-colorpicker2/dist/spectrum.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/select-picker/dist/picker.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/js/demo/form-plugins.demo.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/@highlightjs/cdn-assets/highlight.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/js/demo/render.highlight.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/sweetalert/dist/sweetalert.min.js"></script>
+
+<script src="{{ config.ASSETS_ROOT }}/js/product/main_ProtductCategory.js?v1.0"></script>
+
+
+
+
+{% endblock javascripts %}

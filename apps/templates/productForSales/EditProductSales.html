@@ -1,0 +1,353 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Product For Sales {% endblock %} 
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}
+
+<link href="{{ config.ASSETS_ROOT }}/plugins/datatables.net-bs5/css/dataTables.bootstrap5.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/datatables.net-responsive-bs5/css/responsive.bootstrap5.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/select2/dist/css/select2.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/tag-it/css/jquery.tagit.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/select-picker/dist/picker.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/dropzone/dist/min/dropzone.min.css" rel="stylesheet" />
+<script src="{{ config.ASSETS_ROOT }}/plugins/dropzone/dist/min/dropzone.min.js"></script>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+          @media print {
+            body,page {
+            float: left;
+            margin: none;
+            box-shadow: 0;
+            width: 85mm;
+            height: 100%;
+            }}
+
+          .select2-container--default .select2-results__option[aria-disabled=true] {
+                color: #999;
+            }
+            .datepicker-months .datepicker-switch,
+            .datepicker-months th.next,
+            .datepicker-months th.prev {
+                display: none !important; /* ซ่อนส่วนเลือกปีและลูกศร */
+            }
+
+            .default-select2 option {
+                white-space: nowrap;       /* ไม่ให้ข้อความข้ามบรรทัด */
+                overflow: hidden;          /* ซ่อนข้อความที่เกิน */
+                text-overflow: ellipsis;   /* เพิ่ม '...' เมื่อข้อความยาวเกิน */
+            }
+    </style>
+{% endblock stylesheets %}
+
+{% block content %}
+       
+<!-- <form action="/order/add" id="myForm" method="POST" data-parsley-validate="true" enctype="multipart/form-data">-->
+<form  id="myForm" data-parsley-validate="true" enctype="multipart/form-data"> 
+
+
+<div id="content" class="app-content">
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for categorie, message in messages %}
+            <div class="alert alert-{{categorie}} alert-dismissible fade show mb-2 mt-1">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}                    
+    {% endif %}
+{% endwith %}
+
+    <div class="panel panel-default" data-sortable-id="ui-widget-11" data-init="true">
+        <div class="panel-heading ui-sortable-handle">
+            <h3 class="panel-title " style="font-size: 20px;">Product For Sales </h3>
+            <div class="panel-heading-btn">
+                <button type="button"  class="btn btn-blue"  onclick="func_save()">Save</button>
+            </div>
+        </div>
+        <div class="panel-body">
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="row mb-3" hidden>
+                        <label class="form-label col-form-label col-md-4">id</label>
+                        <div class="col-md-8">
+                            <input type="text"  class="form-control" name="id" id="id-update" value="{{datas.id}}" data-parsley-required="true"/>
+                        </div>
+                    </div>    
+                    <div class="row mb-3"  >
+                        <label class="form-label col-form-label col-md-4">Name Product</label>
+                        <div class="col-md-8">
+                            <input  class="form-control"  name="name_product" id="i_nameProduct"  value="{{datas.name}}"  display data-parsley-required="true"/>
+                        </div>
+                    </div> 
+                    <div class="row mb-3">
+                        <label class="form-label col-form-label col-md-4">Product Category</label>
+                        <div class="col-lg-8">
+                            <select class="default-select2 form-control"  name="productCategory" id="i_productCategory" >
+                                <option value="">ไม่มี</option>
+                                {% for productCar in productCars %}
+                                    <option value="{{productCar.id}}" {% if datas.product_category_id|int == productCar.id|int %} selected {% endif %}>{{productCar.name}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <label class="form-label col-form-label col-md-4">Country</label>
+                        <div class="col-lg-8">
+                            <select class="default-select2 form-control"  name="country" id="i_country" >
+                                <option value="">ไม่มี</option>
+                                {% for country in countrys %}
+                                    <option value="{{country.id}}" {% if datas.country_id|int == country.id|int %} selected {% endif %}>{{country.name}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <label class="form-label col-form-label col-md-4">Period</label>
+                        <div class="col-lg-8">
+                            <select class="default-select2 form-control"  name="period" id="i_period" >
+                                <option value="">ไม่มี</option>
+                                {% for period in periods %}
+                                    <option value="{{period.id}}" {% if datas.period_id|int == period.id|int %} selected {% endif %}>{{period.name}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mb-3"  >
+                        <label class="form-label col-form-label col-md-4">Year</label>
+                        <div class="col-md-8">
+                            <input  class="form-control"  name="year" id="i_year"  value="{{datas.year}}"  display data-parsley-required="true"/>
+                        </div>
+                    </div> 
+                   
+
+                </div>  
+                <div class="col-sm-6">
+                    <div class="row mb-15px">
+                        <label class="form-label col-form-label col-md-4">รูปสินค้า</label>
+                        <div class="col-md-8">
+                           <!-- ส่วน Input สำหรับอัปโหลดไฟล์ -->
+                            <input 
+                                class="form-control" type="file" id="formFile_img" name="formFile_img"  
+                                accept=".jpg, .jpeg, .png" onchange="validateFile(this)" 
+                            />
+
+                            <!-- ส่วนแสดงรูปภาพ -->
+                            <div class="w-100px h-100px bg-light d-flex align-items-center justify-content-center me-2 mt-2">
+                                {% if datas.images and datas.images|length > 0 %}
+                                    <div class="col-2 rounded border mt-1 p-1 position-relative" style="width: 100px; height: 100px;">
+                                        <a href="/static/assets/img/product/{{ datas.images[0].image }}" data-lightbox="gallery-group-4">
+                                            <img src="/static/assets/img/product/{{ datas.images[0].image }}" 
+                                                class="img-thumbnail" 
+                                                alt="Image" 
+                                                style="object-fit: cover; width: 100%; height: 100%; padding: 0 !important;">
+                                        </a>
+                                        <button type="button" onclick="sweetAlertDelImage({{ datas.images[0].id }}, event)" 
+                                                class="btn btn-danger btn-icon btn-circle position-absolute"
+                                                style="bottom: 5px; right: 5px;">
+                                            <i class="fa fa-trash" style="font-size: 12px;"></i>
+                                        </button>
+                                    </div>
+                                {% else %}
+                                    <span>No Image</span>
+                                {% endif %}
+                            </div>
+
+
+                            
+
+                        </div>
+                    </div>
+                   <div class="row mb-15px">
+                        <label class="form-label col-form-label col-md-4">ราคาขาย</label>
+
+                        <div class="col-md-8">
+                            <input  class="form-control"  name="price" id="i_price"  value="{{datas.price}}"  display data-parsley-required="true"/>
+                            
+                        </div>
+                    </div>
+                   <div class="row mb-15px">
+                        <label class="form-label col-form-label col-md-4">ราคาทุน</label>
+                        <div class="col-md-8">
+                            <input  class="form-control"  name="cost" id="i_cost"  value=""  display data-parsley-required="true"/>
+                            
+                        </div>
+                    </div>
+                   <div class="row mb-15px">
+                        <label class="form-label col-form-label col-md-4">Term Of Payment</label>
+                        <div class="col-md-8">
+                           <select class="default-select2 form-control"  name="term" id="i_term" >
+                                <option value="">ไม่มี</option>
+                                {% for term in termOfPaymentModels %}
+                                    <option value="{{term.id}}" {% if datas.term_of_payment_id|int == term.id|int %} selected {% endif %}>{{term.name}}</option>
+                                {% endfor %}
+                            </select>
+                            
+                        </div>
+                    </div>
+                </div>
+                                
+            </div>
+
+            <hr class="my-3">
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="row mb-15px">
+                        <label class="form-label col-form-label col-md-4">Employee</label>
+                        <div class="col-md-8">
+                            <input  class="form-control" readonly name="term" id="i_term"  value="" hidden  display data-parsley-required="true"/>
+                            <select class="multiple-select2 form-control" multiple>
+                                <optgroup label="Alaskan/Hawaiian Time Zone">
+                                    <option value="AK">Alaska</option>
+                                    <option value="HI">Hawaii</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mb-15px">
+                        <label class="form-label col-form-label col-md-4">Supplier (organization)</label>
+                        <div class="col-md-8">
+                            <input  class="form-control" readonly name="term" id="i_term" hidden  value=""  display data-parsley-required="true"/>
+                            <select class="multiple-select2 form-control" multiple>
+                                <optgroup label="Alaskan/Hawaiian Time Zone">
+                                    <option value="AK">Alaska</option>
+                                    <option value="HI">Hawaii</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mb-15px">
+                        <label class="form-label col-form-label col-md-4">Agency</label>
+                        <div class="col-md-8">
+                            <input  class="form-control" readonly name="term" id="i_term"  value="" hidden  display data-parsley-required="true"/>
+                            <select class="multiple-select2 form-control" multiple>
+                                <optgroup label="Alaskan/Hawaiian Time Zone">
+                                    <option value="AK">Alaska</option>
+                                    <option value="HI">Hawaii</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group row">
+                        <label class="form-label col-form-label col-lg-4">รายละเอียดโครงการ</label>
+                        <div class="col-lg-8">
+                            <textarea class="form-control" id="detail" rows="4" cols="50"  name="detail" placeholder="" >{{datas.detail}}</textarea>
+                        </div>
+                    </div> 
+                    <div class="row mt-15px">
+                    <label class="form-label col-form-label col-md-4">ไฟล์โครงการ</label>
+
+                    <div class="col-md-8">
+                        <input class="form-control" type="file" id="formFile_file" name="formFile_file" multiple accept=".pdf,"  onchange="validateFile(this)"/>
+                    </div>
+                    {% for file_data in file_data %}
+                        {% if file_data.file_type == 1 %}
+                            <div class="row mt-2">
+                                <div class="col-md-4">
+                                    
+                                </div>
+                                <div class="col-md-8 col-sm-12 col-xs-12 mt-10px text-ellipsis">
+                                    <a href="{{ url_for('product_blueprint.downloadFile', filename=file_data.filename)}}" style="text-decoration: none; color: black;"><i class="fas fa-lg fa-fw ms-5px  fa-file"></i> <span>{{ file_data.filename }}</span></a> <a onclick="sweetAlertDelSign({{file_data.id}},{{datas.id}})"><i class="fas fa-lg fa-fw mx-5px fa-trash-can text-danger c_trash"></i></a>  </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                </div>
+                
+            </div>
+
+
+            
+          
+        </div>
+        <div class="hljs-wrapper">
+            <pre><code class="html hljs language-xml" data-url="../assets/data/ui-widget-boxes/code-11.json" data-highlighted="yes"></code></pre>
+        </div>
+    </div>
+        	
+
+    
+    
+</form>
+
+
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}
+<script src="{{ config.ASSETS_ROOT }}/plugins/datatables.net/js/dataTables.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/datatables.net-bs5/js/dataTables.bootstrap5.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/datatables.net-responsive/js/dataTables.responsive.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/datatables.net-responsive-bs5/js/responsive.bootstrap5.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/js/demo/table-manage-responsive.demo.js"></script>
+
+<script src="{{ config.ASSETS_ROOT }}/plugins/moment/min/moment.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/bootstrap-daterangepicker/daterangepicker.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/select2/dist/js/select2.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/bootstrap-datepicker/dist/js/bootstrap-datepicker.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/bootstrap-timepicker/js/bootstrap-timepicker.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/ion-rangeslider/js/ion.rangeSlider.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/jquery.maskedinput/src/jquery.maskedinput.js"></script>
+
+<script src="{{ config.ASSETS_ROOT }}/plugins/jquery-migrate/dist/jquery-migrate.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/tag-it/js/tag-it.min.js"></script>
+
+<script src="{{ config.ASSETS_ROOT }}/plugins/clipboard/dist/clipboard.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/spectrum-colorpicker2/dist/spectrum.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/select-picker/dist/picker.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/js/demo/form-plugins.demo.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/@highlightjs/cdn-assets/highlight.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/js/demo/render.highlight.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/js/productForSales/mainUpdateProduct.js?v=1.01"></script>
+<script>
+console.log({{datas|tojson|safe}})
+
+function sweetAlertDelSign(id_file,id_product) {
+    swal({
+        title: "Are you sure?",
+        text: "Delete?",
+        icon: "error",
+        buttons: {
+            cancel: {
+                text: "Cancel",
+                value: null,
+                visible: true,
+                className: "btn btn-dark",
+                closeModal: true,
+            },
+            confirm: {
+                text: "Yes, Delete.",
+                value: true,
+                visible: true,
+                className: "btn btn-danger",
+                closeModal: true,
+            },
+        },
+    }).then((result) => {
+        if (result.dismiss !== "cancel") {
+            post("/product/product_delete_file", {
+                id_file: id_file,
+                id_product: id_product,
+                // path: $("#path").val(),
+            });
+        }
+    });
+}
+</script>
+
+
+
+
+
+
+
+
+
+{% endblock javascripts %}

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta charset="utf-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1, shrink-to-fit=no"
+        />
+        <title>{% block title %}{% endblock %} | IEO</title>
+
+        <!-- <title>Login</title> -->
+        <meta
+            content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+            name="viewport"
+        />
+        <meta content="" name="description" />
+        <meta content="" name="author" />
+        <!-- ================== BEGIN core-css ================== -->
+        <link
+            href="{{ config.ASSETS_ROOT }}/css/vendor.min.css?v=1.2"
+            rel="stylesheet"
+        />
+        <link
+            href="{{ config.ASSETS_ROOT }}/css/default/app.min.css?v=1.2"
+            rel="stylesheet"
+        />
+        <!--<link
+            href="{{ config.ASSETS_ROOT }}/css/additional/main-color.css"
+            rel="stylesheet"
+        />-->
+        <!-- ================== END core-css ================== -->
+
+        <!-- Specific Page CSS goes HERE  -->
+        {% block stylesheets %}{% endblock stylesheets %}
+    </head>
+    <body class="pace-top theme-blue">
+        <!-- BEGIN #loader -->
+        <div id="loader" class="app-loader">
+            <span class="spinner"></span>
+        </div>
+        <!-- END #loader -->
+
+        <!-- BEGIN #app -->
+        <div id="app" class="app">
+            <div class="wrapper">
+                <div class="container-fluid">
+                    {% block content %}{% endblock content %}
+                </div>
+            </div>
+        </div>
+
+        <!-- ================== BEGIN core-js ================== -->
+        <script src="{{ config.ASSETS_ROOT }}/js/vendor.min.js"></script>
+        <script src="{{ config.ASSETS_ROOT }}/js/app.min.js"></script>
+        <!-- ================== END core-js ================== -->
+
+        <!-- ================== BEGIN page-js ================== -->
+        <script src="{{ config.ASSETS_ROOT }}/js/demo/login-v2.demo.js"></script>
+        <!-- ================== END page-js ================== -->
+        <script src="{{ config.ASSETS_ROOT }}/plugins/parsleyjs/dist/parsley.min.js"></script>
+        <script src="{{ config.ASSETS_ROOT }}/plugins/@highlightjs/cdn-assets/highlight.min.js"></script>
+       
+    </body>
+</html>

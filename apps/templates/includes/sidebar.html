@@ -1,0 +1,323 @@
+<div
+    id="sidebar"
+    class="app-sidebar"
+    data-disable-slide-animation="true"
+    data-bs-theme="dark"
+>
+    <!-- BEGIN scrollbar -->
+    <div class="app-sidebar-content" data-scrollbar="true" data-height="100%">
+        <!-- BEGIN menu -->
+        <div class="menu">
+            <div class="menu-profile">
+                <a
+                    href="javascript:;"
+                    class="menu-profile-link"
+                    data-toggle="app-sidebar-profile"
+                    data-target="#appSidebarProfileMenu"
+                >
+                    <div class="menu-profile-cover with-shadow"></div>
+                    <div class="menu-profile-image">
+                        <img
+                            src="{{config.ASSETS_ROOT}}/img/user/user.png"
+                            alt=""
+                        />
+                    </div>
+                    <div class="menu-profile-info">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                {{current_user.username}}
+                            </div>
+                            <div class="menu-caret ms-auto"></div>
+                        </div>
+                        <small>{{current_user.role.name}}</small>
+                    </div>
+                </a>
+            </div>
+            <div id="appSidebarProfileMenu" class="collapse">
+                <div class="menu-item pt-5px">
+                    <a href="javascript:;" class="menu-link">
+                        <div class="menu-icon"><i class="fa fa-cog"></i></div>
+                        <div class="menu-text">Settings</div>
+                    </a>
+                </div>
+                <div class="menu-divider m-0"></div>
+            </div>
+            <div class="menu-header">Applications</div>
+            <div
+                class="menu-item has-sub {% if segment == 'index' %} active {% endif %}"
+            >
+                <a href="javascript:;" class="menu-link">
+                    <div class="menu-icon">
+                        <i class="material-icons">home</i>
+                    </div>
+                    <div class="menu-text">AMETTHINGS</div>
+                    <div class="menu-caret"></div>
+                </a>
+                <div class="menu-submenu">
+                    <div
+                        class="menu-item {% if segment == 'index' %} active {% endif %}"
+                    >
+                        <a href="/" class="menu-link"
+                            ><div class="menu-text">Main</div></a
+                        >
+                    </div>
+                </div>
+            </div>
+            <div hidden
+                class="menu-item has-sub {% if segment in ['thip_dashboard','thip_form_kpi','thip_form_thip','thip_upload'] %} active {% endif %}"
+            >
+                <a href="javascript:;" class="menu-link">
+                    <div class="menu-icon">
+                        <i class="material-icons">fact_check</i>
+                    </div>
+                    <div class="menu-text">Dashboard</div>
+                    <div class="menu-caret"></div>
+                </a>
+                <div class="menu-submenu">
+                    {% if current_user.has_permission('read_thip') %}
+                    <div
+                        class="menu-item {% if segment == 'thip_dashboard' %} active {% endif %}"
+                    >
+                        <a href="/thip/dashboard" class="menu-link"
+                            ><div class="menu-text">Dashboard</div></a
+                        >
+                    </div>
+                    {% endif %} {% if current_user.has_permission('write_thip')
+                    %}
+                    <div
+                        class="menu-item {% if segment == 'thip_form_kpi' %} active {% endif %}"
+                    >
+                        <a href="/thip/form_kpi" class="menu-link"
+                            ><div class="menu-text">กรอกคะแนนโรงพยาบาล</div></a
+                        >
+                    </div>
+                    {% endif %} {% if current_user.has_permission('write_thip')
+                    %}
+                    <div
+                        class="menu-item {% if segment == 'thip_form_thip' %} active {% endif %}"
+                    >
+                        <a href="/thip/form_thip" class="menu-link"
+                            ><div class="menu-text">กรอกคะแนนจาก THIP</div></a
+                        >
+                    </div>
+                    {% endif %} {% if current_user.has_permission('write_thip')
+                    %}
+                    <div
+                        class="menu-item {% if segment == 'thip_upload' %} active {% endif %}"
+                    >
+                        <a href="/thip/form_upload" class="menu-link"
+                            ><div class="menu-text">อัพโหลดไฟล์ excel</div></a
+                        >
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div
+                class="menu-item has-sub {% if segment in ['product_category', 'country', 'period', 'termOfPayment', 'productSales'] %} active {% endif %}"
+            >
+                <a href="javascript:;" class="menu-link">
+                    <div class="menu-icon">
+                        <i class="material-icons">description</i>
+                    </div>
+                    <div class="menu-text">Product</div>
+                    <div class="menu-caret"></div>
+                </a>
+                <div class="menu-submenu">
+                    <div
+                        class="menu-item {% if segment == 'product_category' %} active {% endif %}"
+                    >
+                        <a href="/product/product_category" class="menu-link"
+                            ><div class="menu-text">Product Category </div></a
+                        >
+                    </div>
+                    <div
+                        class="menu-item {% if segment == 'country' %} active {% endif %}"
+                    >
+                        <a href="/product/country" class="menu-link"
+                            ><div class="menu-text">Country </div></a
+                        >
+                    </div>
+                    <div
+                        class="menu-item {% if segment == 'period' %} active {% endif %}"
+                    >
+                        <a href="/product/period" class="menu-link"
+                            ><div class="menu-text">Period </div></a
+                        >
+                    </div>
+                    <div
+                        class="menu-item {% if segment == 'termOfPayment' %} active {% endif %}"
+                    >
+                        <a href="/product/termOfPayment" class="menu-link"
+                            ><div class="menu-text">Term of payment </div></a
+                        >
+                    </div>
+                    <div
+                        class="menu-item {% if segment == 'productSales' %} active {% endif %}"
+                    >
+                        <a href="/product/productSales" class="menu-link"
+                            ><div class="menu-text">Product for Sales </div></a
+                        >
+                    </div>
+                </div>
+            </div>
+            {% if current_user.has_permission('read_order_represent_doctor') and
+            current_user.has_permission('read_report') %}
+            <div
+                class="menu-item has-sub {% if segment in ['order_represent_doctor'] %} active {% endif %}"
+            >
+                <a href="javascript:;" class="menu-link">
+                    <div class="menu-icon">
+                        <i class="material-icons">description</i>
+                    </div>
+                    <div class="menu-text">Report</div>
+                    <div class="menu-caret"></div>
+                </a>
+                <div class="menu-submenu">
+                    {% if
+                    current_user.has_permission('read_order_represent_doctor')
+                    %}
+                    <div
+                        class="menu-item {% if segment == 'order_represent_doctor' %} active {% endif %}"
+                    >
+                        <a
+                            href="/report/order_represent_doctor"
+                            class="menu-link"
+                            ><div class="menu-text">ข้อมูล รคส.</div></a
+                        >
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %} {% if current_user.has_permission('read_po_send_mail')
+            %}
+            <div
+                class="menu-item {% if segment in ['po_send_mail'] %} active {% endif %}"
+            >
+                <a href="/po_send_mail" class="menu-link">
+                    <div class="menu-icon">
+                        <i class="material-icons">forward_to_inbox</i>
+                    </div>
+                    <div class="menu-text">PO Send Mail</div>
+                </a>
+            </div>
+            {% endif %} {% if current_user.has_permission('read_po_send_mail')
+            %}
+            <div
+                class="menu-item {% if segment in ['export'] %} active {% endif %}"
+            >
+                <a href="/export" class="menu-link">
+                    <div class="menu-icon">
+                        <i class="material-icons">file_download</i>
+                    </div>
+                    <div class="menu-text">Export</div>
+                </a>
+            </div>
+            {% endif %} {% if current_user.has_permission('read_monk') %}
+            <div
+                class="menu-item {% if segment in ['monk'] %} active {% endif %}"
+            >
+                <a href="/monk" class="menu-link">
+                    <div class="menu-icon">
+                        <i class="material-icons">check</i>
+                    </div>
+                    <div class="menu-text">Monk</div>
+                </a>
+            </div>
+            {% endif %}
+            <div class="menu-header">Settings</div>
+            {% if current_user.has_permission('read_thip') %}
+            <div
+                class="menu-item has-sub {% if segment in ['thip_topic'] %} active {% endif %}"
+            >
+                <a href="javascript:;" class="menu-link">
+                    <div class="menu-icon">
+                        <i class="material-icons">fact_check</i>
+                    </div>
+                    <div class="menu-text">THIP Dashboard</div>
+                    <div class="menu-caret"></div>
+                </a>
+                <div class="menu-submenu">
+                    <div
+                        class="menu-item {% if segment == 'thip_topic' %} active {% endif %}"
+                    >
+                        <a href="/thip/topic" class="menu-link"
+                            ><div class="menu-text">Indicator Manage</div></a
+                        >
+                    </div>
+                </div>
+            </div>
+            {% endif %} {% if current_user.has_permission('read_resource') or
+            current_user.has_permission('read_permission') or
+            current_user.has_permission('read_role') or
+            current_user.has_permission('read_user') %}
+            <div
+                class="menu-item has-sub {% if segment in ['resource','permission','role','user'] %} active {% endif %}"
+            >
+                <a href="javascript:;" class="menu-link">
+                    <div class="menu-icon">
+                        <i class="material-icons">person</i>
+                    </div>
+                    <div class="menu-text">User Manage</div>
+                    <div class="menu-caret"></div>
+                </a>
+                <div class="menu-submenu">
+                    {% if current_user.has_permission('read_resource') %}
+                    <div
+                        class="menu-item {% if segment == 'resource' %} active {% endif %}"
+                    >
+                        <a href="/setting/resource" class="menu-link"
+                            ><div class="menu-text">Resource</div></a
+                        >
+                    </div>
+                    {% endif %} {% if
+                    current_user.has_permission('read_permission') %}
+                    <div
+                        class="menu-item {% if segment == 'permission' %} active {% endif %}"
+                    >
+                        <a href="/setting/permission" class="menu-link"
+                            ><div class="menu-text">Permission</div></a
+                        >
+                    </div>
+                    {% endif %} {% if current_user.has_permission('read_role')
+                    %}
+                    <div
+                        class="menu-item {% if segment == 'role' %} active {% endif %}"
+                    >
+                        <a href="/setting/role" class="menu-link"
+                            ><div class="menu-text">Role</div></a
+                        >
+                    </div>
+                    {% endif %} {% if current_user.has_permission('read_user')
+                    %}
+                    <div
+                        class="menu-item {% if segment == 'user' %} active {% endif %}"
+                    >
+                        <a href="/setting/user" class="menu-link"
+                            ><div class="menu-text">User</div></a
+                        >
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            <!-- BEGIN minify-button -->
+            <div class="menu-item d-flex">
+                <a
+                    href="javascript:;"
+                    class="app-sidebar-minify-btn ms-auto d-flex align-items-center text-decoration-none"
+                    data-toggle="app-sidebar-minify"
+                    ><i class="fa fa-angle-double-left"></i
+                ></a>
+            </div>
+            <!-- END minify-button -->
+        </div>
+        <!-- END menu -->
+    </div>
+    <!-- END scrollbar -->
+</div>
+<div class="app-sidebar-bg" data-bs-theme="dark"></div>
+<div class="app-sidebar-mobile-backdrop">
+    <a href="#" data-dismiss="app-sidebar-mobile" class="stretched-link"></a>
+</div>
+<!-- END #sidebar -->
