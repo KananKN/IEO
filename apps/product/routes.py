@@ -41,7 +41,7 @@ def product_category():
     # print(datas)
     return render_template('product/product_category.html', segment='product_category' ,datas=datas)
 
-@blueprint.route('/add_productCategory', methods=['POST'])
+@blueprint.route('/product/add_productCategory', methods=['POST'])
 @login_required
 def add_product_category():  # ✅ แก้ไขชื่อฟังก์ชันให้สอดคล้องกับ URL
     
