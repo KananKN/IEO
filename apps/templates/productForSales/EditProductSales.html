@@ -177,7 +177,8 @@
                         <label class="form-label col-form-label col-md-4">ราคาขาย</label>
 
                         <div class="col-md-8">
-                            <input  class="form-control"  name="price" id="i_price"  value="{{datas.price}}"  onchange="formatNumberInter(this)" display data-parsley-required="true"/>
+                            <input  class="form-control price-input"  name="price" id="i_price" value="{{datas.price}}" oninput="formatNumberWithCommas(this)" 
+           onblur="formatNumberWithCommas(this)"  data-parsley-required="true"/>
                             
                         </div>
                     </div>
@@ -346,7 +347,7 @@ $(document).ready(function () {
                             <input type="text" class="form-control" name="term_detail" value="${defaultDetail}" placeholder="รายละเอียด">
                         </div>
                         <div class="col-md-4">
-                            <input type="text" class="form-control" name="installments" value="${defaultAmount}" onchange="formatNumberWithCommas(this)" placeholder="จำนวนงวด ${i + 1}">
+                            <input type="text" class="form-control price-input" name="installments" value="${defaultAmount}" oninput="formatNumberWithCommas(this)" placeholder="จำนวนงวด ${i + 1}">
                         </div>
                     </div>
                 `;
@@ -366,49 +367,14 @@ $(document).ready(function () {
         let termValue = $(this).val().trim();
         generateInputs(termValue, payments);
     });
+
+   $(".price-input").each(function () {
+        let value = $(this).val().replace(/,/g, ''); // ลบ comma เดิม
+        if (!isNaN(value) && $.trim(value) !== '') {
+            $(this).val(parseFloat(value).toLocaleString('en-US')); // ใส่ comma อัตโนมัติ
+        }
+    });
 });
-
-
-// $(document).ready(function () {
-//     function generateInputs(termValue) {
-//         let termNumber = parseInt(termValue, 10); // แปลงเป็นตัวเลข
-//         let extraInputsContainer = $("#extra-inputs");
-
-//         extraInputsContainer.empty(); // ล้างข้อมูลเก่า
-
-//         if (!isNaN(termNumber) && termNumber > 0) { // ตรวจสอบว่าเป็นตัวเลข และมากกว่า 0
-//             for (let i = 0; i < termNumber; i++) {
-//                 let defaultDetail = `รายละเอียดงวด ${i + 1}`;
-//                 let defaultAmount = `${(i + 1) * 1000}`; // ตัวอย่างจำนวนเงิน
-
-//                 let newRow = `
-//                     <div class="row mb-15px">
-//                         <label class="form-label col-form-label col-md-4">จำนวนงวด ${i + 1}</label>
-//                         <div class="col-md-4">
-//                             <input type="text" class="form-control" name="term_detail" value="" placeholder="รายละเอียด">
-//                         </div>
-//                         <div class="col-md-4">
-//                             <input type="text" class="form-control" name="installments" value="" placeholder="จำนวนงวด ${i + 1}">
-//                         </div>
-//                     </div>
-//                 `;
-//                 extraInputsContainer.append(newRow);
-//             }
-//         }
-//     }
-
-//     // ดึงค่าที่เลือกไว้ตอนโหลดหน้าเว็บ
-//     let initialTermValue = $("#i_term").val();
-//     if (initialTermValue) {
-//         generateInputs(initialTermValue); // เรียกใช้งานตอนโหลดหน้า
-//     }
-
-//     // ฟังก์ชันเปลี่ยนค่าตามที่เลือก
-//     $("#i_term").change(function () {
-//         let termValue = $(this).val().trim(); 
-//         generateInputs(termValue);
-//     });
-// });
 
 
 </script>
@@ -447,8 +413,19 @@ function sweetAlertDelSign(id_file,id_product) {
     });
 }
 
-function formatNumberWithCommas(number) {
-    return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+function formatNumberWithCommas(input) {
+    let value = input.value;
+
+    // ลบ comma ที่มีอยู่ทั้งหมด
+    value = value.replace(/,/g, '');
+
+    // ตรวจสอบว่าค่าเป็นตัวเลขหรือไม่
+    if (!isNaN(value) && value !== '') {
+        value = parseFloat(value).toLocaleString('en-US'); 
+    }
+
+    // อัปเดตค่ากลับเข้า input
+    input.value = value;
 }
 
 function formatNumberInter(input) {
