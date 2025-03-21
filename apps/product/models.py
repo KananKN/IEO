@@ -116,7 +116,7 @@ class ProductForSalesModel(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(), nullable=False)  
     year = db.Column(db.String(), nullable=False)  
-    price = db.Column(db.Float, nullable=True)  # ✅ เพิ่ม price ลงในฐานข้อมูล
+    price = db.Column(db.Float, nullable=False)  # ✅ เพิ่ม price ลงในฐานข้อมูล
     product_category_id = db.Column(db.Integer, db.ForeignKey("product_category.id", ondelete="CASCADE"), nullable=False)
     country_id = db.Column(db.Integer, db.ForeignKey("country.id", ondelete="CASCADE"), nullable=False)
     period_id = db.Column(db.Integer, db.ForeignKey("period.id", ondelete='CASCADE'), nullable=False)
