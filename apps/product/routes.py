@@ -351,7 +351,11 @@ def createProductSales():
     productCar = ProductCategoryModel.query.all()
     country = CountryModel.query.all()
     period = PeriodModel.query.all()
-    termOfPaymentModel = term_of_paymentModel.query.all()
+    # termOfPaymentModel = term_of_paymentModel.query.filter_by(term_of_paymentModel.name !="0").all()
+    termOfPaymentModel = term_of_paymentModel.query.filter(term_of_paymentModel.name != "0").all()
+
+
+
     
     return render_template('/productForSales/createProductSales.html', segment='productSales' ,productCars=productCar, countrys=country, periods=period,termOfPaymentModels=termOfPaymentModel)
 
@@ -381,7 +385,7 @@ def addProductSale():
     # รับค่าจาก request.form
     # ✅ ตรวจสอบค่าจาก request.form
     name = request.form.get('name_product') or None
-    year = request.form.get('year') or None
+    year = request.form.get('year') or ''
     price = request.form.get('price') or None
     product_category_id = request.form.get('productCategory') or None
     country_id = request.form.get('country') or None
@@ -397,13 +401,30 @@ def addProductSale():
     else:
         price = None 
         
+    # term_of_payment_id = request.form.get('term') or None
+
+    
+
+    
     try:
         country_id = int(country_id) if country_id and country_id.isdigit() else None
         period_id = int(period_id) if period_id and period_id.isdigit() else None
         product_category_id = int(product_category_id) if product_category_id and product_category_id.isdigit() else None
-        term_of_payment_id = int(term_of_payment_id) if term_of_payment_id and term_of_payment_id.isdigit() else None
+        # term_of_payment_id = int(term_of_payment_id) if term_of_payment_id and term_of_payment_id.isdigit() else None
     except Exception as e:
         return jsonify({"error": "Invalid data format"}), 400  # ส่ง error กลับถ้าค่าผิด
+    
+    # ถ้าค่าที่ได้จากฟอร์มเป็นค่าว่าง หรือ '0' หรือ None จะตั้งเป็น None
+    if not term_of_payment_id or term_of_payment_id == '0':
+        term_of_payment_id = None
+
+    # ตรวจสอบว่าค่าของ term_of_payment_id เป็น None หรือไม่
+    if term_of_payment_id:
+        # ตรวจสอบว่า term_of_payment_id นี้มีอยู่ในฐานข้อมูลหรือไม่
+        existing_term = term_of_paymentModel.query.filter_by(id=term_of_payment_id).first()
+        if not existing_term:
+            print(f"Invalid term_of_payment_id: {term_of_payment_id}. Setting to None.")
+            term_of_payment_id = None
 
     
     new_item = ProductForSalesModel(
@@ -524,17 +545,17 @@ def addProductSale():
     else:
         print("Error: term_detail_list and installments_list do not match in length.")            
     # print(datas)
-    return redirect(url_for('product_blueprint.productSales'))
+    return redirect(url_for('product_blueprint.EditProductSales',id=new_item.id))
 
 @blueprint.route('/updateProductSale', methods=['GET', 'POST'])
 @login_required
 @read_permission.require(http_exception=403)
 def updateProductSale():
-    print(request.form)
+    # print(request.form)
     # รับค่าจาก request.form
     id = request.form.get('id') or None
     name = request.form.get('name_product') or None
-    year = request.form.get('year') or None
+    year = request.form.get('year') or ''
     price = request.form.get('price') or None
     product_category_id = request.form.get('productCategory') or None
     country_id = request.form.get('country') or None
@@ -545,6 +566,11 @@ def updateProductSale():
     start = datetime.strptime(request.form.get("start"), "%d-%m-%Y") if request.form["start"] else None 
     end = datetime.strptime(request.form.get("end"), "%d-%m-%Y") if request.form["end"] else None
     
+    if price:
+        price = float(price.replace(',', ''))  # 
+    else:
+        price = None 
+        
     try:
         country_id = int(country_id) if country_id and country_id.isdigit() else None
         period_id = int(period_id) if period_id and period_id.isdigit() else None
@@ -553,10 +579,8 @@ def updateProductSale():
     except Exception as e:
         return jsonify({"error": "Invalid data format"}), 400  # ส่ง error กลับถ้าค่าผิด
 
-    try:
-        price = float(price) if price and price.strip() != '' else None
-    except ValueError:
-        price = None
+    # 
+    
 
     thisItem = ProductForSalesModel.query.filter_by(id=id).first()
     if thisItem:
@@ -622,46 +646,6 @@ def updateProductSale():
     else:
         print("Error: term_detail_list and installments_list do not match in length.")
 
-    # ตรวจสอบว่าลิสต์ไม่ว่าง และมีขนาดเท่ากัน
-    # if term_detail_list and installments_list and len(term_detail_list) == len(installments_list) == len(term_id_list):
-    #     for term, amount, term_id in zip(term_detail_list, installments_list, term_id_list):
-    #         print(f"Processing: term_detail={term}, amount={amount}, term_id={term_id}")  # ตรวจสอบค่าก่อนบันทึก
-
-    #         # ค้นหาข้อมูลที่มี product_for_sales_id และ id ตรงกัน
-    #         payment_item = installmentsPaymentModel.query.filter_by(
-    #             product_for_sales_id=thisItem.id,  # product_for_sales_id ตรงกับ thisItem.id
-    #             id=term_id  # ใช้ term_id ที่มาจาก term_id_list
-    #         ).first()
-
-    #         if payment_item:
-    #             print(f"Found existing item with ID: {payment_item.id}")
-    #             # หากเจอข้อมูลแล้วให้ทำการแก้ไข
-    #             payment_item.term_detail = term.strip()  # ลบช่องว่างด้านหน้าและหลัง
-    #             payment_item.amount = amount.strip()  # ลบช่องว่างด้านหน้าและหลัง
-    #             print(f"Updating: term_detail={term}, amount={amount}")  # แจ้งเตือนว่าทำการอัปเดต
-    #         else:
-    #             print(f"No existing item found for term_id={term_id}")
-    #             # หากไม่เจอข้อมูลให้เพิ่มข้อมูลใหม่
-    #             payment_item = installmentsPaymentModel(
-    #                 term_detail=term.strip(),  # ลบช่องว่างด้านหน้าและหลัง
-    #                 amount=amount.strip(),  # ลบช่องว่างด้านหน้าและหลัง
-    #                 product_for_sales_id=thisItem.id,
-    #             )
-    #             db.session.add(payment_item)
-    #             print(f"Adding: term_detail={term}, amount={amount}")  # แจ้งเตือนว่าทำการเพิ่มข้อมูลใหม่
-
-    #     try:
-    #         print("Committing changes to the database...")
-    #         db.session.commit()
-    #         print("All data saved or updated successfully!")
-    #     except Exception as e:
-    #         print(f"Error saving data: {e}")
-    #         db.session.rollback()  # Rollback in case of error
-    # else:
-    #     print("Error: term_detail_list, installments_list, and term_id_list do not match in length.")
-
-
-    
     
    
     if request.files:
@@ -723,7 +707,7 @@ def updateProductSale():
             db.session.commit()
     
     # print(datas)
-    return redirect(url_for('product_blueprint.productSales'))
+    return redirect(url_for('product_blueprint.EditProductSales',id=thisItem.id))
 
 @blueprint.route('/upload')
 @login_required
