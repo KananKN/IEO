@@ -290,11 +290,7 @@ def termOfPayment():
 def addTerm():  # ✅ แก้ไขชื่อฟังก์ชันให้สอดคล้องกับ URL
     
     json_data = request.get_json()
-    
-    print(json_data)
-
     name =json_data["name"]
-    print(name)
 
     if not name:
         flash("Term of payment name is required!", "warning")
@@ -370,9 +366,12 @@ def EditProductSales(id):
     period = PeriodModel.query.all()
     termOfPaymentModel = term_of_paymentModel.query.all()
     file_data = FileModel.query.filter_by(product_for_sales_id = datas.id).all()
-    # print(file_data)
-    print(datas)
-    return render_template('/productForSales/EditProductSales.html', segment='productSales' , datas=datas, productCars=productCar, countrys=country, periods=period,termOfPaymentModels=termOfPaymentModel, file_data=file_data)
+    print("DEBUG: datas.id ->", datas.id)  # ตรวจสอบค่าก่อน Query
+    payment = installmentsPaymentModel.query.filter_by(product_for_sales_id=datas.id).all()
+    print("DEBUG: payment ->", payment)
+    
+
+    return render_template('/productForSales/EditProductSales.html', segment='productSales' , datas=datas, productCars=productCar, countrys=country, periods=period,termOfPaymentModels=termOfPaymentModel, file_data=file_data,payments=payment)
 
 @blueprint.route('/addProductSale', methods=['GET', 'POST'])
 @login_required
@@ -389,7 +388,15 @@ def addProductSale():
     period_id = request.form.get('period') or None
     term_of_payment_id = request.form.get('term') or None
     detail = request.form.get('detail') or None
+    start = datetime.strptime(request.form.get("start"), "%d-%m-%Y") if request.form["start"] else None 
+    end = datetime.strptime(request.form.get("end"), "%d-%m-%Y") if request.form["end"] else None 
     # ✅ ตรวจสอบว่า country_id และ period_id ได้ค่าที่ถูกต้อง (ต้องเป็นตัวเลข ไม่ใช่ function)
+    
+    if price:
+        price = float(price.replace(',', ''))  # 
+    else:
+        price = None 
+        
     try:
         country_id = int(country_id) if country_id and country_id.isdigit() else None
         period_id = int(period_id) if period_id and period_id.isdigit() else None
@@ -398,13 +405,7 @@ def addProductSale():
     except Exception as e:
         return jsonify({"error": "Invalid data format"}), 400  # ส่ง error กลับถ้าค่าผิด
 
-    # ✅ ตรวจสอบว่า price ถูกต้อง
-    try:
-        price = float(price) if price and price.strip() != '' else None
-    except ValueError:
-        price = None
-
-    # ✅ สร้าง Object ของ Model
+    
     new_item = ProductForSalesModel(
         name=name,
         year=year,
@@ -413,12 +414,15 @@ def addProductSale():
         country_id=country_id,  # ✅ แก้ไขให้ country_id เป็น int หรือ None
         period_id=period_id,  # ✅ แก้ไขให้ period_id เป็น int หรือ None
         term_of_payment_id=term_of_payment_id,
-        detail=detail
+        detail=detail,
+        start_at=start,
+        end_at=end,
     )
 
     # ✅ เพิ่มข้อมูลลงฐานข้อมูล
     db.session.add(new_item)
     db.session.commit()
+        
         
     uploaded_images  = request.files.getlist("formFile_img")
     if uploaded_images:
@@ -434,13 +438,13 @@ def addProductSale():
                 # ✅ บันทึกไฟล์ลงในโฟลเดอร์
                 img.save(file_path)
 
-                # ✅ ค้นหารูปภาพเดิม ถ้าไม่มีให้สร้างใหม่
-                thisItemimg = MD_Image.query.filter_by(product_for_sales_id=new_item.id).first()
-                if thisItemimg:
-                    thisItemimg.image = filename  # ✅ อัปเดตชื่อไฟล์ภาพ
-                else:
-                    new_image = MD_Image(image=filename, product_for_sales_id=new_item.id)
-                    db.session.add(new_image)
+                # # ✅ ค้นหารูปภาพเดิม ถ้าไม่มีให้สร้างใหม่
+                # thisItemimg = MD_Image.query.filter_by(product_for_sales_id=new_item.id).first()
+                # if thisItemimg:
+                #     thisItemimg.image = filename  # ✅ อัปเดตชื่อไฟล์ภาพ
+                # else:
+                new_image = MD_Image(image=filename, product_for_sales_id=new_item.id)
+                db.session.add(new_image)
 
         db.session.commit()  # ✅ บันทึกการเปลี่ยนแปลง
 
@@ -470,6 +474,55 @@ def addProductSale():
                 newfile = FileModel(filename=filename,filepath=file_path,file_type =1, product_for_sales_id=new_item.id)
                 db.session.add(newfile)
                 db.session.commit()    
+                
+    
+    
+    installments_list = request.form.getlist('installments')  
+    term_detail_list = request.form.getlist('term_detail') 
+    term_id_list = request.form.getlist('term_id')
+    
+    db.session.query(installmentsPaymentModel).filter(installmentsPaymentModel.product_for_sales_id == new_item.id).delete()
+    db.session.commit()
+
+   
+    
+    # ตรวจสอบว่าลิสต์ไม่ว่าง และมีขนาดเท่ากัน
+    if term_detail_list and installments_list and len(term_detail_list) == len(installments_list):
+        for i, (term, amount) in enumerate(zip(term_detail_list, installments_list)):
+            term = term.strip()  # ลบช่องว่าง
+            amount = str(amount).strip()  # ลบช่องว่าง
+            amount = amount.replace(',', '')
+            
+            if term_id_list and i < len(term_id_list) and term_id_list[i].strip():  # เช็คว่ามี term_id หรือไม่
+                term_id = term_id_list[i].strip()
+                existing_item = installmentsPaymentModel.query.filter_by(id=term_id).first()
+
+                if existing_item:  
+                    print(f"Updating: term_id={term_id}, term_detail={term}, amount={amount}")
+                    existing_item.term_detail = term
+                    existing_item.amount = amount
+                else:  # 
+                    print(f"Adding new (term_id not found): term_detail={term}, amount={amount}")
+                    new_payment= installmentsPaymentModel(
+                        term_detail=term,
+                        amount=amount,
+                        product_for_sales_id=new_item.id,
+                    )
+                    db.session.add(new_payment)
+
+            else: 
+                print(f"Adding new: term_detail={term}, amount={amount}")
+                new_payment = installmentsPaymentModel(
+                    term_detail=term,
+                    amount=amount,
+                    product_for_sales_id=new_item.id,
+                )
+                db.session.add(new_payment)
+
+        db.session.commit()
+        print("All data saved successfully!")  # แจ้งเตือนว่าเซฟสำเร็จ
+    else:
+        print("Error: term_detail_list and installments_list do not match in length.")            
     # print(datas)
     return redirect(url_for('product_blueprint.productSales'))
 
@@ -477,7 +530,7 @@ def addProductSale():
 @login_required
 @read_permission.require(http_exception=403)
 def updateProductSale():
-    # print(request.form)
+    print(request.form)
     # รับค่าจาก request.form
     id = request.form.get('id') or None
     name = request.form.get('name_product') or None
@@ -487,8 +540,11 @@ def updateProductSale():
     country_id = request.form.get('country') or None
     period_id = request.form.get('period') or None
     term_of_payment_id = request.form.get('term') or None
+    
     detail = request.form.get('detail') or None
-
+    start = datetime.strptime(request.form.get("start"), "%d-%m-%Y") if request.form["start"] else None 
+    end = datetime.strptime(request.form.get("end"), "%d-%m-%Y") if request.form["end"] else None
+    
     try:
         country_id = int(country_id) if country_id and country_id.isdigit() else None
         period_id = int(period_id) if period_id and period_id.isdigit() else None
@@ -512,8 +568,100 @@ def updateProductSale():
         thisItem.period_id=period_id, 
         thisItem.term_of_payment_id=term_of_payment_id,
         thisItem.detail=detail
+        thisItem.start_at=start,
+        thisItem.end_at=end,
     
     db.session.commit()
+    
+    
+
+    installments_list = request.form.getlist('installments')  
+    term_detail_list = request.form.getlist('term_detail') 
+    term_id_list = request.form.getlist('term_id')
+    
+    db.session.query(installmentsPaymentModel).filter(installmentsPaymentModel.product_for_sales_id == thisItem.id).delete()
+    db.session.commit()
+
+   
+    
+    # ตรวจสอบว่าลิสต์ไม่ว่าง และมีขนาดเท่ากัน
+    if term_detail_list and installments_list and len(term_detail_list) == len(installments_list):
+        for i, (term, amount) in enumerate(zip(term_detail_list, installments_list)):
+            term = term.strip()  # ลบช่องว่าง
+            amount = amount.strip()  # ลบช่องว่าง
+            amount = amount.replace(',', '')
+            
+            if term_id_list and i < len(term_id_list) and term_id_list[i].strip():  # เช็คว่ามี term_id หรือไม่
+                term_id = term_id_list[i].strip()
+                existing_item = installmentsPaymentModel.query.filter_by(id=term_id).first()
+
+                if existing_item:  # ถ้ามีข้อมูลเดิมอยู่ ให้ทำการอัปเดต
+                    print(f"Updating: term_id={term_id}, term_detail={term}, amount={amount}")
+                    existing_item.term_detail = term
+                    existing_item.amount = amount
+                else:  # ถ้า term_id ไม่พบในฐานข้อมูล ให้เพิ่มใหม่
+                    print(f"Adding new (term_id not found): term_detail={term}, amount={amount}")
+                    new_item = installmentsPaymentModel(
+                        term_detail=term,
+                        amount=amount,
+                        product_for_sales_id=thisItem.id,
+                    )
+                    db.session.add(new_item)
+
+            else:  # ถ้าไม่มี term_id หรือจำนวนไม่ตรง ให้เพิ่มข้อมูลใหม่
+                print(f"Adding new: term_detail={term}, amount={amount}")
+                new_item = installmentsPaymentModel(
+                    term_detail=term,
+                    amount=amount,
+                    product_for_sales_id=thisItem.id,
+                )
+                db.session.add(new_item)
+
+        db.session.commit()
+        print("All data saved successfully!")  # แจ้งเตือนว่าเซฟสำเร็จ
+    else:
+        print("Error: term_detail_list and installments_list do not match in length.")
+
+    # ตรวจสอบว่าลิสต์ไม่ว่าง และมีขนาดเท่ากัน
+    # if term_detail_list and installments_list and len(term_detail_list) == len(installments_list) == len(term_id_list):
+    #     for term, amount, term_id in zip(term_detail_list, installments_list, term_id_list):
+    #         print(f"Processing: term_detail={term}, amount={amount}, term_id={term_id}")  # ตรวจสอบค่าก่อนบันทึก
+
+    #         # ค้นหาข้อมูลที่มี product_for_sales_id และ id ตรงกัน
+    #         payment_item = installmentsPaymentModel.query.filter_by(
+    #             product_for_sales_id=thisItem.id,  # product_for_sales_id ตรงกับ thisItem.id
+    #             id=term_id  # ใช้ term_id ที่มาจาก term_id_list
+    #         ).first()
+
+    #         if payment_item:
+    #             print(f"Found existing item with ID: {payment_item.id}")
+    #             # หากเจอข้อมูลแล้วให้ทำการแก้ไข
+    #             payment_item.term_detail = term.strip()  # ลบช่องว่างด้านหน้าและหลัง
+    #             payment_item.amount = amount.strip()  # ลบช่องว่างด้านหน้าและหลัง
+    #             print(f"Updating: term_detail={term}, amount={amount}")  # แจ้งเตือนว่าทำการอัปเดต
+    #         else:
+    #             print(f"No existing item found for term_id={term_id}")
+    #             # หากไม่เจอข้อมูลให้เพิ่มข้อมูลใหม่
+    #             payment_item = installmentsPaymentModel(
+    #                 term_detail=term.strip(),  # ลบช่องว่างด้านหน้าและหลัง
+    #                 amount=amount.strip(),  # ลบช่องว่างด้านหน้าและหลัง
+    #                 product_for_sales_id=thisItem.id,
+    #             )
+    #             db.session.add(payment_item)
+    #             print(f"Adding: term_detail={term}, amount={amount}")  # แจ้งเตือนว่าทำการเพิ่มข้อมูลใหม่
+
+    #     try:
+    #         print("Committing changes to the database...")
+    #         db.session.commit()
+    #         print("All data saved or updated successfully!")
+    #     except Exception as e:
+    #         print(f"Error saving data: {e}")
+    #         db.session.rollback()  # Rollback in case of error
+    # else:
+    #     print("Error: term_detail_list, installments_list, and term_id_list do not match in length.")
+
+
+    
     
    
     if request.files:

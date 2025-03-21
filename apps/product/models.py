@@ -124,7 +124,11 @@ class ProductForSalesModel(db.Model):
     
     images = db.relationship("MD_Image", back_populates="product", cascade="all, delete", lazy=True)
     files = db.relationship("FileModel", back_populates="product", cascade="all, delete", lazy=True)
+    installments= db.relationship("installmentsPaymentModel", back_populates="product", cascade="all, delete", lazy=True)
+    
     detail = db.Column(db.Text(),default=None)
+    start_at = db.Column(db.DateTime,  default=None)
+    end_at = db.Column(db.DateTime,  default=None)
 
     
     created_at = db.Column(db.DateTime,  default=db.func.current_timestamp())
@@ -144,6 +148,10 @@ class FileModel(db.Model):
     product_for_sales_id = db.Column(db.Integer, db.ForeignKey("product_for_sales.id", ondelete="CASCADE"))
     product = db.relationship("ProductForSalesModel", back_populates="files")  # ✅ back_populates ที่ถูกต้อง
     flag_delete = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime,  default=db.func.current_timestamp())
+    updated_at = db.Column(db.DateTime,  default=db.func.current_timestamp(),
+                           onupdate=db.func.current_timestamp())
+    
     
 @dataclass
 class MD_Image(db.Model):
@@ -158,5 +166,26 @@ class MD_Image(db.Model):
     
     product_for_sales_id = db.Column(db.Integer, db.ForeignKey("product_for_sales.id", ondelete="CASCADE"))
     product = db.relationship("ProductForSalesModel", back_populates="images")  # ✅ ใช้ชื่อ relationship ที่ถูกต้อง
+    created_at = db.Column(db.DateTime,  default=db.func.current_timestamp())
+    updated_at = db.Column(db.DateTime,  default=db.func.current_timestamp(),
+                           onupdate=db.func.current_timestamp())
+    
+
+@dataclass
+class installmentsPaymentModel(db.Model):
+    __tablename__ = "installments_payment"
+    
+    id: int
+    term_detail: str
+    amount: str
+    
+    id = db.Column(db.Integer, primary_key=True)
+    term_detail = db.Column(db.String(), nullable=False)
+    amount = db.Column(db.String(), nullable=False)
+    product_for_sales_id = db.Column(db.Integer, db.ForeignKey("product_for_sales.id", ondelete="CASCADE"))
+    product = db.relationship("ProductForSalesModel", back_populates="installments")
+    created_at = db.Column(db.DateTime,  default=db.func.current_timestamp())
+    updated_at = db.Column(db.DateTime,  default=db.func.current_timestamp(),
+                           onupdate=db.func.current_timestamp())
     
     
