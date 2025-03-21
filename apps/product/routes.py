@@ -19,6 +19,8 @@ import json
 import os
 from datetime import datetime
 import uuid
+from sqlalchemy import and_, func, case, asc
+
 
 read_permission = Permission(RoleNeed("read_permission"))
 write_permission = Permission(RoleNeed("write_permission"))
@@ -349,14 +351,12 @@ def productSales():
 @read_permission.require(http_exception=403)
 def createProductSales():
     productCar = ProductCategoryModel.query.all()
-    country = CountryModel.query.all()
+    country = CountryModel.query.order_by(asc(CountryModel.name)).all()
     period = PeriodModel.query.all()
-    # termOfPaymentModel = term_of_paymentModel.query.filter_by(term_of_paymentModel.name !="0").all()
-    termOfPaymentModel = term_of_paymentModel.query.filter(term_of_paymentModel.name != "0").all()
-
-
-
+    termOfPaymentModel = term_of_paymentModel.query.order_by(term_of_paymentModel.name).all()
     
+
+
     return render_template('/productForSales/createProductSales.html', segment='productSales' ,productCars=productCar, countrys=country, periods=period,termOfPaymentModels=termOfPaymentModel)
 
 @blueprint.route('/EditProductSales/<id>')
@@ -366,9 +366,9 @@ def EditProductSales(id):
 
     datas= ProductForSalesModel.query.filter_by(id=id).first()
     productCar = ProductCategoryModel.query.all()
-    country = CountryModel.query.all()
+    country = CountryModel.query.order_by(asc(CountryModel.name)).all()
     period = PeriodModel.query.all()
-    termOfPaymentModel = term_of_paymentModel.query.all()
+    termOfPaymentModel = term_of_paymentModel.query.order_by(term_of_paymentModel.name).all()
     file_data = FileModel.query.filter_by(product_for_sales_id = datas.id).all()
     print("DEBUG: datas.id ->", datas.id)  # ตรวจสอบค่าก่อน Query
     payment = installmentsPaymentModel.query.filter_by(product_for_sales_id=datas.id).all()
