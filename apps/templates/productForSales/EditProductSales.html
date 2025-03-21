@@ -106,16 +106,27 @@
                             </select>
                         </div>
                     </div>
+                    
                     <div class="row mb-3">
                         <label class="form-label col-form-label col-md-4">Period</label>
                         <div class="col-lg-8">
                             <select class="default-select2 form-control"  name="period" id="i_period" >
                                 <option value="">ไม่มี</option>
                                 {% for period in periods %}
-                                    <option value="{{period.id}}" {% if datas.period_id|int == period.id|int %} selected {% endif %}>{{period.name}}</option>
+                                    <option value="{{period.id}}" data-period="{{period.name}}" {% if datas.period_id|int == period.id|int %} selected {% endif %}>{{period.name}}</option>
                                 {% endfor %}
                             </select>
                         </div>
+                    </div>
+                    <div class="form-group row mb-3">
+                        <label class="form-label col-form-label col-lg-4">ระยะเวลาโครงการ</label>
+                            <div class="col-lg-8">
+                                <div class="input-group input-daterange">
+                                    <input type="text" class="form-control" name="start" id="w_start" placeholder="Date Start" required autocomplete="off" value="{{ datas.start_at.strftime('%d-%m-%Y') if datas.start_at else '' }}" />
+                                    <span class="input-group-text input-group-addon">to</span>
+                                    <input type="text" class="form-control" name="end" id="w_end"placeholder="Date End" required autocomplete="off" value="{{ datas.end_at.strftime('%d-%m-%Y') if datas.end_at else '' }}"/>
+                                </div>
+                            </div>
                     </div>
                     <div class="row mb-3"  >
                         <label class="form-label col-form-label col-md-4">Year</label>
@@ -166,15 +177,14 @@
                         <label class="form-label col-form-label col-md-4">ราคาขาย</label>
 
                         <div class="col-md-8">
-                            <input  class="form-control"  name="price" id="i_price"  value="{{datas.price}}"  display data-parsley-required="true"/>
+                            <input  class="form-control"  name="price" id="i_price"  value="{{datas.price}}"  onchange="formatNumberInter(this)" display data-parsley-required="true"/>
                             
                         </div>
                     </div>
-                   <div class="row mb-15px">
+                   <div class="row mb-15px" hidden>
                         <label class="form-label col-form-label col-md-4">ราคาทุน</label>
                         <div class="col-md-8">
                             <input  class="form-control"  name="cost" id="i_cost"  value=""  display data-parsley-required="true"/>
-                            
                         </div>
                     </div>
                    <div class="row mb-15px">
@@ -183,11 +193,18 @@
                            <select class="default-select2 form-control"  name="term" id="i_term" >
                                 <option value="">ไม่มี</option>
                                 {% for term in termOfPaymentModels %}
-                                    <option value="{{term.id}}" {% if datas.term_of_payment_id|int == term.id|int %} selected {% endif %}>{{term.name}}</option>
+                                    <option value="{{term.name}}" {% if datas.term_of_payment_id|int == term.name|int %} selected {% endif %}>{{term.name}}</option>
                                 {% endfor %}
                             </select>
                             
                         </div>
+                    </div>
+                    <div class="row mb-15px">
+
+                        <input type="hidden" id="paymentData" value='{{ payments | tojson | safe }}'>
+
+                        <div id="extra-inputs"></div>
+
                     </div>
                 </div>
                                 
@@ -307,6 +324,95 @@
 <script src="{{ config.ASSETS_ROOT }}/js/demo/render.highlight.js"></script>
 <script src="{{ config.ASSETS_ROOT }}/js/productForSales/mainUpdateProduct.js?v=1.01"></script>
 <script>
+
+$(document).ready(function () {
+    function generateInputs(termValue, payments = []) {
+        let termNumber = parseInt(termValue, 10); 
+        let extraInputsContainer = $("#extra-inputs");
+
+        extraInputsContainer.empty(); 
+
+        if (!isNaN(termNumber) && termNumber > 0) { 
+            for (let i = 0; i < termNumber; i++) {
+                let defaultID = payments[i] ? payments[i].id : "";
+                let defaultDetail = payments[i] ? payments[i].term_detail : "";
+                let defaultAmount = payments[i] ? payments[i].amount : "";
+
+                let newRow = `
+                    <div class="row mb-15px">
+                        <label class="form-label col-form-label col-md-4">จำนวนงวด ${i + 1}</label>
+                        <div class="col-md-4">
+                            <input type="text" class="form-control" hidden name="term_id" value="${defaultID}" placeholder="รายละเอียด">
+                            <input type="text" class="form-control" name="term_detail" value="${defaultDetail}" placeholder="รายละเอียด">
+                        </div>
+                        <div class="col-md-4">
+                            <input type="text" class="form-control" name="installments" value="${defaultAmount}" onchange="formatNumberWithCommas(this)" placeholder="จำนวนงวด ${i + 1}">
+                        </div>
+                    </div>
+                `;
+                extraInputsContainer.append(newRow);
+            }
+        }
+    }
+
+    let payments = JSON.parse($("#paymentData").val() || "[]");
+
+    let initialTermValue = $("#i_term").val();
+    if (initialTermValue) {
+        generateInputs(initialTermValue, payments);
+    }
+
+    $("#i_term").change(function () {
+        let termValue = $(this).val().trim();
+        generateInputs(termValue, payments);
+    });
+});
+
+
+// $(document).ready(function () {
+//     function generateInputs(termValue) {
+//         let termNumber = parseInt(termValue, 10); // แปลงเป็นตัวเลข
+//         let extraInputsContainer = $("#extra-inputs");
+
+//         extraInputsContainer.empty(); // ล้างข้อมูลเก่า
+
+//         if (!isNaN(termNumber) && termNumber > 0) { // ตรวจสอบว่าเป็นตัวเลข และมากกว่า 0
+//             for (let i = 0; i < termNumber; i++) {
+//                 let defaultDetail = `รายละเอียดงวด ${i + 1}`;
+//                 let defaultAmount = `${(i + 1) * 1000}`; // ตัวอย่างจำนวนเงิน
+
+//                 let newRow = `
+//                     <div class="row mb-15px">
+//                         <label class="form-label col-form-label col-md-4">จำนวนงวด ${i + 1}</label>
+//                         <div class="col-md-4">
+//                             <input type="text" class="form-control" name="term_detail" value="" placeholder="รายละเอียด">
+//                         </div>
+//                         <div class="col-md-4">
+//                             <input type="text" class="form-control" name="installments" value="" placeholder="จำนวนงวด ${i + 1}">
+//                         </div>
+//                     </div>
+//                 `;
+//                 extraInputsContainer.append(newRow);
+//             }
+//         }
+//     }
+
+//     // ดึงค่าที่เลือกไว้ตอนโหลดหน้าเว็บ
+//     let initialTermValue = $("#i_term").val();
+//     if (initialTermValue) {
+//         generateInputs(initialTermValue); // เรียกใช้งานตอนโหลดหน้า
+//     }
+
+//     // ฟังก์ชันเปลี่ยนค่าตามที่เลือก
+//     $("#i_term").change(function () {
+//         let termValue = $(this).val().trim(); 
+//         generateInputs(termValue);
+//     });
+// });
+
+
+</script>
+<script>
 console.log({{datas|tojson|safe}})
 
 function sweetAlertDelSign(id_file,id_product) {
@@ -339,6 +445,36 @@ function sweetAlertDelSign(id_file,id_product) {
             });
         }
     });
+}
+
+function formatNumberWithCommas(number) {
+    return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+function formatNumberInter(input) {
+
+    let value = input.value;
+
+    // ตรวจสอบว่าค่าที่ใส่มาเป็นตัวเลขหรือไม่
+    if (!value) {
+        input.value = ''; // ถ้าไม่มีค่า ให้เคลียร์
+        return;
+    }
+
+    // ลบ comma ออกก่อนทำการประมวลผล
+    value = value.replace(/,/g, '');
+
+    // ตรวจสอบว่าค่าเป็นตัวเลขหรือไม่
+    if (isNaN(value)) {
+        input.value = ''; // ถ้าไม่ใช่ตัวเลข ให้เคลียร์ค่า
+        return;
+    }
+
+    // แปลงค่าเป็นจำนวนเต็ม
+    let number = parseInt(value, 10);
+
+    // กำหนดค่ากลับโดยเพิ่ม comma ให้ตัวเลข
+    input.value = number.toLocaleString();
 }
 </script>
 

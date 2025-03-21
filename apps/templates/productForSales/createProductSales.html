@@ -117,6 +117,16 @@
                             </select>
                         </div>
                     </div>
+                    <div class="form-group row mb-3">
+                        <label class="form-label col-form-label col-lg-4">ระยะเวลาโครงการ</label>
+                            <div class="col-lg-8">
+                                <div class="input-group input-daterange">
+                                    <input type="text" class="form-control" name="start" id="w_start" placeholder="Date Start" required autocomplete="off" />
+                                    <span class="input-group-text input-group-addon">to</span>
+                                    <input type="text" class="form-control" name="end" id="w_end"placeholder="Date End" required autocomplete="off" />
+                                </div>
+                            </div>
+                    </div>
                     <div class="row mb-3"  >
                         <label class="form-label col-form-label col-md-4">Year</label>
                         <div class="col-md-8">
@@ -139,11 +149,11 @@
                         <label class="form-label col-form-label col-md-4">ราคาขาย</label>
 
                         <div class="col-md-8">
-                            <input  class="form-control"  name="price" id="i_price"  value=""  display data-parsley-required="true"/>
+                            <input  class="form-control"  name="price" id="i_price"  value="0"  oninput="formatNumber(this)" display data-parsley-required="true"/>
                             
                         </div>
                     </div>
-                   <div class="row mb-15px">
+                   <div class="row mb-15px" hidden>
                         <label class="form-label col-form-label col-md-4">ราคาทุน</label>
                         <div class="col-md-8">
                             <input  class="form-control"  name="cost" id="i_cost"  value=""  display data-parsley-required="true"/>
@@ -153,14 +163,18 @@
                    <div class="row mb-15px">
                         <label class="form-label col-form-label col-md-4">Term Of Payment</label>
                         <div class="col-md-8">
-                           <select class="default-select2 form-control"  name="term" id="i_term" >
+                           <select class="default-select2 form-control"  name="term" id="i_term"  >
                                 <option value="">ไม่มี</option>
                                 {% for term in termOfPaymentModels %}
-                                    <option value="{{term.id}}">{{term.name}}</option>
+                                    <option value="{{term.name}}">{{term.name}}</option>
                                 {% endfor %}
                             </select>
                             
                         </div>
+                    </div>
+                    <div class="row mb-15px">
+                        <div id="extra-inputs"></div>
+
                     </div>
                 </div>
                                 
@@ -267,8 +281,60 @@
 <script src="{{ config.ASSETS_ROOT }}/plugins/@highlightjs/cdn-assets/highlight.min.js"></script>
 <script src="{{ config.ASSETS_ROOT }}/js/demo/render.highlight.js"></script>
 <script src="{{ config.ASSETS_ROOT }}/js/productForSales/mainCreatProduct.js?v=1.01"></script>
-<script>
 
+<script>
+$(document).ready(function () {
+    $("#i_term").change(function () {
+        let termValue = $(this).val(); // ดึงค่าที่เลือก
+        let termNumber = parseInt(termValue, 10); // แปลงเป็นตัวเลขฐาน 10
+        let extraInputsContainer = $("#extra-inputs");
+
+        extraInputsContainer.empty(); // ล้างข้อมูลเดิมก่อนเพิ่มใหม่
+
+        if (!isNaN(termNumber) && termNumber > 0) { // ตรวจสอบว่าเป็นตัวเลขและมากกว่า 0
+            for (let i = 0; i < termNumber; i++) { // วน loop ตามจำนวนที่เลือก
+                let newRow = `
+                    <div class="row mb-15px">
+                        <label class="form-label col-form-label col-md-4">จำนวนงวด ${i + 1}</label>
+                        <div class="col-md-4">
+                            <input type="text" class="form-control" hidden name="term_id" value="" placeholder="รายละเอียด">
+                            <input type="text" class="form-control" name="term_detail"  placeholder="รายละเอียด">
+                        </div>
+                        <div class="col-md-4">
+                            <input type="text" class="form-control" name="installments"  value="0"  oninput="formatNumber(this)" placeholder="จำนวนงวด ${i + 1}">
+                        </div>
+                    </div>
+                `;
+                extraInputsContainer.append(newRow);
+            }
+        }
+    });
+});
+</script>
+
+<script>
+function formatNumber(input) {
+    let value = input.value;
+
+    // ลบ comma ออกจากค่าที่ป้อน
+    value = value.replace(/,/g, '');
+
+    let regex = /^\d+(\.\d{0,2})?$/;
+    if (!regex.test(value)) {
+        input.value = input.value.slice(0, -1); // ลบตัวอักษรสุดท้ายที่เกินออก
+        return;
+    }
+
+    // แปลงค่าเป็นตัวเลข
+    let number = parseFloat(value);
+
+    // แยกส่วนหน้าและส่วนทศนิยม
+    let parts = value.split('.');
+    parts[0] = parseInt(parts[0], 10).toLocaleString(); // เพิ่ม comma ให้เฉพาะส่วนหน้า
+
+    // รวมค่ากลับ
+    input.value = parts.length > 1 ? parts.join('.') : parts[0];
+}
 
 </script>
 

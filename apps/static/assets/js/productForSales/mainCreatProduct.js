@@ -1,4 +1,25 @@
+$("#w_start").datepicker({
+    todayHighlight: true,
+    format: "dd-mm-yyyy",
+}).on("changeDate", function(e) {
+    // ดึงวันที่ที่ถูกเลือกจาก #w_start
+    var startDate = e.date;
+    
+    // let initialSelected = $("#i_period").find("option:selected").data("period");
+    // console.log("term_perid :",initialSelected)
+    // คำนวณวันที่ +1 ปี
+//     var endDate = new Date(startDate);
+//     endDate.setFullYear(endDate.getFullYear() + 1);
+//     endDate.setDate(endDate.getDate() - 1);
 
+//     // อัปเดตค่าเริ่มต้นของ #w_end
+//     $("#w_end").datepicker("setDate", endDate);
+});
+$("#w_end").datepicker({
+    todayHighlight: true,
+    format: "dd-mm-yyyy",
+});
+// de
 // delete
 function post(path, params, method = "post") {
     const form = document.createElement("form");
