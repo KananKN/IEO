@@ -721,21 +721,20 @@ def upload_file():
 
 @blueprint.route('/download/<filename>')
 def downloadFile(filename):
-    file = FileModel.query.filter_by(filename=filename).first()
     
-    # ถ้าไม่มีไฟล์ในฐานข้อมูล ให้แสดง error 404
-    if not file:
-        abort(404, description="ไม่พบไฟล์ที่ต้องการดาวน์โหลด")
+    file = FileModel.query.filter_by(filename=filename).first()
+   
+    filename_without_ext, file_extension = file.filepath.rsplit('.', 1)
 
-    # ตรวจสอบพาธไฟล์จากฐานข้อมูล (ป้องกันพาธซ้ำซ้อน)
-    if file.filepath.startswith("apps/") or file.filepath.startswith("static/"):
-        file_path = os.path.join("D:/ieo", file.filepath)
-    else:
-        file_path = os.path.join("D:/ieo/apps/static/assets/files", file.filepath)
+    # print(f"ชื่อไฟล์: {filename_without_ext}")  
+    # print(f"นามสกุล: {file_extension}")  # pd
+    path = "static\\assets\\files\\" + file.filename+'.'+file_extension   
+    file_path = os.path.join(path)    # file = FileModel.query.filter_by(filename=filename).first()
+    
+   
 
-    # ตรวจสอบว่าไฟล์มีอยู่จริงหรือไม่
-    if not os.path.exists(file_path):
-        abort(404, description="ไฟล์ที่ต้องการดาวน์โหลดไม่มีอยู่ในระบบ")
+    
+
     
     return send_file(file_path, as_attachment=True)
 
@@ -751,6 +750,7 @@ def product_delete_file():
     
     if thisFile.file_type == 1:
         try:
+            
             path = "apps\\static\\assets\\files\\" + thisFile.filename+'.pdf'
             file_path = os.path.join(path)
             # print(file_path)
