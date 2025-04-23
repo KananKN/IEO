@@ -44,6 +44,8 @@ class CountryModel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(), nullable=False)  
     products = db.relationship("ProductForSalesModel", backref="country", cascade="all, delete" )
+    supplier = db.relationship("SupplierModel", backref="country", cascade="all, delete" )
+    employee = db.relationship("EmployeeModel", backref="country", cascade="all, delete" )
     created_at = db.Column(db.DateTime,  default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime,  default=db.func.current_timestamp(),
                            onupdate=db.func.current_timestamp())

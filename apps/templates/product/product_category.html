@@ -26,7 +26,7 @@
             <!-- ฝั่งซ้าย: รายการอุปกรณ์ + ปุ่มบวก -->
             <div class="d-flex align-items-center">
                 <h6 class="page-header m-0">Product Category</h6>
-                {% if current_user.has_permission('write_resource') %}
+                {% if current_user.has_permission('write_product') %}
                      <a class="btn btn-success ms-3 shadow-sm  bg-gradient" onclick="func_modal('add')">
                             <i class="fa fa-plus"></i> เพิ่ม
                         </a> 
@@ -78,13 +78,13 @@
                                     <td width="40%">{{data.name}}</td>
                                    
                                     <td  class="with-btn text-center" width="10%">
-                                        {% if current_user.has_permission('write_resource') %}
+                                        {% if current_user.has_permission('write_product') %}
                                             <a  class=" btn btn-dark btn-icon btn-circle btn-lg" onclick='func_modal("edit",{{data|tojson|safe}})' >
                                                 <i class="fa fa-pencil-alt"></i>
                                             </a>
                                             
                                         {% endif %}
-                                        {% if current_user.has_permission('delete_resource') %}
+                                        {% if current_user.has_permission('delete_product') %}
                                             <a  onclick="sweetAlertDel({{ data.id }})" class=" btn btn-danger btn-icon btn-circle btn-lg">
                                                 <i class="fa fa-trash"></i>
                                             </a>
@@ -122,7 +122,7 @@
                         </div>
                     </div>
                     <div class="row mb-3">
-                        <label class="form-label col-form-label col-md-4">Product Category</label>
+                        <label class="form-label col-form-label col-md-4">Product Category<span class="text-danger">*</span></label>
                         <div class="col-md-8">
                             <input type="text" class="form-control" placeholder="" name="name_product" data-parsley-required="true"/>
                         </div>
@@ -176,6 +176,35 @@
 <script src="{{ config.ASSETS_ROOT }}/js/product/main_ProtductCategory.js?v1.0"></script>
 
 
+<script>
+    
+function func_modal(mode, data) {
+    console.log(mode, data)
+    $('#modal-dialog').modal('show');
 
+    if (mode == 'add') {
+        // $('form').attr('action', '/customer/add');
+        $('.modal-title').html('Add');
+        $('.c_add').show()
+        $('.c_edit').hide()
+        $('.modal-title').html('Add');
+        $('[name="name_product"]').val('');
+       
+
+
+    } else if (mode == 'edit') {
+        // $('form').attr('action', '/customer/edit');
+        $('.modal-title').html('Edit');
+        $('.c_add').hide()
+        $('.c_edit').show()
+
+        $('[name="id"]').val(data.id);
+        $('[name="name_product"]').val(data.name);
+       
+        
+    }
+
+}
+</script>
 
 {% endblock javascripts %}

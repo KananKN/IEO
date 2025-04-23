@@ -4,6 +4,8 @@ import re
 from apps.product import blueprint
 from apps.authentication.models import *
 from apps.product.models import *
+from apps.supplier.models import *
+from apps.employee.models import *
 from apps import db
 from flask import render_template, request, redirect, url_for, flash, Markup, jsonify, abort, send_file
 from flask_login import login_required, current_user, logout_user
@@ -354,10 +356,12 @@ def createProductSales():
     country = CountryModel.query.order_by(asc(CountryModel.name)).all()
     period = PeriodModel.query.all()
     termOfPaymentModel = term_of_paymentModel.query.order_by(term_of_paymentModel.name).all()
+    supplier = SupplierModel.query.order_by(SupplierModel.name).all()
+    employee = EmployeeModel.query.order_by(EmployeeModel.name).all()
     
 
 
-    return render_template('/productForSales/createProductSales.html', segment='productSales' ,productCars=productCar, countrys=country, periods=period,termOfPaymentModels=termOfPaymentModel)
+    return render_template('/productForSales/createProductSales.html', segment='productSales' ,productCars=productCar, countrys=country, periods=period,termOfPaymentModels=termOfPaymentModel,suppliers=supplier,employees=employee)
 
 @blueprint.route('/EditProductSales/<id>')
 @login_required
@@ -370,12 +374,17 @@ def EditProductSales(id):
     period = PeriodModel.query.all()
     termOfPaymentModel = term_of_paymentModel.query.order_by(term_of_paymentModel.name).all()
     file_data = FileModel.query.filter_by(product_for_sales_id = datas.id).all()
-    print("DEBUG: datas.id ->", datas.id)  # ตรวจสอบค่าก่อน Query
     payment = installmentsPaymentModel.query.filter_by(product_for_sales_id=datas.id).all()
-    print("DEBUG: payment ->", payment)
+    supplier = SupplierModel.query.order_by(SupplierModel.name).all()
+    employee = EmployeeModel.query.order_by(EmployeeModel.name).all()
+    productSup = ProductSupplierAssociation.query.filter_by(product_id=id).all()
+    selected_suppliers = [p.supplier_id for p in productSup]
+    
+    productEmplo = ProductEmployerAssociation.query.filter_by(product_id=id).all()
+    selected_employee = [e.employee_id for e in productEmplo]
     
 
-    return render_template('/productForSales/EditProductSales.html', segment='productSales' , datas=datas, productCars=productCar, countrys=country, periods=period,termOfPaymentModels=termOfPaymentModel, file_data=file_data,payments=payment)
+    return render_template('/productForSales/EditProductSales.html', segment='productSales' , datas=datas, productCars=productCar, countrys=country, periods=period,termOfPaymentModels=termOfPaymentModel, file_data=file_data,payments=payment,suppliers=supplier,employees=employee,selected_suppliers=selected_suppliers,selected_employee=selected_employee)
 
 @blueprint.route('/addProductSale', methods=['GET', 'POST'])
 @login_required
@@ -395,7 +404,8 @@ def addProductSale():
     start = datetime.strptime(request.form.get("start"), "%d-%m-%Y") if request.form["start"] else None 
     end = datetime.strptime(request.form.get("end"), "%d-%m-%Y") if request.form["end"] else None 
     # ✅ ตรวจสอบว่า country_id และ period_id ได้ค่าที่ถูกต้อง (ต้องเป็นตัวเลข ไม่ใช่ function)
-    
+    supplier_ids = request.form.getlist('supplier') or None
+    employee_ids = request.form.getlist('employee') or None
     if price:
         price = float(price.replace(',', ''))  # 
     else:
@@ -543,7 +553,33 @@ def addProductSale():
         db.session.commit()
         print("All data saved successfully!")  # แจ้งเตือนว่าเซฟสำเร็จ
     else:
-        print("Error: term_detail_list and installments_list do not match in length.")            
+        print("Error: term_detail_list and installments_list do not match in length.")    
+        
+    if supplier_ids:
+        for supplier_id in supplier_ids:
+            # สร้างความสัมพันธ์ในตาราง ProgramSupplierAssociation
+            new_association = ProductSupplierAssociation(
+                product_id=new_item.id,
+                supplier_id=supplier_id,
+            )
+
+            db.session.add(new_association)
+
+        db.session.commit()  # บันทึกข้อมูลลงฐานข้อมูล
+        print("เพิ่ม Supplier เข้าโครงการสำเร็จ")         
+           
+    if employee_ids:
+        for employee_id in employee_ids:
+            # สร้างความสัมพันธ์ในตาราง ProgramSupplierAssociation
+            new_associationEmployee = ProductEmployerAssociation(
+                product_id=new_item.id,
+                employee_id=employee_id,
+            )
+
+            db.session.add(new_associationEmployee)
+
+        db.session.commit()  # บันทึกข้อมูลลงฐานข้อมูล
+        print("เพิ่ม Employee เข้าโครงการสำเร็จ")            
     # print(datas)
     return redirect(url_for('product_blueprint.EditProductSales',id=new_item.id))
 
@@ -551,7 +587,7 @@ def addProductSale():
 @login_required
 @read_permission.require(http_exception=403)
 def updateProductSale():
-    # print(request.form)
+    print(request.form)
     # รับค่าจาก request.form
     id = request.form.get('id') or None
     name = request.form.get('name_product') or None
@@ -561,6 +597,8 @@ def updateProductSale():
     country_id = request.form.get('country') or None
     period_id = request.form.get('period') or None
     term_of_payment_id = request.form.get('term') or None
+    supplier_ids = request.form.getlist('supplier') or None
+    employee_ids = request.form.getlist('employee') or None
     
     detail = request.form.get('detail') or None
     start = datetime.strptime(request.form.get("start"), "%d-%m-%Y") if request.form["start"] else None 
@@ -705,6 +743,37 @@ def updateProductSale():
                     db.session.add(newfile)
 
             db.session.commit()
+    
+    db.session.query(ProductSupplierAssociation).filter(ProductSupplierAssociation.product_id == thisItem.id).delete()
+    db.session.query(ProductEmployerAssociation).filter(ProductEmployerAssociation.product_id == thisItem.id).delete()
+    db.session.commit()        
+    if supplier_ids:
+        for supplier_id in supplier_ids:
+            # สร้างความสัมพันธ์ในตาราง ProgramSupplierAssociation
+            new_association = ProductSupplierAssociation(
+                product_id=thisItem.id,
+                supplier_id=supplier_id,
+            )
+
+            db.session.add(new_association)
+
+        db.session.commit()  # บันทึกข้อมูลลงฐานข้อมูล
+        print("เพิ่ม Supplier เข้าโครงการสำเร็จ")
+    
+        
+    if employee_ids:
+        for employee_ids in employee_ids:
+            # สร้างความสัมพันธ์ในตาราง ProgramSupplierAssociation
+            new_associationEmployee = ProductEmployerAssociation(
+                product_id=thisItem.id,
+                employee_id=employee_ids,
+            )
+
+            db.session.add(new_associationEmployee)
+
+        db.session.commit()  # บันทึกข้อมูลลงฐานข้อมูล
+        print("เพิ่ม Employee เข้าโครงการสำเร็จ")  
+   
     
     # print(datas)
     return redirect(url_for('product_blueprint.EditProductSales',id=thisItem.id))
