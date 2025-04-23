@@ -46,9 +46,9 @@
 {% block content %}
        
 <!-- <form action="/order/add" id="myForm" method="POST" data-parsley-validate="true" enctype="multipart/form-data">-->
-<form  id="myForm" data-parsley-validate="true" enctype="multipart/form-data"> 
+<form  id="myForm" data-parsley-validate="true" enctype="multipart/form-data" autocomplete="off"> 
 
-
+<input type="text" name="fakefield" style="display:none">
 <div id="content" class="app-content">
 
 {% with messages = get_flashed_messages(with_categories=true) %}
@@ -212,41 +212,40 @@
             </div>
 
             <hr class="my-3">
-            <div class="row">
-                <div class="col-sm-6">
-                    <div class="row mb-15px">
+            <div class="row" >
+                <div class="col-sm-6" >
+                    <div class="row mb-15px" >
                         <label class="form-label col-form-label col-md-4">Employee</label>
                         <div class="col-md-8">
-                            <input  class="form-control" readonly name="term" id="i_term"  value="" hidden  display data-parsley-required="true"/>
-                            <select class="multiple-select2 form-control" multiple>
-                                <optgroup label="Alaskan/Hawaiian Time Zone">
-                                    <option value="AK">Alaska</option>
-                                    <option value="HI">Hawaii</option>
-                                </optgroup>
+
+                            <select class="multiple-select2 form-control" multiple  name="employee" id="i_employee" >
+                                {% for employee in employees %}
+                                    <option value="{{employee.id}}" {% if employee.id in selected_employee  %} selected {% endif %}>{{employee.name}}</option>
+                                {% endfor %}
                             </select>
                         </div>
                     </div>
                     <div class="row mb-15px">
                         <label class="form-label col-form-label col-md-4">Supplier (organization)</label>
                         <div class="col-md-8">
-                            <input  class="form-control" readonly name="term" id="i_term" hidden  value=""  display data-parsley-required="true"/>
-                            <select class="multiple-select2 form-control" multiple>
-                                <optgroup label="Alaskan/Hawaiian Time Zone">
-                                    <option value="AK">Alaska</option>
-                                    <option value="HI">Hawaii</option>
-                                </optgroup>
+                            <select class="multiple-select2 form-control" multiple name="supplier" id="i_supplier" >
+                                {% for supplier in suppliers %}
+                                    <option value="{{ supplier.id }}"
+                                        {% if supplier.id in selected_suppliers  %} selected {% endif %}>
+                                        {{ supplier.name }}
+                                    </option>
+                                {% endfor %}
                             </select>
                         </div>
                     </div>
-                    <div class="row mb-15px">
+                    <div class="row mb-15px" hidden>
                         <label class="form-label col-form-label col-md-4">Agency</label>
                         <div class="col-md-8">
                             <input  class="form-control" readonly name="term" id="i_term"  value="" hidden  display data-parsley-required="true"/>
                             <select class="multiple-select2 form-control" multiple>
-                                <optgroup label="Alaskan/Hawaiian Time Zone">
-                                    <option value="AK">Alaska</option>
-                                    <option value="HI">Hawaii</option>
-                                </optgroup>
+                                {% for supplier in suppliers %}
+                                    <option value="{{supplier.id}}">{{supplier.name}}</option>
+                                {% endfor %}
                             </select>
                         </div>
                     </div>
@@ -280,7 +279,7 @@
                 
             </div>
 
-
+            
             
           
         </div>

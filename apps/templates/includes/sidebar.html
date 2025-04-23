@@ -50,7 +50,7 @@
                     <div class="menu-icon">
                         <i class="material-icons">home</i>
                     </div>
-                    <div class="menu-text">AMETTHINGS</div>
+                    <div class="menu-text">IEO</div>
                     <div class="menu-caret"></div>
                 </a>
                 <div class="menu-submenu">
@@ -113,7 +113,7 @@
                 </div>
             </div>
 
-            {% if current_user.has_permission('read_role') %}
+            {% if current_user.has_permission('read_product') %}
             <div
                 class="menu-item has-sub {% if segment in ['product_category', 'country', 'period', 'termOfPayment', 'productSales'] %} active {% endif %}"
             >
@@ -163,35 +163,169 @@
                 </div>
             </div>
             {% endif %}
-            {% if current_user.has_permission('read_order_represent_doctor') and
-            current_user.has_permission('read_report') %}
+            {% if current_user.has_permission('read_supplier')  %}
             <div
-                class="menu-item has-sub {% if segment in ['order_represent_doctor'] %} active {% endif %}"
+                class="menu-item has-sub {% if segment in ['fees', 'supplier_type', 'supplier_main'] %} active {% endif %}"
             >
                 <a href="javascript:;" class="menu-link">
                     <div class="menu-icon">
                         <i class="material-icons">description</i>
                     </div>
-                    <div class="menu-text">Report</div>
+                    <div class="menu-text">Supplier</div>
                     <div class="menu-caret"></div>
                 </a>
                 <div class="menu-submenu">
                     {% if
-                    current_user.has_permission('read_order_represent_doctor')
+                    current_user.has_permission('read_supplier')
                     %}
                     <div
-                        class="menu-item {% if segment == 'order_represent_doctor' %} active {% endif %}"
+                        class="menu-item {% if segment == 'fees' %} active {% endif %}"
                     >
                         <a
-                            href="/report/order_represent_doctor"
+                            href="/supplier/fees"
                             class="menu-link"
-                            ><div class="menu-text">ข้อมูล รคส.</div></a
+                            ><div class="menu-text">Fees</div></a
+                        >
+                    </div>
+                    <div
+                        class="menu-item {% if segment == 'supplier_type' %} active {% endif %}"
+                    >
+                        <a
+                            href="/supplier/supplier_type"
+                            class="menu-link"
+                            ><div class="menu-text">Supplier Type</div></a
+                        >
+                    </div>
+                    <div
+                        class="menu-item {% if segment == 'supplier_main' %} active {% endif %}"
+                    >
+                        <a
+                            href="/supplier/supplier_main"
+                            class="menu-link"
+                            ><div class="menu-text">Supplier</div></a
                         >
                     </div>
                     {% endif %}
                 </div>
             </div>
-            {% endif %} {% if current_user.has_permission('read_po_send_mail')
+            {% endif %}
+            {% if current_user.has_permission('read_employee')%}
+            <div class="menu-item  {% if segment == 'employee' %} active {% endif %}" >
+                 <a href="/employee" class="menu-link">
+                  <div class="menu-icon">
+                        <i class="fas fa-file-invoice fs-18px mx-1 mt-1"></i>
+                    </div>
+                 <div class="menu-text mt-1">Employee</div></a>
+            </div>     
+            {% endif %}  
+            <div
+                class="menu-item has-sub {% if segment in ['list_Productsupplier', 'list_ProductEmployee'] %} active {% endif %}"
+            >
+                <a href="javascript:;" class="menu-link">
+                    <div class="menu-icon">
+                        <i class="material-icons">description</i>
+                    </div>
+                    <div class="menu-text">รายการโครงการของ Supplier / Employee </div>
+                    <div class="menu-caret"></div>
+                </a>
+                <div class="menu-submenu">
+                    {% if
+                    current_user.has_permission('read_supplier')
+                    %}
+                    <div
+                        class="menu-item {% if segment == 'list_Productsupplier' %} active {% endif %}"
+                    >
+                        <a
+                            href="/supplier/list_Productsupplier"
+                            class="menu-link"
+                            ><div class="menu-text">รายการโครงการ Supplier</div></a
+                        >
+                    </div>
+                    <div
+                        class="menu-item {% if segment == 'list_ProductEmployee' %} active {% endif %}"
+                    >
+                        <a
+                            href="/employee/list_ProductEmployee"
+                            class="menu-link"
+                            ><div class="menu-text">รายการโครงการ Employee</div></a
+                        >
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% if current_user.has_permission('read_user request')  %}
+            <div
+                class="menu-item has-sub {% if segment in ['agency_request','user_request', 'list_agency','list_userAll'] %} active {% endif %}" hidden
+            >
+                <a href="javascript:;" class="menu-link">
+                    <div class="menu-icon">
+                        <i class="material-icons">description</i>
+                    </div>
+                    <div class="menu-text">รายการคนลงทะเบียนสมัคร</div>
+                    <div class="menu-caret"></div>
+                </a>
+                <div class="menu-submenu">
+                    <div
+                        class="menu-item {% if segment == 'agency_request' %} active {% endif %}"
+                    >
+                        <a
+                            href="/user_request"
+                            class="menu-link"
+                            ><div class="menu-text">คำขออนุมัตินายหน้า</div></a
+                        >
+                    </div>
+                    <div
+                        class="menu-item {% if segment == 'user_request' %} active {% endif %}"
+                    >
+                        <a
+                            href="/user_request/list_user"
+                            class="menu-link"
+                            ><div class="menu-text">คำขออนุมัติโครงการให้กับเด็ก</div></a
+                        >
+                    </div>
+                    <div
+                        class="menu-item {% if segment == 'list_agency' %} active {% endif %}"
+                    >
+                        <a
+                            href="/user_request/list_agency"
+                            class="menu-link"
+                            ><div class="menu-text">รายการ Agency/Univercity ทั้งหมดที่ลงทะเบียน</div></a
+                        >
+                    </div>
+                    <div
+                        class="menu-item {% if segment == 'list_userAll' %} active {% endif %}"
+                    >
+                        <a
+                            href="/user_request/list_userAll"
+                            class="menu-link"
+                            ><div class="menu-text">รายการคนที่สนใจโครงการ</div></a
+                        >
+                    </div>
+
+                </div>
+            </div>
+            
+            {% endif %} 
+             <div class="menu-header" hidden>Agency</div>
+             
+            {% if current_user.has_permission('read_public product')  %}
+
+            <div
+                class="menu-item {% if segment in 'public_product' %} active {% endif %}" hidden
+            >
+                <a href="/product/public_product/" class="menu-link">
+                    <div class="menu-icon">
+                        <i class="fas fa-file-invoice fs-18px mx-1 mt-1"></i>
+                    </div>
+                    <div class="menu-text">รายการโครงการ (Projects)</div>
+                </a>
+            </div>
+
+            
+           
+            {% endif %} 
+            
+            {% if current_user.has_permission('read_po_send_mail')
             %}
             <div
                 class="menu-item {% if segment in ['po_send_mail'] %} active {% endif %}"
@@ -301,13 +435,7 @@
                     </div>
                     {% endif %} {% if current_user.has_permission('read_role')
                     %}
-                    <div
-                        class="menu-item {% if segment == 'user' %} active {% endif %}"
-                    >
-                        <a href="/setting/user" class="menu-link"
-                            ><div class="menu-text">test</div></a
-                        >
-                    </div>
+                    
                     {% endif %}
                 </div>
             </div>
