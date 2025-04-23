@@ -253,6 +253,7 @@
                     {% endif %}
                 </div>
             </div>
+            <!---
             {% if current_user.has_permission('read_user request')  %}
             <div
                 class="menu-item has-sub {% if segment in ['agency_request','user_request', 'list_agency','list_userAll'] %} active {% endif %}" hidden
@@ -360,7 +361,7 @@
                     <div class="menu-text">Monk</div>
                 </a>
             </div>
-            {% endif %}
+            {% endif %}-->
             <div class="menu-header">Settings</div>
             {% if current_user.has_permission('read_thip') %}
             <div
