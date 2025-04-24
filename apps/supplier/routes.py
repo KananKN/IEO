@@ -541,7 +541,7 @@ def downloadSupplier(filename):
    
     filename_without_ext, file_extension = file.filepath.rsplit('.', 1)
 
-    path = "static\\assets\\files\\supplier\\" + file.filename+'.'+file_extension   
+    path = "static\\assets\\files\\supplier\\" + file.filename   
     file_path = os.path.join(path)    # file = FileModel.query.filter_by(filename=filename).first()
     
     
