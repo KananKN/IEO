@@ -70,11 +70,18 @@ def get_fees():
     }
 
     # เริ่ม query
-    query = FeesModel.query
 
+    search = f"%{search_value}%"
+    
+    query = db.session.query(FeesModel).filter(
+            or_(
+                FeesModel.name.ilike(search),
+                FeesModel.description.ilike(search),
+            )
+        )
     # ค้นหาข้อมูล
-    if search_value:
-        query = query.filter(FeesModel.name.ilike(f"%{search_value}%"))
+    # if search_value:
+    #     query = query.filter(FeesModel.name.ilike(f"%{search_value}%"))
 
     # นับจำนวนข้อมูลหลังจาก filter
     total_filtered = query.count()
@@ -157,8 +164,11 @@ def editFees():  # ✅ แก้ไขชื่อฟังก์ชันให
         # return redirect(url_for('supplier_blueprint.fees'))  # ✅ แก้ชื่อ route
 
     # ตรวจสอบว่ามีชื่อซ้ำหรือไม่
-    name_check = FeesModel.query.filter_by(name=name).first()
-    
+    # name_check = FeesModel.query.filter_by(name=name).first()
+    name_check = FeesModel.query.filter(
+        FeesModel.name == name,
+        FeesModel.id != id_fees  # อย่าเช็กตัวเอง
+    ).first()
     if  name_check:
         print("⚠️ พบชื่อซ้ำ:", name_check)  # ✅ ตรวจสอบว่าค่าเข้ามาแล้วจริง
         return jsonify({'status': 'Error', 'message': 'ชื่อซ้ำไม่สามารถบันทึกข้อมูล', "data": name}), 400
@@ -211,11 +221,18 @@ def get_supplierType():
         2: SupplierTypeModel.description  # คอลัมน์ที่ 2 -> description
     }
 
+    search = f"%{search_value}%"
     
+    query = db.session.query(SupplierTypeModel).filter(
+            or_(
+                SupplierTypeModel.name.ilike(search),
+                SupplierTypeModel.description.ilike(search),
+            )
+        )
     # ค้นหาข้อมูล
-    query = SupplierTypeModel.query
-    if search_value:
-        query = query.filter(SupplierTypeModel.name.ilike(f"%{search_value}%"))
+    # query = SupplierTypeModel.query
+    # if search_value:
+    #     query = query.filter(SupplierTypeModel.name.ilike(f"%{search_value}%"))
 
     # จัดเรียงลำดับข้อมูล
     if order:
@@ -295,7 +312,10 @@ def editSupplier():  # ✅ แก้ไขชื่อฟังก์ชัน�
         # return redirect(url_for('supplier_blueprint.fees'))  # ✅ แก้ชื่อ route
 
     # ตรวจสอบว่ามีชื่อซ้ำหรือไม่
-    name_check = SupplierTypeModel.query.filter_by(name=name).first()
+    name_check = SupplierTypeModel.query.filter(
+        SupplierTypeModel.name == name,
+        SupplierTypeModel.id != id_fees  # อย่าเช็กตัวเอง
+    ).first()
     
     if  name_check:
         print("⚠️ พบชื่อซ้ำ:", name_check)  # ✅ ตรวจสอบว่าค่าเข้ามาแล้วจริง
@@ -347,7 +367,9 @@ def get_supplier():
 
     query = db.session.query(SupplierModel, Product.name)\
         .outerjoin(ProductSupplierAssociation, SupplierModel.id == ProductSupplierAssociation.supplier_id)\
-        .outerjoin(Product, Product.id == ProductSupplierAssociation.product_id)
+        .outerjoin(Product, Product.id == ProductSupplierAssociation.product_id)\
+        .outerjoin(CountryModel, CountryModel.id == SupplierModel.country_id)\
+        .outerjoin(SupplierTypeModel, SupplierTypeModel.id == SupplierModel.supplierType_id)\
 
     # Mapping คอลัมน์จาก DataTable ไปยังฟิลด์ในฐานข้อมูล
     column_map = {
@@ -365,7 +387,10 @@ def get_supplier():
         query = query.filter(
             or_(
                 SupplierModel.name.ilike(search),
-                Product.name.ilike(search)
+                SupplierModel.tel.ilike(search),
+                SupplierTypeModel.name.ilike(search),
+                Product.name.ilike(search),
+                CountryModel.name.ilike(search),
             )
         )
 
@@ -715,42 +740,62 @@ def get_Productsupplier():
     
     Product = aliased(ProductForSalesModel)
     Supplier = aliased(SupplierModel)
+    SupplierType = aliased(SupplierTypeModel)
+    Country = aliased(CountryModel)
 
-    query = db.session.query(SupplierModel, Product.name)\
-        .outerjoin(ProductSupplierAssociation, SupplierModel.id == ProductSupplierAssociation.supplier_id)\
-        .outerjoin(Product, Product.id == ProductSupplierAssociation.product_id)
+    # query = db.session.query(SupplierModel, Product.name)\
+    #     .outerjoin(ProductSupplierAssociation, SupplierModel.id == ProductSupplierAssociation.supplier_id)\
+    #     .outerjoin(Product, Product.id == ProductSupplierAssociation.product_id)
 
     # Mapping คอลัมน์จาก DataTable ไปยังฟิลด์ในฐานข้อมูล
     column_map = {
-        0: SupplierModel.id,
-        1: SupplierModel.name,
-        2: SupplierModel.supplierType_id,
-        3: SupplierModel.country_id,
-        4: SupplierModel.tel,
+        0: Supplier.id,
+        1: Supplier.name,
+        2: Supplier.supplierType_id,
+        3: Supplier.country_id,
+        4: Supplier.tel,
         5: Product.name
     }
 
     # การค้นหา
+    # if search_value:
+    #     search = f"%{search_value}%"
+    #     query = query.filter(
+    #         or_(
+    #             SupplierModel.name.ilike(search),
+    #             Product.name.ilike(search)
+    #         )
+    #     )
+    
+    query = db.session.query(Supplier, Product.name).\
+    outerjoin(ProductSupplierAssociation, Supplier.id == ProductSupplierAssociation.supplier_id).\
+    outerjoin(Product, Product.id == ProductSupplierAssociation.product_id).\
+    outerjoin(CountryModel, CountryModel.id == Supplier.country_id).\
+    outerjoin(SupplierType, SupplierType.id == Supplier.supplierType_id)
+
+
     if search_value:
         search = f"%{search_value}%"
         query = query.filter(
             or_(
-                SupplierModel.name.ilike(search),
-                Product.name.ilike(search)
+                Supplier.name.ilike(search),
+                Supplier.tel.ilike(search),
+                CountryModel.name.ilike(search),
+                Product.name.ilike(search),
+                SupplierType.name.ilike(search)
             )
         )
 
     # การจัดเรียง
     if order:
         column_index = int(order[0]["column"])
-        column_order = column_map.get(column_index, SupplierModel.id)
+        column_order = column_map.get(column_index, Supplier.id)  # ✅ ใช้ alias
         sort_direction = order[0]["dir"]
-
         if sort_direction == "desc":
             column_order = column_order.desc()
         query = query.order_by(column_order)
     else:
-        query = query.order_by(SupplierModel.id)
+        query = query.order_by(Supplier.id)
 
     # Pagination
     total_records = query.count()
