@@ -74,9 +74,17 @@ def get_employee():
         column_order = EmployeeModel.id.asc()  # เรียงตาม ID ถ้าไม่มี order
 
     # ค้นหาข้อมูล
-    query = EmployeeModel.query
-    if search_value:
-        query = query.filter(EmployeeModel.name.ilike(f"%{search_value}%"))
+    search = f"%{search_value}%"
+
+    query = db.session.query(EmployeeModel).\
+        outerjoin(CountryModel, CountryModel.id == EmployeeModel.country_id).\
+        filter(
+            or_(
+                EmployeeModel.name.ilike(search),
+                CountryModel.name.ilike(search),
+                EmployeeModel.tel.ilike(search)
+            )
+        )
 
     # นับจำนวนแถวทั้งหมด
     total_records = query.count()
@@ -442,13 +450,17 @@ def get_listProductemployee():
     # ค้นหาข้อมูล
     query = db.session.query(Employee, Product.name).\
     outerjoin(ProductEmployerAssociation, Employee.id == ProductEmployerAssociation.employee_id).\
-    outerjoin(Product, Product.id == ProductEmployerAssociation.product_id)
+    outerjoin(Product, Product.id == ProductEmployerAssociation.product_id).\
+    outerjoin(CountryModel, CountryModel.id == Employee.country_id)
+
 
     if search_value:
         search = f"%{search_value}%"
         query = query.filter(
             or_(
                 Employee.name.ilike(search),
+                Employee.tel.ilike(search),
+                CountryModel.name.ilike(search),
                 Product.name.ilike(search)
             )
         )
