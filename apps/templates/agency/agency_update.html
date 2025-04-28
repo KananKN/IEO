@@ -1,0 +1,286 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} ลงทะเบียนสำหรับ Agency {% endblock %} 
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}
+
+<link href="{{ config.ASSETS_ROOT }}/plugins/datatables.net-bs5/css/dataTables.bootstrap5.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/datatables.net-responsive-bs5/css/responsive.bootstrap5.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/select2/dist/css/select2.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/tag-it/css/jquery.tagit.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/select-picker/dist/picker.min.css" rel="stylesheet" />
+{% endblock stylesheets %}
+
+{% block content %}
+
+<form  id="myForm" data-parsley-validate="true" enctype="multipart/form-data"> 
+
+    <div id="content" class="app-content">
+            
+        <div class="row" >
+            <div class="col-xl-8">
+                <div class="panel panel-inverse">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">แก้ไขข้อมูล Agency</h4>
+                        <div class="panel-heading-btn">
+                            <a href="javascript:;" class="btn btn-xs btn-icon btn-default" data-toggle="panel-expand"><i class="fa fa-expand"></i></a>
+                            <a href="javascript:;" class="btn btn-xs btn-icon btn-success" data-toggle="panel-reload"><i class="fa fa-redo"></i></a>
+                            <a href="javascript:;" class="btn btn-xs btn-icon btn-warning" data-toggle="panel-collapse"><i class="fa fa-minus"></i></a>
+                            <a href="javascript:;" class="btn btn-xs btn-icon btn-danger" data-toggle="panel-remove"><i class="fa fa-times"></i></a>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                {% for categorie, message in messages %}
+                                    <div class="alert alert-{{categorie}} alert-dismissible fade show mb-2 mt-1">
+                                        {{ message }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    </div>
+                                {% endfor %}                    
+                            {% endif %}
+                        {% endwith %}
+
+                <div class="row">
+
+                    <div class="card">
+                        <div class="card-header bg-white">
+                            <div class="d-flex justify-content-between">
+                                <h4 class="card-title my-2">แก้ไขข้อมูล Agency</h4>  
+                               
+                            </div>
+                        </div>   
+                        <div class="card-body">
+                            <div class="col-12">
+
+                                <form method="POST" action="/register">
+
+                                    <div class="row mb-3" hidden >
+                                        <label class="form-label col-form-label col-md-4">id</label>
+                                        <div class="col-md-8">
+                                            <input   class="form-control" name="id" id="id-update" data-parsley-required="true" value="{{datas.id}}"/>
+                                        </div>
+                                    </div>   
+                                    <div class="mb-3">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                            <label for="fullname" class="form-label">ชื่อ</label>
+                                            <input name="fullname" required class="form-control  me-2" value="{{datas.first_name}}" placeholder="ชื่อ">
+                                            </div>
+                                            <div class="col-md-6">
+                                            <label for="fullname" class="form-label">นามสกุล</label>
+                                            <input name="lastname" required class="form-control "  value="{{datas.last_name}}" placeholder="นามสกุล">
+                                            </div>
+                                        </div>
+                                        
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                            <label for="email" class="form-label">อีเมล</label>
+                                            <input type="email" class="form-control" name="email" value="{{datas.email}}" placeholder="อีเมล">
+                                            </div>
+                                            <div class="col-md-6">
+                                            <label for="email" class="form-label">เบอร์โทร</label>
+                                            <input name="phone" required class="form-control " value="{{datas.tel}}"placeholder="เบอร์โทรศัพท์*">
+
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                            <label for="email" class="form-label">ที่อยู่</label>
+                                            <input type="text" class="form-control" name="address" value="{{datas.address}}" placeholder="ที่อยู่">
+                                            </div>
+                                            <div class="col-md-6">
+                                            <label for="email" class="form-label">ประเทศ</label>
+                                            <input class="form-control mb-3" name="country"  value="{{datas.country}}" placeholder="ประเทศ">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3" >
+                                        <div class="row">
+                                            <div class="col-md-6" hidden>
+                                            <label class="form-label col-form-label">เลือก Product</label>
+                                                <select class="default-select2 form-control"  name="country" id="i_country" >
+                                                    <option value="">ไม่มี</option>
+                                                    {% for country in countrys %}
+                                                        <option value="{{country.id}}">{{country.name}}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6" hidden>
+                                                 <label class="form-label col-form-label">คนแนะนำ</label>
+                                                    <select class="default-select2 form-control"  name="country" id="i_country" >
+                                                        <option value="">ไม่มี</option>
+                                                        {% for country in countrys %}
+                                                            <option value="{{country.id}}">{{country.name}}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                            
+                                   
+                                            
+                                    
+                                    <div class="mb-3">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <label for="username" class="form-label">รหัส Agency</label>
+                                                <div class="input-group">
+                                                    <input name="code" readonly class="form-control-plaintext" disable value="{{datas.agency_code}}" placeholder="" >
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="name_con" class="form-label">คนแนะนำ</label>
+                                                <div class="input-group">
+                                                    <input name="name_con" readonly class="form-control-plaintext" disable value="{{datas.referred_by.first_name}} {{datas.referred_by.last_name}}" placeholder="" >
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                            
+                                    </div>
+
+                                    <div class="mb-3" >
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                           <label for="username" class="form-label">Username</label>
+                                                <div class="input-group">
+                                                    <input name="username" readonly class="form-control-plaintext" value="{{datas.user.username}}" placeholder="Username*" >
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                           
+                                            </div>
+                                        </div>
+                                        
+                                    </div>
+                                    
+                                    <div class="mb-3" >
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                            <label for="email" class="form-label">เปลียนรหัสผ่าน</label>
+                                            <input name="password" type="password"  class="form-control mb-3" placeholder="รหัสผ่าน*">
+                                            </div>
+                                            <div class="col-md-6">
+                                            <label for="email" class="form-label">ยืนยันรหัสผ่าน</label>
+                                            <input name="confirm_password" type="password"  class="form-control mb-3" placeholder="ยืนยันรหัสผ่าน">
+                                            </div>
+                                        </div>
+                                        
+                                    </div>
+                                    
+                                    <button type="button" class="btn btn-primary w-100 mb-3" onclick="validateForm()">
+                                        <i class="fa fa-user-check me-2"></i> ลงทะเบียน
+                                    </button>
+
+                                    <hr>
+                                    
+                                    <div class="row" hidden>
+                                        <div class="col-6">
+                                        <a href="/register/google" class="btn btn-danger w-100 mb-2 disabled-link" onclick="return false;">
+                                            <i class="fab fa-google me-2 bg-"></i> สมัครด้วย Google
+                                        </a>
+                                        </div>
+                                        <div class="col-6">
+                                        <a href="/register/facebook" class="btn btn-primary w-100 disabled-link" onclick="return false;">
+                                            <i class="fab fa-facebook-f me-2"></i> สมัครด้วย Facebook
+                                        </a>
+                                        </div>
+                                    </div>
+                                    <!-- ปุ่ม Google / Facebook -->
+                                    
+                                    
+                                </form>
+
+                               
+                            </div>
+                            
+
+                            
+                                
+                        </div>
+
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</form>
+<a href="javascript:;" class="btn btn-icon btn-circle btn-primary btn-scroll-to-top" data-toggle="scroll-to-top"><i class="fa fa-angle-up"></i></a>
+
+
+
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}
+<script src="{{ config.ASSETS_ROOT }}/plugins/datatables.net/js/dataTables.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/datatables.net-bs5/js/dataTables.bootstrap5.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/datatables.net-responsive/js/dataTables.responsive.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/datatables.net-responsive-bs5/js/responsive.bootstrap5.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/js/demo/table-manage-responsive.demo.js"></script>
+
+<script src="{{ config.ASSETS_ROOT }}/plugins/moment/min/moment.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/bootstrap-daterangepicker/daterangepicker.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/select2/dist/js/select2.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/bootstrap-datepicker/dist/js/bootstrap-datepicker.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/bootstrap-timepicker/js/bootstrap-timepicker.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/ion-rangeslider/js/ion.rangeSlider.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/jquery.maskedinput/src/jquery.maskedinput.js"></script>
+
+<script src="{{ config.ASSETS_ROOT }}/plugins/jquery-migrate/dist/jquery-migrate.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/tag-it/js/tag-it.min.js"></script>
+
+<script src="{{ config.ASSETS_ROOT }}/plugins/clipboard/dist/clipboard.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/spectrum-colorpicker2/dist/spectrum.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/select-picker/dist/picker.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/js/demo/form-plugins.demo.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/@highlightjs/cdn-assets/highlight.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/js/demo/render.highlight.js"></script>
+
+<script src="{{ config.ASSETS_ROOT }}/js/agency/registerAgencyEdit.js?v1.0"></script>
+<script>
+function validateForm() {
+    let isValid = true;
+
+    // เช็คทุก input, textarea, select ที่ required
+    $('#myForm').find('input[required], textarea[required], select[required]').each(function () {
+        if (!$(this).val().trim()) {
+            $(this).addClass('border-red-500');
+            isValid = false;
+        } else {
+            $(this).removeClass('border-red-500');
+        }
+    });
+
+    if (!isValid) {
+        swal({
+            icon: 'warning',
+            title: 'กรุณากรอกข้อมูลให้ครบถ้วน',
+        });
+        return;
+    }
+
+    // ✅ ถ้าข้อมูลครบ เรียกฟังก์ชันบันทึก
+    func_save();
+}
+</script>
+<script>
+
+
+
+
+</script>
+
+{% endblock javascripts %}

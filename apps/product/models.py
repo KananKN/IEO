@@ -46,6 +46,7 @@ class CountryModel(db.Model):
     products = db.relationship("ProductForSalesModel", backref="country", cascade="all, delete" )
     supplier = db.relationship("SupplierModel", backref="country", cascade="all, delete" )
     employee = db.relationship("EmployeeModel", backref="country", cascade="all, delete" )
+    organizations = db.relationship("OrganizationModel", backref="country", cascade="all, delete" )
     created_at = db.Column(db.DateTime,  default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime,  default=db.func.current_timestamp(),
                            onupdate=db.func.current_timestamp())
@@ -127,6 +128,12 @@ class ProductForSalesModel(db.Model):
     images = db.relationship("MD_Image", back_populates="product", cascade="all, delete", lazy=True)
     files = db.relationship("FileModel", back_populates="product", cascade="all, delete", lazy=True)
     installments= db.relationship("installmentsPaymentModel", back_populates="product", cascade="all, delete", lazy=True)
+    
+    # suppliers = db.relationship(
+    #     'SupplierModel',
+    #     secondary='product_supplier_association',
+    #     back_populates='products'
+    # )
     
     detail = db.Column(db.Text(),default=None)
     start_at = db.Column(db.DateTime,  default=None)

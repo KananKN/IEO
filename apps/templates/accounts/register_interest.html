@@ -1,0 +1,254 @@
+{% extends "layouts/base-fullscreen.html" %}
+
+{% block title %}Register{% endblock %} 
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}
+<link href="{{ config.ASSETS_ROOT }}/plugins/datatables.net-bs5/css/dataTables.bootstrap5.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/datatables.net-responsive-bs5/css/responsive.bootstrap5.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/select2/dist/css/select2.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/tag-it/css/jquery.tagit.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/select-picker/dist/picker.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/dropzone/dist/min/dropzone.min.css" rel="stylesheet" />
+<script src="{{ config.ASSETS_ROOT }}/plugins/dropzone/dist/min/dropzone.min.js"></script>
+
+
+<style>
+    * {
+        font-family: 'Prompt', sans-serif;
+    }
+     body {
+      background-color:rgb(207, 211, 214);
+      
+    }
+    .card {
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      width: 100%;
+    }
+
+    .disabled-link {
+      pointer-events: none;
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+</style>
+
+{% endblock stylesheets %}
+
+{% block content %}
+ <form  id="myForm" data-parsley-validate="true" enctype="multipart/form-data"> 
+
+  <div class="d-flex justify-content-center">
+      <div class="col-xl-6 my-5">
+          <div class="card shadow-md rounded-lg">
+              <div class="row p-0">
+                  <!-- ฝั่งซ้าย (สีฟ้า) 
+                  <div class="col-5 d-flex flex-column justify-content-center text-white rounded-lg"      style="background-color: #54627F; padding: 40px; min-height: 100%; border-top-left-radius: 0.5rem; border-bottom-left-radius: 16px;">
+                      <div class="text-center mb-4">
+                          <i class="fa-solid fa-user-plus fa-2x text-white"></i>
+                          <h4 class="fw-bold mt-2">ลงทะเบียนเข้าร่วมโครงการ</h4>
+                          <p class="text-white">มีบัญชีอยู่แล้ว? <a href="/login" class="text-white">เข้าสู่ระบบ</a><br></p>
+
+                      </div>
+                      
+                  </div>-->
+
+
+                  <!-- ฝั่งขวา (ฟอร์ม) -->
+                  <div class="col-12 p-5">
+                      <div class="text-center mb-4 mt-2">
+                          <i class="fa-solid fa-user-plus fa-2x text-dark"></i>
+                          <h3 class="fw-bold mt-2">ลงทะเบียนเข้าร่วมโครงการ</h3>
+                          <h6 class=" mt-0">IEO Internship | Work and Travel</h6>
+                          <h6 class=" mt-0">กรอกข้อมูลเพื่อลงทะเบียน</h6>
+                      </div>  
+                      <form method="POST" action="/register">
+
+                          <div class="mb-3">
+                              <div class="row">
+                                <div class="col-md-6">
+                                  <label for="fullname" class="form-label">ชื่อ<span class="text-danger form-label">*</span></label>
+                                  <input name="fullname" required class="form-control  me-2"  placeholder="ชื่อ">
+                                </div>
+                                <div class="col-md-6">
+                                  <label for="fullname" class="form-label">นามสกุล<span class="text-danger form-label">*</span></label>
+                                  <input name="lastname" required class="form-control "  placeholder="นามสกุล">
+                                </div>
+                              </div>
+                            
+                          </div>
+                          <div class="mb-3">
+                              <div class="row">
+                                <div class="col-md-6">
+                                  <label for="nickname" class="form-label">ชื่อเล่น</label>
+                                  <input name="nickname"  class="form-control  me-2"  placeholder="ชื่อเล่น">
+                                </div>
+                                <div class="col-md-6">
+                                  <label for="birth_date" class="form-label">วันเกิด<span class="text-danger form-label">*</span></label>
+                                  <input type="text" class="form-control" id="masked-input-date" name="birth_date" placeholder="dd/mm/yyyy">
+                                  
+                                </div>
+                              </div>
+                            
+                          </div>
+
+                          <div class="mb-3">
+                              <div class="row">
+                                <div class="col-md-6">
+                                  <label for="email" class="form-label">อีเมล<span class="text-danger form-label">*</span></label>
+                                  <input type="email" class="form-control" name="email" placeholder="อีเมล">
+                                </div>
+                                <div class="col-md-6">
+                                  <label for="email" class="form-label">เบอร์โทร<span class="text-danger form-label">*</span></label>
+                                  <input name="phone" required class="form-control " placeholder="เบอร์โทรศัพท์*">
+                                </div>
+                              </div>
+                          </div>
+
+                          <div class="mb-3">
+                              <div class="row">
+                                <div class="col-md-6">
+                                  <label for="email" class="form-label">Line ID<span class="text-danger form-label">*</span></label>
+                                  <input type="text" class="form-control" name="line_id" placeholder="Line ID">
+                                </div>
+                                <div class="col-md-6">
+                                  <label for="email" class="form-label">เพศ<span class="text-danger form-label">*</span></label>
+                                  <div class="col-md-9 pt-2">
+                                    <div class="form-check form-check-inline">
+                                      <input class="form-check-input" type="radio" id="inlineRadio1" name="gender" value="men">
+                                      <label class="form-check-label" for="inlineRadio1" >ชาย</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                      <input class="form-check-input" type="radio" id="customRadio2" name="gender"  value="female">
+                                      <label class="form-check-label" for="customRadio2">หญิง</label>
+                                    </div>
+                                    
+                                  </div>
+                                </div>
+                              </div>
+                          </div>
+                          <div class="mb-3">
+                              <div class="row mb-15px">
+                                <label class="form-label col-form-label col-md-4">Agency</label>
+                                <div class="col-md-8">
+                                    <input  class="form-control" readonly name="agency" id="i_agency"  value="" hidden  display data-parsley-required="true"/>
+                                    <select class="multiple-select2 form-control" multiple>
+                                        {% for agency in agencys %}
+                                            <option value="{{agency.id}}">{{agency.name}}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                          </div>
+                          
+                          <!--
+                          <div class="mb-3" hidden>
+                              <label for="password" class="form-label">Username</label>
+                              <div class="input-group">
+                                  <input name="username" required class="form-control " placeholder="Username*" >
+                              </div>
+                          </div>
+                          <div class="mb-3" hidden>
+                              <div class="row">
+                                <div class="col-md-6">
+                                  <label for="email" class="form-label">รหัสผ่าน</label>
+                                  <input name="password" type="password" required class="form-control mb-3" placeholder="รหัสผ่าน*">
+                                </div>
+                                <div class="col-md-6">
+                                  <label for="email" class="form-label">ยืนยันรหัสผ่าน</label>
+                                  <input name="confirm_password" type="password" required class="form-control mb-3" placeholder="ยืนยันรหัสผ่าน">
+                                </div>
+                              </div>
+                              
+                          </div>-->
+                          
+                          <button type="button" class="btn btn-primary w-100 mb-3" onclick="validateForm()">
+                              <i class="fa fa-user-check me-2"></i> ลงทะเบียน
+                          </button>
+
+                          <hr>
+                          
+                          <div class="row">
+                            <div class="col-6">
+                              <a href="/register/google" class="btn btn-danger w-100 mb-2 disabled-link" onclick="return false;">
+                                <i class="fab fa-google me-2 bg-"></i> สมัครด้วย Google
+                              </a>
+                            </div>
+                            <div class="col-6">
+                              <a href="/register/facebook" class="btn btn-primary w-100 disabled-link" onclick="return false;">
+                                  <i class="fab fa-facebook-f me-2"></i> สมัครด้วย Facebook
+                              </a>
+                            </div>
+                          </div>
+                          <!-- ปุ่ม Google / Facebook -->
+                          
+                          
+                      </form>
+
+                      <div class="footer-text mt-4 text-center">
+                          
+                          © 2025 IEO. All rights reserved.
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </div>
+  </div>
+</form>  
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}
+
+<script src="{{ config.ASSETS_ROOT }}/plugins/moment/min/moment.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/bootstrap-daterangepicker/daterangepicker.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/select2/dist/js/select2.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/bootstrap-datepicker/dist/js/bootstrap-datepicker.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/bootstrap-timepicker/js/bootstrap-timepicker.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/ion-rangeslider/js/ion.rangeSlider.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/jquery.maskedinput/src/jquery.maskedinput.js"></script>
+
+<script src="{{ config.ASSETS_ROOT }}/plugins/jquery-migrate/dist/jquery-migrate.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/tag-it/js/tag-it.min.js"></script>
+
+<script src="{{ config.ASSETS_ROOT }}/plugins/clipboard/dist/clipboard.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/spectrum-colorpicker2/dist/spectrum.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/select-picker/dist/picker.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/js/demo/form-plugins.demo.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/@highlightjs/cdn-assets/highlight.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/js/demo/render.highlight.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/sweetalert/dist/sweetalert.min.js"></script>
+
+<script src="{{ config.ASSETS_ROOT }}/js/register/registerUser.js?v1.0"></script>
+<script>
+
+
+function validateForm() {
+    let isValid = true;
+
+    // เช็คทุก input, textarea, select ที่ required
+    $('#myForm').find('input[required], textarea[required], select[required]').each(function () {
+        if (!$(this).val().trim()) {
+            $(this).addClass('border-red-500');
+            isValid = false;
+        } else {
+            $(this).removeClass('border-red-500');
+        }
+    });
+
+    if (!isValid) {
+        swal({
+            icon: 'warning',
+            title: 'กรุณากรอกข้อมูลให้ครบถ้วน',
+        });
+        return;
+    }
+
+    // ✅ ถ้าข้อมูลครบ เรียกฟังก์ชันบันทึก
+    func_save();
+}
+</script>
+
+{% endblock javascripts %}

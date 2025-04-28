@@ -1,0 +1,202 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Organization Create {% endblock %} 
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}
+
+<link href="{{ config.ASSETS_ROOT }}/plugins/datatables.net-bs5/css/dataTables.bootstrap5.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/datatables.net-responsive-bs5/css/responsive.bootstrap5.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/select2/dist/css/select2.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/tag-it/css/jquery.tagit.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/select-picker/dist/picker.min.css" rel="stylesheet" />
+{% endblock stylesheets %}
+
+{% block content %}
+
+<form  id="myForm" data-parsley-validate="true" enctype="multipart/form-data"> 
+
+    <div id="content" class="app-content">
+            
+        <div class="row">
+            <div class="col-xl-12">
+                <div class="panel panel-inverse">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">Organization Create</h4>
+                        <div class="panel-heading-btn">
+                            <a href="javascript:;" class="btn btn-xs btn-icon btn-default" data-toggle="panel-expand"><i class="fa fa-expand"></i></a>
+                            <a href="javascript:;" class="btn btn-xs btn-icon btn-success" data-toggle="panel-reload"><i class="fa fa-redo"></i></a>
+                            <a href="javascript:;" class="btn btn-xs btn-icon btn-warning" data-toggle="panel-collapse"><i class="fa fa-minus"></i></a>
+                            <a href="javascript:;" class="btn btn-xs btn-icon btn-danger" data-toggle="panel-remove"><i class="fa fa-times"></i></a>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                {% for categorie, message in messages %}
+                                    <div class="alert alert-{{categorie}} alert-dismissible fade show mb-2 mt-1">
+                                        {{ message }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    </div>
+                                {% endfor %}                    
+                            {% endif %}
+                        {% endwith %}
+
+                <div class="row">
+
+                    <div class="card">
+                        <div class="card-header bg-white">
+                            <div class="d-flex justify-content-between">
+                                <h4 class="card-title my-2">Organization Create</h4>  
+                                <div class="panel-heading-btn">
+                                    <button type="button"  class="btn btn-blue"  onclick="validateForm()">Save</button>
+                                </div>
+                            </div>
+                        </div>   
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <h4 class="card-title mb-2">ข้อมูลการติดต่อ</h4>  
+                                    <div class="row mb-3" hidden>
+                                        <label class="form-label col-form-label col-md-4">id</label>
+                                        <div class="col-md-8">
+                                            <input type="hidden"  class="form-control" name="id" id="id-update" data-parsley-required="true"/>
+                                        </div>
+                                    </div>    
+
+                                    <div class="row mb-3">
+                                        <label class="form-label col-form-label col-md-4">ชื่อบริษัท / องค์กร<span class="text-danger">*</span> </label>
+                                        <div class="col-lg-8">
+                                            <input  class="form-control" required name="n_nameCompany" id="i_nameCompany"  value=""  data-parsley-required="true"/>
+                                        </div>
+                                    </div>                        
+                                    <div class="form-group row mb-3" hidden>
+                                        <label class="form-label col-form-label col-lg-4">ประเภทของบริษัท</label>
+
+                                        <div class="col-lg-8">
+                                            <select  class="default-select2 form-control"  name="supplierType" id="supplierType"  ">
+                                                <option value="0">ไม่มี</option>
+                                                    {% for supplier in supplierTypelist %}
+                                                        <option value="{{supplier.id}}">{{supplier.name}}</option>
+                                                    {% endfor %}
+                                            </select>
+                                        </div>
+            
+                                    </div>
+                                    <div class="row mb-3">
+                                        <label class="form-label col-form-label col-md-4" >เลขทะเบียนบริษัท<span class="text-danger">*</span></label>
+                                        <div class="col-lg-8">
+                                            <input  class="form-control" name="n_tax" id="i_tax"  value=""  required data-parsley-required="true"/>
+                                        </div>
+                                    </div>
+                                
+                                    <div class="row mb-15px">
+                                        <label class="form-label col-form-label col-md-4">ประเทศ<span class="text-danger">*</span></label>
+                                        <div class="col-md-8">
+                                            <select  class="default-select2 form-control"  name="n_country" id="i_country"  ">
+                                                <option value="0">ไม่มี</option>
+                                                    {% for country in countrylist %}
+                                                        <option value="{{country.id}}">{{country.name}}</option>
+                                                    {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="row mb-3"  >
+                                        <label class="form-label col-form-label col-md-4">ที่อยู่บริษัท (Company Address)</label>
+                                        <div class="col-md-8">
+                                            <textarea class="form-control" id="i_address" rows="4" cols="50" required name="address" placeholder="" ></textarea>
+                                        </div>
+                                    </div> 
+                                    
+                                                                                                       
+                                
+                                </div>
+                                <div class="col-sm-6 border-right">
+                                    <h4 class="card-title mb-2">ข้อมูลผู้ติดต่อ</h4>  
+                                    
+                                    <div class="form-group row mb-3">
+                                        <label class="form-label col-form-label col-lg-4">ชื่อ-นามสกุล<span class="text-danger">*</span></label>
+                                        <div class="col-lg-8">
+                                            <input type="text" class="form-control" placeholder="" name="name_coondinator" id="name_coondinator" data-parsley-required="true" required/>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row mb-3">
+                                        <label class="form-label col-form-label col-lg-4">อีเมล<span class="text-danger">*</span></label>
+                                        <div class="col-lg-8">
+                                            <input type="text" class="form-control" placeholder="" name="email" id="email" data-parsley-required="true" required />
+                                        </div>
+                                    </div>
+                                    <div class="form-group row mb-3">
+                                        <label class="form-label col-form-label col-lg-4">เบอร์โทร<span class="text-danger">*</span></label>
+                                        <div class="col-lg-8">
+                                            <input type="text" class="form-control" placeholder="" name="tel" id="tel" data-parsley-required="true" required />
+                                        </div>
+                                    </div>
+                                    <div class="form-group row mb-3">
+                                        <label class="form-label col-form-label col-lg-4">เอกสารแนบ (File Uploads)</label>
+                                        <div class="col-lg-8">
+                                            <input class="form-control" type="file" id="formFile" name="formFile" placeholder=""  multiple accept=".pdf, .jpg, .jpeg, .png"  onchange="validateFile(this)"/>
+                                        
+                                        </div>
+                                    </div>
+                                    
+                                </div>
+                            </div>
+                            
+
+                            
+                                
+                        </div>
+
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</form>
+<a href="javascript:;" class="btn btn-icon btn-circle btn-primary btn-scroll-to-top" data-toggle="scroll-to-top"><i class="fa fa-angle-up"></i></a>
+
+
+
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}
+<script src="{{ config.ASSETS_ROOT }}/plugins/datatables.net/js/dataTables.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/datatables.net-bs5/js/dataTables.bootstrap5.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/datatables.net-responsive/js/dataTables.responsive.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/datatables.net-responsive-bs5/js/responsive.bootstrap5.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/js/demo/table-manage-responsive.demo.js"></script>
+
+<script src="{{ config.ASSETS_ROOT }}/plugins/moment/min/moment.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/bootstrap-daterangepicker/daterangepicker.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/select2/dist/js/select2.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/bootstrap-datepicker/dist/js/bootstrap-datepicker.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/bootstrap-timepicker/js/bootstrap-timepicker.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/ion-rangeslider/js/ion.rangeSlider.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/jquery.maskedinput/src/jquery.maskedinput.js"></script>
+
+<script src="{{ config.ASSETS_ROOT }}/plugins/jquery-migrate/dist/jquery-migrate.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/tag-it/js/tag-it.min.js"></script>
+
+<script src="{{ config.ASSETS_ROOT }}/plugins/clipboard/dist/clipboard.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/spectrum-colorpicker2/dist/spectrum.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/select-picker/dist/picker.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/js/demo/form-plugins.demo.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/@highlightjs/cdn-assets/highlight.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/js/demo/render.highlight.js"></script>
+
+<script src="{{ config.ASSETS_ROOT }}/js/organization/main_organization.js?v1.0"></script>
+
+<script>
+
+
+
+
+</script>
+
+{% endblock javascripts %}

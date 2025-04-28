@@ -1,0 +1,217 @@
+{% extends "layouts/base-fullscreen.html" %}
+
+{% block title %} Register University{% endblock %} 
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}
+  <link href="{{ config.ASSETS_ROOT }}/plugins/datatables.net-bs5/css/dataTables.bootstrap5.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/datatables.net-responsive-bs5/css/responsive.bootstrap5.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/select2/dist/css/select2.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/tag-it/css/jquery.tagit.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/select-picker/dist/picker.min.css" rel="stylesheet" />
+
+<style>
+    * {
+        font-family: 'Prompt', sans-serif;
+    }
+     body {
+      background-color:rgb(207, 211, 214);
+      
+    }
+    .card {
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      width: 100%;
+    }
+
+    .disabled-link {
+      pointer-events: none;
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+</style>
+
+{% endblock stylesheets %}
+
+{% block content %}
+ <form  id="myForm" data-parsley-validate="true" enctype="multipart/form-data"> 
+
+  <div class="d-flex justify-content-center">
+      <div class="col-xl-8 my-5">
+          <div class="card shadow-md rounded-lg">
+              <div class="row p-0">
+                  <!-- ฝั่งซ้าย (สีฟ้า) -->
+                  <div class="col-5 d-flex flex-column justify-content-center text-white rounded-lg"      style="background-color: #54627F; padding: 40px; min-height: 100%; border-top-left-radius: 0.5rem; border-bottom-left-radius: 16px;">
+                      <div class="text-center mb-4">
+                          <i class="fa-solid fa-user-plus fa-2x text-white"></i>
+                          <h4 class="fw-bold mt-2">University Registration Form</h4>
+                          <p class="text-white" hidden>มีบัญชีอยู่แล้ว? <a href="/login" class="text-white">เข้าสู่ระบบ</a><br></p>
+
+                      </div>
+                      
+                  </div>
+
+
+                  <!-- ฝั่งขวา (ฟอร์ม) -->
+                  <div class="col-7 p-5">
+                      <div class="text-center mb-4">
+                          <h4 class="fw-bold mt-2">กรอกข้อมูลเพื่อลงทะเบียน</h4>
+                      </div>  
+                      <form method="POST" action="/register">
+                              <input type="hidden" name="referral_code" id="referral_code" value="">
+
+                          <div class="mb-3">
+                              <div class="row">
+                                <div class="col-md-12">
+                                  <label for="name_univer" class="form-label">ชื่อมหาวิทยาลัย</label>
+                                  <input name="name_univer" required class="form-control  me-2"  placeholder="ชื่อมหาวิทยาลัย">
+                                </div>
+                                
+                              </div>
+                            
+                          </div>
+
+                          <div class="mb-3">
+                              <div class="row">
+                                <div class="col-md-6">
+                                  <label for="fullname" class="form-label">ชื่อผู้ประสานงาน</label>
+                                  <input name="fullname" required class="form-control  me-2"  placeholder="ชื่อ">
+                                </div>
+                                <div class="col-md-6">
+                                  <label for="fullname" class="form-label">นามสกุลผู้ประสานงาน</label>
+                                  <input name="lastname" required class="form-control "  placeholder="นามสกุล">
+                                </div>
+                              </div>
+                            
+                          </div>
+
+                          <div class="mb-3">
+                              <div class="row">
+                                <div class="col-md-6">
+                                  <label for="email" class="form-label">อีเมล</label>
+                                  <input type="email" class="form-control" name="email" placeholder="อีเมล">
+                                </div>
+                                <div class="col-md-6">
+                                  <label for="email" class="form-label">เบอร์โทร</label>
+                                  <input name="phone" required class="form-control " placeholder="เบอร์โทรศัพท์*">
+
+                                </div>
+                              </div>
+                          </div>
+
+                          <div class="mb-3">
+                              <div class="row">
+                                <div class="col-md-6">
+                                  <label for="email" class="form-label">ที่อยู่</label>
+                                  <input type="text" class="form-control" name="address" placeholder="ที่อยู่">
+                                </div>
+                                <div class="col-md-6">
+                                  <label for="email" class="form-label">ประเทศ</label>
+                                  <input class="form-control mb-3" name="country"  placeholder="ประเทศ">
+                                </div>
+                              </div>
+                          </div>
+                          
+
+                          <div class="mb-3">
+                              <label for="password" class="form-label">Username</label>
+                              <div class="input-group">
+                                  <input name="username" required class="form-control " placeholder="Username*" >
+                              </div>
+                          </div>
+                          <div class="mb-3">
+                              <div class="row">
+                                <div class="col-md-6">
+                                  <label for="email" class="form-label">รหัสผ่าน</label>
+                                  <input name="password" type="password" required class="form-control mb-3" placeholder="รหัสผ่าน*">
+                                </div>
+                                <div class="col-md-6">
+                                  <label for="email" class="form-label">ยืนยันรหัสผ่าน</label>
+                                  <input name="confirm_password" type="password" required class="form-control mb-3" placeholder="ยืนยันรหัสผ่าน">
+                                </div>
+                              </div>
+                              
+                          </div>
+                          
+                          <button type="button" class="btn btn-primary w-100 mb-3" onclick="validateForm()">
+                              <i class="fa fa-user-check me-2"></i> ลงทะเบียน
+                          </button>
+
+                          <hr>
+                          
+                          <div class="row" hidden>
+                            <div class="col-6">
+                              <a href="/register/google" class="btn btn-danger w-100 mb-2 disabled-link" onclick="return false;">
+                                <i class="fab fa-google me-2 bg-"></i> สมัครด้วย Google
+                              </a>
+                            </div>
+                            <div class="col-6">
+                              <a href="/register/facebook" class="btn btn-primary w-100 disabled-link" onclick="return false;">
+                                  <i class="fab fa-facebook-f me-2"></i> สมัครด้วย Facebook
+                              </a>
+                            </div>
+                          </div>
+                          <!-- ปุ่ม Google / Facebook -->
+                          
+                          
+                      </form>
+
+                      <div class="footer-text mt-4 text-center">
+                          
+                          © 2025 IEO. All rights reserved.
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </div>
+  </div>
+</form>  
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}
+
+
+<script src="{{ config.ASSETS_ROOT }}/plugins/sweetalert/dist/sweetalert.min.js"></script>
+
+<script src="{{ config.ASSETS_ROOT }}/js/register/registerUnivercity.js?v1.0"></script>
+<script>
+function validateForm() {
+    let isValid = true;
+
+    // เช็คทุก input, textarea, select ที่ required
+    $('#myForm').find('input[required], textarea[required], select[required]').each(function () {
+        if (!$(this).val().trim()) {
+            $(this).addClass('border-red-500');
+            isValid = false;
+        } else {
+            $(this).removeClass('border-red-500');
+        }
+    });
+
+    if (!isValid) {
+        swal({
+            icon: 'warning',
+            title: 'กรุณากรอกข้อมูลให้ครบถ้วน',
+        });
+        return;
+    }
+
+    // ✅ ถ้าข้อมูลครบ เรียกฟังก์ชันบันทึก
+    func_save();
+}
+</script>
+
+<script>
+window.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const refCode = urlParams.get('ref');
+
+    if (refCode) {
+        document.getElementById('referral_code').value = refCode;
+    }
+});
+</script>
+
+{% endblock javascripts %}

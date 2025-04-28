@@ -1,6 +1,6 @@
 {% extends "layouts/base.html" %}
 
-{% block title %} Supplier {% endblock %} 
+{% block title %} รายการโครงการ Organization {% endblock %} 
 
 <!-- Specific Page CSS goes HERE  -->
 {% block stylesheets %}
@@ -25,12 +25,10 @@
         <div class="d-flex justify-content-between align-items-center mb-3">
             <!-- ฝั่งซ้าย: รายการอุปกรณ์ + ปุ่มบวก -->
             <div class="d-flex align-items-center">
-                <h6 class="page-header m-0">Supplier</h6>
-                {% if current_user.has_permission('write_supplier') %}
+                <h6 class="page-header m-0">รายการโครงการ Organization</h6>
+                {% if current_user.has_permission('write_organization') %}
                     
-                     <a href="/supplier/supplier_create" class="btn btn-success ms-3 shadow-sm  bg-gradient">
-                            <i class="fa fa-plus"></i> เพิ่ม
-                    </a>   
+                    
                 {% endif %}
             </div>
 
@@ -42,7 +40,7 @@
         <div class="col-xl-12">
             <div class="panel panel-inverse">
                 <div class="panel-heading">
-                    <h4 class="panel-title">Supplier</h4>
+                    <h4 class="panel-title">รายการโครงการ Organization</h4>
                     <div class="panel-heading-btn">
                         <a href="javascript:;" class="btn btn-xs btn-icon btn-default" data-toggle="panel-expand"><i class="fa fa-expand"></i></a>
                         <a href="javascript:;" class="btn btn-xs btn-icon btn-success" data-toggle="panel-reload"><i class="fa fa-redo"></i></a>
@@ -67,11 +65,9 @@
                             <tr>
                                 <th class="text-center" width="1%">No</th>
                                 <th class="text-nowrap" width="30%">Name</th>
-                                <th class="text-nowrap" width="20%">Type</th>
                                 <th class="text-nowrap" width="20%">country</th>
                                 <th class="text-nowrap" width="20%">tel</th>
-                                <!--<th class="text-nowrap" width="20%">โครงการที่เข้าร่วม</th> -->
-                                <th class="text-nowrap text-center" width="10%">Action</th>
+                                <th class="text-nowrap text-center" width="10%">โครงการที่เข้าร่วม</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -88,47 +84,7 @@
 <a href="javascript:;" class="btn btn-icon btn-circle btn-primary btn-scroll-to-top" data-toggle="scroll-to-top"><i class="fa fa-angle-up"></i></a>
 
 
-<div class="modal fade" id="modal-dialog">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <form  method="POST" data-parsley-validate="true">
-                <div class="modal-header">
-                    <h4 class="modal-title">Add Supplier Type</h4>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row mb-3" hidden>
-                        <label class="form-label col-form-label col-md-4">id</label>
-                        <div class="col-md-8">
-                            <input type="hidden"  class="form-control" name="id-update" id="id-update" data-parsley-required="true"/>
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <label class="form-label col-form-label col-md-4">Name</label>
-                        <div class="col-md-8">
-                            <input type="text" class="form-control" placeholder="" name="name_supplier" data-parsley-required="true"/>
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <label class="form-label col-form-label col-md-4">Descrition</label>
-                        <div class="col-md-8">
-                            <input type="text" class="form-control" placeholder="" name="n_description" data-parsley-required="true"/>
-                        </div>
-                    </div>
-                   
-                    
-                
-                   
-                </div>
-                <div class="modal-footer">
-                    <a href="javascript:;" class="btn btn-white" data-bs-dismiss="modal">Close</a>
-                    <button type="button" class="btn btn-success c_add" onclick="func_save('add',$(this))">Submit</button>
-                    <button type="button" class="btn btn-success c_edit" onclick="func_save('edit',$(this))">Submit</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+
 
 
 
@@ -160,7 +116,7 @@
 <script src="{{ config.ASSETS_ROOT }}/plugins/@highlightjs/cdn-assets/highlight.min.js"></script>
 <script src="{{ config.ASSETS_ROOT }}/js/demo/render.highlight.js"></script>
 
-<script src="{{ config.ASSETS_ROOT }}/js/supplier/main_supplierType.js?v1.0"></script>
+<script src="{{ config.ASSETS_ROOT }}/js/organization/main_organization.js?v1.0"></script>
 
 <script>
 $(document).ready(function() {
@@ -172,14 +128,12 @@ function loadDataTable() {
         $('#data-table-responsive').DataTable().destroy(); // ลบ DataTable เดิมก่อน
     }
 
-    
-
     $('#data-table-responsive').DataTable({
         responsive: true,
         processing: true,
         serverSide: true,
         ajax: {
-            url: "/supplier/get_supplier",
+            url: "/organization/get_listProductorganization",
             type: "POST",
             data: function(d) { 
                 return JSON.stringify(d); 
@@ -190,36 +144,24 @@ function loadDataTable() {
         columns: [
             { data: "id", className: "text-center" },
             { data: "name" },
-            { data: "supplier_type" },
             { data: "country" },
             { data: "tel" },
-            // {
+            {data: "product",className: "text-center"},
+            // { 
             //     data: null,  
             //     orderable: false, // ปิดการเรียงลำดับในคอลัมน์นี้
             //     className: 'text-center',
             //     render: function(data, type, row) {
-            //         if (!data.product) return '';
-            //         let products = data.product.split(','); // แยกด้วยเครื่องหมายคอมม่า
-            //         return products.map(p => 
-            //             `<span class="badge bg-info text-white me-1">${p.trim()}</span>`
-            //         ).join('');
-            //                     }
-            // },
-            { 
-                data: null,  
-                orderable: false, // ปิดการเรียงลำดับในคอลัมน์นี้
-                className: 'text-center',
-                render: function(data, type, row) {
-                    return `
-                        <a href="/supplier/supplier_update/${row.data_id}" class="btn btn-dark btn-icon btn-circle btn-lg">
-                            <i class="fa fa-pencil-alt"></i>
-                        </a>
-                        <a class="btn btn-danger btn-icon btn-circle btn-lg" onclick="sweetAlertDel(${row.data_id})">
-                            <i class="fas fa-trash"></i>
-                        </a>
-                    `;
-                }
-            }
+            //         return `
+            //             <a href="/employee/employee_update/${row.id}" class="btn btn-dark btn-icon btn-circle btn-lg">
+            //                 <i class="fa fa-pencil-alt"></i>
+            //             </a>
+            //             <a class="btn btn-danger btn-icon btn-circle btn-lg" onclick="sweetAlertDel(${row.id})">
+            //                 <i class="fas fa-trash"></i>
+            //             </a>
+            //         `;
+            //     }
+            // }
         ],
         order: [[0, "asc"]],  // เรียงลำดับจาก ID
         lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
@@ -251,7 +193,7 @@ function sweetAlertDel(id) {
         },
     }).then((result) => {
         if (result.dismiss !== "cancel") {
-            post("/supplier/delete_supplierMain", {
+            post("/employee/delete_employee", {
                 id: id
             });
         }

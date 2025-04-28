@@ -23,6 +23,15 @@ class UserModel(db.Model, UserMixin):
     # email = db.Column(db.String(64), unique=True)
     password = db.Column(db.LargeBinary)
     role_id = db.Column(db.Integer, db.ForeignKey("role.id", ondelete='SET NULL'))
+    status = db.Column(db.String(20), default='pending') 
+    
+    agency = db.relationship(
+    'AgencyModel',
+    back_populates='user',
+    foreign_keys='AgencyModel.user_id',
+    uselist=False
+    )
+    
     
     # oauth_github  = db.Column(db.String(100), nullable=True)
     # user_manage_permission = db.Column(db.Boolean, default=False)
@@ -55,6 +64,15 @@ class UserModel(db.Model, UserMixin):
         permissions = role.permissions
         return permission in [permission.name+"_"+permission.resource.name for permission in permissions]
     
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'username': self.username,
+            'status': self.status,
+            # เพิ่มเฉพาะ field ที่ต้องการส่งกลับ
+        }
+    
+   
 @login_manager.user_loader
 def user_loader(id):
     return UserModel.query.filter_by(id=id).first()
@@ -63,7 +81,7 @@ def user_loader(id):
 @login_manager.request_loader
 def request_loader(request):
     username = request.form.get('username')
-    user = UserModel.query.filter_by(username=username).first()
+    user = UserModel.query.filter_by(username=username).first() 
     return user if user else None
 
 
@@ -140,4 +158,90 @@ class ResourceModel(db.Model):
     created_at = db.Column(db.DateTime,  default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime,  default=db.func.current_timestamp(),
                            onupdate=db.func.current_timestamp())
+
+
+@dataclass
+class AgencyModel(db.Model):
+    __tablename__ = 'agency'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), unique=True)
+
+    company_name_en = db.Column(db.String(100))
+    company_name_th = db.Column(db.String(100))
+    address = db.Column(db.Text)
+    currency = db.Column(db.String(10))
+    file_id = db.Column(db.String(100))
+    country_id = db.Column(db.Integer)
+    tel = db.Column(db.String(30))
+    email = db.Column(db.String(100))
+    contact_person = db.Column(db.String(100))
+    status = db.Column(db.String(20))  # pending / approved / rejected
+    web = db.Column(db.String(100))
+    
+    is_agency = db.Column(db.Boolean, default=False)
+    agency_code = db.Column(db.String(20), unique=True, nullable=True)
+
+    # ใครแนะนำมา
+    # referred_by_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    
+    org_type = db.Column(db.String(100))
+    tax_id = db.Column(db.String(50))
+    country = db.Column(db.String(100))
+    first_name = db.Column(db.String(100))
+    last_name = db.Column(db.String(100))
+
+    referred_by_id = db.Column(db.Integer, db.ForeignKey('agency.id'), nullable=True)
+
+
+    user = db.relationship('UserModel',back_populates='agency',foreign_keys=[user_id],uselist=False)
+    referred_by = db.relationship('AgencyModel', foreign_keys=[referred_by_id], remote_side=[id], backref='referrals', uselist=False)
+
+
+    created_at = db.Column(db.DateTime,  default=db.func.current_timestamp())
+    updated_at = db.Column(db.DateTime,  default=db.func.current_timestamp(),
+                           onupdate=db.func.current_timestamp())
+@dataclass        
+class ProductAgencyAssociation(db.Model):
+    __tablename__ = 'product_agency_association'
+
+    id = db.Column(db.Integer, primary_key=True)
+    product_id = db.Column(db.Integer, db.ForeignKey('product_for_sales.id', ondelete='CASCADE'))
+    agency_id = db.Column(db.Integer, db.ForeignKey('agency.id' , ondelete='CASCADE'))
+
+    # ข้อมูลเพิ่มเติมที่อยากเก็บ (optional)
+    status = db.Column(db.String(20), default='active')  # active, pending
+    assigned_date = db.Column(db.DateTime, default=db.func.current_timestamp())
+    notes = db.Column(db.Text)
+
+    product = db.relationship('ProductForSalesModel', backref='agency_links')
+    employee = db.relationship('AgencyModel', backref='product_links')    
+@dataclass
+class interestedUsersModel(db.Model):
+    __tablename__ = 'interested_users'
+
+    id = db.Column(db.Integer, primary_key=True)
+    # user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), unique=True)
+
+    first_name = db.Column(db.String(100))
+    last_name = db.Column(db.String(100))
+    nick_name = db.Column(db.String(100))
+    tel = db.Column(db.String(30))
+    email = db.Column(db.String(100))
+    status = db.Column(db.String(20))  # pending / approved / rejected
+    gender = db.Column(db.String(20))  # pending / approved / rejected
+    line_id = db.Column(db.String(20))  # pending / approved / rejected
+    approved_by = db.Column(db.String(100))
+    approved_at = db.Column(db.DateTime)
+    birth_date = db.Column(db.DateTime,  default=None)
+    created_at = db.Column(db.DateTime,  default=db.func.current_timestamp())
+    updated_at = db.Column(db.DateTime,  default=db.func.current_timestamp(),
+                           onupdate=db.func.current_timestamp())
+    
+    
+   
+
+
+    # user = db.relationship('UserModel', back_populates='interested', uselist=False)
+
 
