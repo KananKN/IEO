@@ -225,7 +225,7 @@
                             </select>
                         </div>
                     </div>
-                    <div class="row mb-15px">
+                    <div class="row mb-15px" hidden>
                         <label class="form-label col-form-label col-md-4">Supplier (organization)</label>
                         <div class="col-md-8">
                             <select class="multiple-select2 form-control" multiple name="supplier" id="i_supplier" >
@@ -238,13 +238,24 @@
                             </select>
                         </div>
                     </div>
-                    <div class="row mb-15px" hidden>
+                    <div class="row mb-15px">
+                        <label class="form-label col-form-label col-md-4">Oganization</label>
+                        <div class="col-md-8">
+                            <select class="multiple-select2 form-control" multiple name="organization" id="i_organization">
+                                {% for organization in organizations %}
+                                    <option value="{{organization.id}}" {% if organization.id in selected_organizations  %} selected {% endif %}>{{organization.name}}</option>
+                                {% endfor %}
+                            </select>   
+                            
+                        </div>
+                    </div>
+                    <div class="row mb-15px" >
                         <label class="form-label col-form-label col-md-4">Agency</label>
                         <div class="col-md-8">
-                            <input  class="form-control" readonly name="term" id="i_term"  value="" hidden  display data-parsley-required="true"/>
-                            <select class="multiple-select2 form-control" multiple>
-                                {% for supplier in suppliers %}
-                                    <option value="{{supplier.id}}">{{supplier.name}}</option>
+                            <input  class="form-control" readonly  value="" hidden  display data-parsley-required="true"/>
+                            <select class="multiple-select2 form-control" multiple name="agency" id="i_agency" >
+                                {% for agency in agencys %}
+                                    <option value="{{agency.id}}" {% if agency.id in selected_agencys  %} selected {% endif %}>{{agency.agency_code}}</option>
                                 {% endfor %}
                             </select>
                         </div>

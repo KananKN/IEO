@@ -3,90 +3,111 @@
 {% block title %} Register {% endblock %} 
 
 <!-- Specific Page CSS goes HERE  -->
-{% block stylesheets %}{% endblock stylesheets %}
+{% block stylesheets %}
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+{% endblock stylesheets %}
 
 {% block content %}
 
     <div class="content">
         <div class="container">
-            <div class="row pt-5">
-                <div class="col-md-6 mt-5 offset-md-3 pt-5 mt-5">
-                    <div class="card">
-                        <div class="card-header text-center py-4">
-                            <h4 class="title">
-                                Sign UP
-                            </h4>
+            <body class="bg-gray-50 font-sans">
 
-                            <h6 class="card-category">
-                                {% if msg %}
-                                    <span class="text-danger">{{ msg | safe }}</span>
-                                {% else %}
-                                    <span>
-                                        Add your credentials
-                                    </span>
-                                {% endif %}  
-                            </h6>     
-
-                        </div>
-
-                        {% if success %}
-
-                            <div class="card-footer text-center">
-                                <a href="{{ url_for('authentication_blueprint.login') }}" 
-                                   class="btn btn-fill btn-primary">Login</a>
-                            </div>
-
-                        {% else %}
-
-                            <form role="form" method="post" action="">
-            
-                                {{ form.hidden_tag() }} 
-
-                                <div class="card-body px-5 py-3">
-
-                                    <div class="row">
-                                        <div class="col-md-12 px-md-1">
-                                            <div class="form-group">
-                                                <label>Username</label>
-                                                {{ form.username(class="form-control") }}
-                                            </div>
-                                        </div>
-
-                                        <div class="col-md-12 px-md-1">
-                                            <div class="form-group">
-                                                <label>Email</label>
-                                                {{ form.email(class="form-control", type="email") }}
-                                            </div>
-                                        </div>
-
-                                        <div class="col-md-12 px-md-1">
-                                            <div class="form-group">
-                                                <label>Password</label>
-                                                {{ form.password(class="form-control", type="password") }}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    
-                                </div>
-                                <div class="card-footer text-center">
-                                    <button type="submit" name="register" class="btn btn-fill btn-primary">Register</button>
-
-                                    <br /><br />
-                                    
-                                    <p>
-                                        Have an account? <a href="{{ url_for('authentication_blueprint.login') }}" class="text-primary">Login</a>
-                                    </p> 
-                                </div>
-                            
-                            </form>
-
-                        {% endif %} 
-
+                <div class="max-w-4xl mx-auto my-10 p-8 bg-white shadow-md rounded-lg">
+                    <div class="text-center mb-6">
+                    <img src="your-logo.png" alt="IEO Logo" class="mx-auto w-20 mb-4">
+                    <h1 class="text-2xl font-bold text-gray-800">ลงทะเบียนเข้าร่วมโครงการ</h1>
+                    <p class="text-gray-500">IEO Internship | Work and Travel</p>
                     </div>
+
+                    <form action="/submit-registration" method="POST" class="space-y-6">
+                    <!-- ข้อมูลส่วนตัว -->
+                    <div>
+                        <h2 class="text-lg font-semibold text-gray-700 mb-4">ข้อมูลส่วนตัว</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <input name="firstname" required class="border border-gray-300 p-3 rounded-lg w-full" placeholder="ชื่อ (ภาษาไทย)*">
+                        <input name="lastname" required class="border border-gray-300 p-3 rounded-lg w-full" placeholder="นามสกุล (ภาษาไทย)*">
+                        <input name="firstname_en" required class="border border-gray-300 p-3 rounded-lg w-full" placeholder="ชื่อ (ภาษาอังกฤษ)*">
+                        <input name="lastname_en" required class="border border-gray-300 p-3 rounded-lg w-full" placeholder="นามสกุล (ภาษาอังกฤษ)*">
+                        <input name="email" type="email" required class="border border-gray-300 p-3 rounded-lg w-full" placeholder="อีเมล*">
+                        <input name="phone" required class="border border-gray-300 p-3 rounded-lg w-full" placeholder="เบอร์โทรศัพท์*">
+                        <input name="birthdate" type="date" required class="border border-gray-300 p-3 rounded-lg w-full" placeholder="วันเกิด*">
+                        </div>
+                    </div>
+
+                    <!-- ข้อมูลการศึกษา -->
+                    <div>
+                        <h2 class="text-lg font-semibold text-gray-700 mb-4">ข้อมูลการศึกษา</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <input name="university" required class="border border-gray-300 p-3 rounded-lg w-full" placeholder="มหาวิทยาลัย*">
+                        <input name="faculty" required class="border border-gray-300 p-3 rounded-lg w-full" placeholder="คณะ*">
+                        <input name="major" required class="border border-gray-300 p-3 rounded-lg w-full" placeholder="สาขา*">
+                        <input name="year" type="number" min="1" max="8" class="border border-gray-300 p-3 rounded-lg w-full" placeholder="ชั้นปี">
+                        </div>
+                    </div>
+
+                    <!-- เลือกโครงการ -->
+                    <div>
+                        <h2 class="text-lg font-semibold text-gray-700 mb-4">เลือกโครงการที่สนใจ*</h2>
+                        <select name="project" required class="border border-gray-300 p-3 rounded-lg w-full">
+                        <option value="">-- กรุณาเลือกโครงการ --</option>
+                        <option value="internship_usa">Internship USA</option>
+                        <option value="work_travel_usa">Work and Travel USA</option>
+                        <option value="internship_japan">Internship Japan</option>
+                        <option value="อื่นๆ">อื่น ๆ</option>
+                        </select>
+                    </div>
+
+                    <!-- เลือกประเทศ -->
+                    <div>
+                        <h2 class="text-lg font-semibold text-gray-700 mb-4">ประเทศที่สนใจ*</h2>
+                        <select name="country" required class="border border-gray-300 p-3 rounded-lg w-full">
+                        <option value="">-- กรุณาเลือกประเทศ --</option>
+                        <option value="usa">สหรัฐอเมริกา (USA)</option>
+                        <option value="japan">ญี่ปุ่น (Japan)</option>
+                        <option value="australia">ออสเตรเลีย (Australia)</option>
+                        <option value="อื่นๆ">อื่น ๆ</option>
+                        </select>
+                    </div>
+
+                    <!-- เลือก Agency -->
+                    <div>
+                        <h2 class="text-lg font-semibold text-gray-700 mb-4">เลือกเอเจนซี่ที่สมัครผ่าน*</h2>
+                        <select name="agency" required class="border border-gray-300 p-3 rounded-lg w-full">
+                        <option value="">-- กรุณาเลือกเอเจนซี่ --</option>
+                        <option value="ieo_bangkok">IEO Bangkok</option>
+                        <option value="abc_travel">ABC Travel</option>
+                        <option value="world_exchange">World Exchange</option>
+                        <option value="อื่นๆ">อื่น ๆ</option>
+                        </select>
+                    </div>
+
+                    <!-- เพิ่มส่วน Username และ Password -->
+                    <div>
+                        <h2 class="text-lg font-semibold text-gray-700 mb-4">ข้อมูลการเข้าสู่ระบบ</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <input name="username" required class="border border-gray-300 p-3 rounded-lg w-full" placeholder="Username*">
+                        <input name="password" type="password" required class="border border-gray-300 p-3 rounded-lg w-full" placeholder="Password*">
+                        </div>
+                    </div>
+
+                    <!-- ข้อตกลง -->
+                    <div class="flex items-start space-x-2">
+                        <input type="checkbox" required class="mt-1">
+                        <label class="text-sm text-gray-600">ข้าพเจ้ายินยอมให้ IEO เก็บข้อมูล และติดต่อกลับเพื่อประสานงานการสมัคร</label>
+                    </div>
+
+                    <!-- ปุ่มส่ง -->
+                    <div class="text-center mt-6">
+                        <button type="submit" class="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition duration-200">
+                        ส่งแบบฟอร์ม
+                        </button>
+                    </div>
+                    </form>
                 </div>
 
-            </div>
+            </body>
         </div>
 
     </div>

@@ -1,0 +1,583 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Agency{% endblock %} 
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}
+<link href="{{ config.ASSETS_ROOT }}/plugins/datatables.net-bs5/css/dataTables.bootstrap5.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/datatables.net-responsive-bs5/css/responsive.bootstrap5.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/select2/dist/css/select2.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/tag-it/css/jquery.tagit.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/select-picker/dist/picker.min.css" rel="stylesheet" />
+{% endblock stylesheets %}
+
+{% block content %}
+
+<div id="content" class="app-content">
+
+    <h1 class="page-header">Agency
+        {% if current_user.has_permission('write_agency') %}
+            <a href="/agency/create_agency" class="btn btn-success ms-3 shadow-sm  bg-gradient">
+                <i class="fa fa-plus"></i> เพิ่ม
+            </a>
+        {% endif %}
+    </h1>
+    
+    <div class="row">
+        <div class="col-xl-12">
+            <div class="panel panel-inverse">
+                <div class="panel-heading">
+                    <h4 class="panel-title">Agency</h4>
+                    <div class="panel-heading-btn">
+                        <a href="javascript:;" class="btn btn-xs btn-icon btn-default" data-toggle="panel-expand"><i class="fa fa-expand"></i></a>
+                        <a href="javascript:;" class="btn btn-xs btn-icon btn-success" data-toggle="panel-reload"><i class="fa fa-redo"></i></a>
+                        <a href="javascript:;" class="btn btn-xs btn-icon btn-warning" data-toggle="panel-collapse"><i class="fa fa-minus"></i></a>
+                        <a href="javascript:;" class="btn btn-xs btn-icon btn-danger" data-toggle="panel-remove"><i class="fa fa-times"></i></a>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for categorie, message in messages %}
+                                <div class="alert alert-{{categorie}} alert-dismissible fade show mb-2 mt-1">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}                    
+                        {% endif %}
+                    {% endwith %}
+                    <table id="data-table-responsive" width="100%" class="table table-striped table-bordered align-middle text-nowrap">
+                        <thead>
+                            <tr>
+                                <th width="1%">No</th>
+                                <th class="text-nowrap">Full Name</th>
+                                <th class="text-nowrap">E-mail</th>
+                                <th class="text-nowrap">Phone</th>
+                                <th class="text-nowrap ">รหัส Agency</th>
+                                <th class="text-nowrap" >คนแนะนำ</th>
+                                <th class="text-nowrap ">ลิงก์</th>
+                                
+                                <th class="text-nowrap">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<a href="javascript:;" class="btn btn-icon btn-circle btn-primary btn-scroll-to-top" data-toggle="scroll-to-top"><i class="fa fa-angle-up"></i></a>
+
+
+<div class="modal fade" id="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form  method="POST" data-parsley-validate="true">
+                <div class="modal-header">
+                    <h4 class="modal-title">Name : </h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true"></button>
+                </div>
+                <div class="modal-body">
+                     <div class="row mb-3" hidden>
+                        <label class="form-label col-form-label col-md-4">id</label>
+                        <div class="col-md-8">
+                            <input type="text"  class="form-control" name="id" id="id-update" data-parsley-required="true"/>
+                        </div>
+                    </div>    
+                    <div class="mb-3">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="fullname" class="form-label">ชื่อ</label>
+                                <input name="fullname" required class="form-control  me-2"  placeholder="ชื่อ">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="fullname" class="form-label">นามสกุล</label>
+                                <input name="lastname" required class="form-control "  placeholder="นามสกุล">
+                            </div>
+                        </div>
+                        
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">อีเมล</label>
+                                <input type="email" class="form-control" name="email" placeholder="อีเมล">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">เบอร์โทร</label>
+                                <input name="phone" required class="form-control " placeholder="เบอร์โทรศัพท์*">
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                              <div class="row">
+                                <div class="col-md-6">
+                                  <label for="address" class="form-label">ที่อยู่</label>
+                                  <input name="address"  class="form-control  me-2"  placeholder="ที่อยู่">
+                                </div>
+                                <div class="col-md-6">
+                                  <label for="country" class="form-label">ประเทศ</label>
+                                  
+                                  <input name="country"  class="form-control  me-2"  placeholder="ประเทศ">
+                                  
+                                </div>
+                              </div>
+                            
+                          </div>
+                    <div class="mb-3">
+                        
+                    </div>
+                    <div class="mb-3">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">ชื่อโครงการ</label>
+                                <input type="text" class="form-control" name="name_project" placeholder="">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="email" class="form-label" hidden>คนแนะนำ</label>
+                                <input class="form-control mb-3" name="name_agency"  placeholder="">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row ">
+                        <div class="col-md-6">
+                            <label for="email" class="form-label">รหัส Agency</label>
+                            <input type="text" class="form-control" name="code" placeholder="">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="email" class="form-label">remask</label>
+                            <input class="form-control mb-3" name="remask"  placeholder="">
+                        </div>
+                    
+                    </div>
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <div class="input-group">
+                            <input name="username" required class="form-control " placeholder="Username*" >
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" onclick="func_save('rejected',$(this))">Rejected</button>
+                    <button type="button" class="btn btn-success" onclick="func_save('active',$(this))">Appove</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}
+
+<script src="{{ config.ASSETS_ROOT }}/plugins/datatables.net/js/dataTables.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/datatables.net-bs5/js/dataTables.bootstrap5.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/datatables.net-responsive/js/dataTables.responsive.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/datatables.net-responsive-bs5/js/responsive.bootstrap5.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/js/demo/table-manage-responsive.demo.js"></script>
+
+<script src="{{ config.ASSETS_ROOT }}/plugins/parsleyjs/dist/parsley.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/@highlightjs/cdn-assets/highlight.min.js"></script>
+
+<script src="{{ config.ASSETS_ROOT }}/plugins/select2/dist/js/select2.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/jquery-migrate/dist/jquery-migrate.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/tag-it/js/tag-it.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/select-picker/dist/picker.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/sweetalert/dist/sweetalert.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+$(document).ready(function() {
+    loadDataTable();
+});
+
+function loadDataTable() {
+    if ($.fn.DataTable.isDataTable('#data-table-responsive')) {
+        $('#data-table-responsive').DataTable().destroy(); // ลบ DataTable เดิมก่อน
+    }
+
+    const table = $('#data-table-responsive').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: "/agency/get_listAgency",
+            type: "POST",
+            data: function(d) { 
+                return JSON.stringify(d); 
+            },
+            contentType: "application/json",
+            dataType: "json"
+        },
+        columns: [
+            { data: "id", className: "text-center" },
+            {
+                data: null,
+                render: function(data, type, row) {
+                    return `${row.first_name} ${row.last_name}`;
+                }
+            },
+            { data: "data_user.email" },
+            { data: "data_user.tel" },
+            { data: "agency_code" },
+             { data: "referred" },
+             {
+                data: null,
+                className: 'text-center',
+                render: function(data, type, row) {
+                    const baseUrl = window.location.origin + '/register/agency';
+                    const fullUrl = `${baseUrl}?ref=${row.agency_code}`;
+                    return `<button class="btn btn-sm btn-primary" onclick="copyLink('${fullUrl}')">Copy Link</button>`;
+                }
+            },   
+           
+            // {
+            //     data: null,
+            //     className: 'text-center',
+            //     render: function(data, type, row) {
+            //         return row.referred_by ? `${row.referred_by.first_name}` : '-';
+
+            //     }
+            // },   
+            { 
+                data: null,  
+                orderable: false, // ปิดการเรียงลำดับในคอลัมน์นี้
+                className: 'text-center',
+                render: function(data, type, row) {
+                    return `
+                        <a href="/agency/agency_update/${row.data_user.id}" class="btn btn-dark btn-icon btn-circle btn-lg">
+                            <i class="fa fa-pencil-alt"></i>
+                        </a>
+                        <a class="btn btn-danger btn-icon btn-circle btn-lg" onclick="sweetAlertDel(${row.data_user.id})">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    `;
+                }
+            }                                                                             
+            // {
+            //     data: null,
+            //     render: function(data, type, row) {
+            //         let color = '';
+            //         if (row.referred == ''){
+            //             color = 'bg-success'
+            //             text = 'IEO'
+                    
+            //         }else {
+            //             color = 'bg-primary'; // สำหรับสถานะอื่นๆ
+            //             text = row.referred
+            //         }
+            //         return `<div class="text-center"><label class="badge ${color} text-center" >${text}</label></div>`;
+            //     }
+            // },
+            
+            
+            
+            // { 
+            //     data: null,  
+            //     orderable: false, // ปิดการเรียงลำดับในคอลัมน์นี้
+            //     className: 'text-center',
+            //     render: function(data, type, row) {
+            //         const rowData = JSON.stringify(row).replace(/"/g, '&quot;'); 
+            //         return `
+
+            //         <a href="javascript:;" class="btn btn-success  btn-icon btn-circle "><i class="fas fa-check" onclick="sweetAlertAppove('${data.data_user.id}','active')"></i></a>
+                                            
+            //         <a href="javascript:;" onclick="sweetAlertReject('${data.data_user.id}','rejected')" class=" btn btn-danger btn-icon btn-circle "><i class="fas fa-times"></i></a>
+            //         <a  href="javascript:;" onclick="func_modal('${rowData}')" class=" btn btn-dark btn-icon btn-circle "  ><i class="fas fa-eye"></i></a>`;
+            //     }
+            // }
+        ],
+        order: [[0, "asc"]],  // เรียงลำดับจาก ID
+        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+        pageLength: 10
+    });
+
+    setInterval(function () {
+        table.ajax.reload(null, false); // false = ไม่ reset pagination
+    }, 10000);
+}
+
+function func_modal(data) {
+    console.log(data)
+    data = JSON.parse(data); 
+    $('#modal-dialog').modal('show');
+
+    // $('form').attr('action', '/customer/edit');
+    $('.modal-title').html(`Name: ${data.first_name} ${data.last_name}`);
+    $('.c_add').hide()
+    $('.c_edit').show()
+
+    $('[name="id"]').val(data.data_user.id);
+    $('[name="fullname"]').val(data.first_name);
+    $('[name="lastname"]').val(data.last_name);
+    $('[name="address"]').val(data.data_user.address);
+    $('[name="country"]').val(data.data_user.country);
+    $('[name="email"]').val(data.data_user.email);
+    $('[name="phone"]').val(data.data_user.tel);
+    $('[name="code"]').val(data.agency_code);
+    $('[name="username"]').val(data.data_user.username);
+    if(data.referred){
+        
+        $('[name="name_agency"]').val(data.referred);
+    }else{
+
+        $('[name="name_agency"]').val("IEO");
+    }
+    $('[name="name_project"]').val("");
+   
+
+}
+</script>
+<script>
+function func_save(mode, x){
+    console.log(mode)
+    x.attr('disabled', true);   
+
+       fetch("/user_request/get_listAgenct", {
+            method: "post",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+
+                id: $('[name="id"]').val(),
+                status: mode
+            
+            }),
+        })
+        .then((response) => response.json())
+        .then((data) => {
+            console.log(data);
+            x.attr('disabled',true);
+            swal({
+                icon: "success",
+                title: "Successfully!",
+                timer: 1500
+            });
+
+            location.reload();
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+            swal({
+                icon: "error",
+                title: "Error adding country!",
+                confirmButtonText: "OK",  // ✅ ใช้ได้กับ Swal.fire()
+                showConfirmButton: true
+            });
+            x.attr('disabled', false);
+        });     
+    
+    
+}
+function sweetAlertAppove(id_check,mode ){
+    console.log(mode)
+    swal({
+            title: "ยืนยันการดำเนินการ?",
+            text: `คุณแน่ใจหรือไม่ว่าจะอนุมัติ ผู้ใช้นี้?`,
+            icon: "warning",
+            buttons: {
+                cancel: {
+                    text: "ยกเลิก",
+                    visible: true,
+                    className: "btn btn-gray-300",
+                    closeModal: true,
+                },
+                confirm: {
+                    text: "ยืนยัน",
+                    visible: true,
+                    className: "btn btn-primary",
+                    closeModal: false, // ปิด modal หลังจาก fetch เสร็จ
+                }
+            },
+            dangerMode: true,
+        }).then((willApprove) => {
+            if (willApprove) {
+                fetch("/user_request/check_appovedUser", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        id: id_check,
+                        status: mode
+                    }),
+                })
+                .then((response) => response.json())
+                .then((data) => {
+                    console.log(data);
+                    swal({
+                        icon: "success",
+                        title: "ดำเนินการสำเร็จ!",
+                        text: `ผู้ใช้ถูกอนุมัติเรียบร้อยแล้ว`,
+                        confirmButtonText: "OK"
+                    }).then(() => {
+                        location.reload();
+                    });
+                })
+                .catch((error) => {
+                    console.error("Error:", error);
+                    swal({
+                        icon: "error",
+                        title: "เกิดข้อผิดพลาด!",
+                        text: "ไม่สามารถดำเนินการได้ กรุณาลองใหม่",
+                    });
+                });
+            }
+        });
+        
+        
+}
+function sweetAlertReject(id_check,mode ){
+    console.log(mode)
+    swal({
+            title: "ยืนยันการดำเนินการ?",
+            text: `คุณแน่ใจหรือไม่ว่าต้องการปฏิเสธผู้ใช้นี้?`,
+            icon: "warning",
+            buttons: {
+                cancel: {
+                    text: "ยกเลิก",
+                    visible: true,
+                    className: "btn btn-gray-300",
+                    closeModal: true,
+                },
+                confirm: {
+                    text: "ยืนยัน",
+                    visible: true,
+                    className: "btn btn-primary",
+                    closeModal: false, // ปิด modal หลังจาก fetch เสร็จ
+                }
+            },
+            dangerMode: true,
+        }).then((willApprove) => {
+            if (willApprove) {
+                fetch("/user_request/check_appovedUser", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        id: id_check,
+                        status: mode
+                    }),
+                })
+                .then((response) => response.json())
+                .then((data) => {
+                    console.log(data);
+                    swal({
+                        icon: "success",
+                        title: "ดำเนินการสำเร็จ!",
+                        text: `ปฏิเสธการอนุมัติผู้ใช้เรียบร้อยแล้ว`,
+                        confirmButtonText: "OK"
+                    }).then(() => {
+                        location.reload();
+                    });
+                })
+                .catch((error) => {
+                    console.error("Error:", error);
+                    swal({
+                        icon: "error",
+                        title: "เกิดข้อผิดพลาด!",
+                        text: "ไม่สามารถดำเนินการได้ กรุณาลองใหม่",
+                    });
+                });
+            }
+        }); 
+    
+    
+}
+
+
+
+function sweetAlertDel(id) {
+    swal({
+        title: "Are you sure?",
+        text: "Delete!",
+        icon: "warning",
+        buttons: {
+            cancel: {
+                text: "Cancel",
+                value: null,
+                visible: true,
+                className: "btn btn-default",
+                closeModal: true,
+            },
+            confirm: {
+                text: "Delete",
+                value: true,
+                visible: true,
+                className: "btn btn-danger",
+                closeModal: true,
+            },
+        },
+    }).then((result) => {
+        if (result.dismiss !== "cancel") {
+            post("/agency/delete_agency", {
+                id: id
+            });
+        }
+    });
+}
+function post(path, params, method = "post") {
+    const form = document.createElement("form");
+    form.method = method;
+    form.action = path;
+    for (const key in params) {
+        if (params.hasOwnProperty(key)) {
+            const hiddenField = document.createElement("input");
+            hiddenField.type = "hidden";
+            hiddenField.name = key;
+            hiddenField.value = params[key];
+            form.appendChild(hiddenField);
+        }
+    }
+    document.body.appendChild(form);
+    form.submit();
+}
+
+function copyLink(text) {
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(text)
+            .then(() => {
+                console.log('Link copied to clipboard!');
+            })
+            .catch(err => {
+                console.error('Failed to copy: ', err);
+            });
+    } else {
+        console.warn('Clipboard API not supported!');
+        // fallback เช่นสร้าง input element เพื่อ copy
+        const input = document.createElement('input');
+        input.value = text;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        document.body.removeChild(input);
+    }
+}
+
+
+
+
+function copyLinkFromText(link) {
+    navigator.clipboard.writeText(link).then(function() {
+        alert('คัดลอกลิงก์สำเร็จ: ' + link);
+    }, function(err) {
+        alert('คัดลอกลิงก์ไม่สำเร็จ: ' + err);
+    });
+}
+
+</script>
+
+
+{% endblock javascripts %}

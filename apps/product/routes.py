@@ -3,6 +3,7 @@ import time
 import re
 from apps.product import blueprint
 from apps.authentication.models import *
+from apps.organization.models import *
 from apps.product.models import *
 from apps.supplier.models import *
 from apps.employee.models import *
@@ -356,12 +357,13 @@ def createProductSales():
     country = CountryModel.query.order_by(asc(CountryModel.name)).all()
     period = PeriodModel.query.all()
     termOfPaymentModel = term_of_paymentModel.query.order_by(term_of_paymentModel.name).all()
-    supplier = SupplierModel.query.order_by(SupplierModel.name).all()
+    organization = OrganizationModel.query.order_by(OrganizationModel.name).all()
     employee = EmployeeModel.query.order_by(EmployeeModel.name).all()
+    agency = AgencyModel.query.order_by(AgencyModel.agency_code).all()
     
 
 
-    return render_template('/productForSales/createProductSales.html', segment='productSales' ,productCars=productCar, countrys=country, periods=period,termOfPaymentModels=termOfPaymentModel,suppliers=supplier,employees=employee)
+    return render_template('/productForSales/createProductSales.html', segment='productSales' ,productCars=productCar, countrys=country, periods=period,termOfPaymentModels=termOfPaymentModel,organizations=organization,employees=employee,agencys=agency)
 
 @blueprint.route('/EditProductSales/<id>')
 @login_required
@@ -375,16 +377,20 @@ def EditProductSales(id):
     termOfPaymentModel = term_of_paymentModel.query.order_by(term_of_paymentModel.name).all()
     file_data = FileModel.query.filter_by(product_for_sales_id = datas.id).all()
     payment = installmentsPaymentModel.query.filter_by(product_for_sales_id=datas.id).all()
-    supplier = SupplierModel.query.order_by(SupplierModel.name).all()
+    organization = OrganizationModel.query.order_by(OrganizationModel.name).all()
     employee = EmployeeModel.query.order_by(EmployeeModel.name).all()
-    productSup = ProductSupplierAssociation.query.filter_by(product_id=id).all()
-    selected_suppliers = [p.supplier_id for p in productSup]
+    agency = AgencyModel.query.order_by(AgencyModel.agency_code).all()
+    productSup = ProductOrganizationAssociation.query.filter_by(product_id=id).all()
+    selected_organizations = [p.organization_id for p in productSup]
     
     productEmplo = ProductEmployerAssociation.query.filter_by(product_id=id).all()
     selected_employee = [e.employee_id for e in productEmplo]
     
+    productAgency = ProductAgencyAssociation.query.filter_by(product_id=id).all()
+    selected_agency = [e.agency_id for e in productAgency]
+    
 
-    return render_template('/productForSales/EditProductSales.html', segment='productSales' , datas=datas, productCars=productCar, countrys=country, periods=period,termOfPaymentModels=termOfPaymentModel, file_data=file_data,payments=payment,suppliers=supplier,employees=employee,selected_suppliers=selected_suppliers,selected_employee=selected_employee)
+    return render_template('/productForSales/EditProductSales.html', segment='productSales' , datas=datas, productCars=productCar, countrys=country, periods=period,termOfPaymentModels=termOfPaymentModel, file_data=file_data,payments=payment,organizations=organization,employees=employee,selected_organizations=selected_organizations,selected_employee=selected_employee,selected_agencys=selected_agency,agencys=agency)
 
 @blueprint.route('/addProductSale', methods=['GET', 'POST'])
 @login_required
@@ -404,8 +410,9 @@ def addProductSale():
     start = datetime.strptime(request.form.get("start"), "%d-%m-%Y") if request.form["start"] else None 
     end = datetime.strptime(request.form.get("end"), "%d-%m-%Y") if request.form["end"] else None 
     # ✅ ตรวจสอบว่า country_id และ period_id ได้ค่าที่ถูกต้อง (ต้องเป็นตัวเลข ไม่ใช่ function)
-    supplier_ids = request.form.getlist('supplier') or None
+    organization_ids = request.form.getlist('organization') or None
     employee_ids = request.form.getlist('employee') or None
+    agency_ids = request.form.getlist('agency') or None
     if price:
         price = float(price.replace(',', ''))  # 
     else:
@@ -555,12 +562,12 @@ def addProductSale():
     else:
         print("Error: term_detail_list and installments_list do not match in length.")    
         
-    if supplier_ids:
-        for supplier_id in supplier_ids:
+    if organization_ids:
+        for organization_id in organization_ids:
             # สร้างความสัมพันธ์ในตาราง ProgramSupplierAssociation
-            new_association = ProductSupplierAssociation(
+            new_association = ProductOrganizationAssociation(
                 product_id=new_item.id,
-                supplier_id=supplier_id,
+                organization_id=organization_id,
             )
 
             db.session.add(new_association)
@@ -579,7 +586,20 @@ def addProductSale():
             db.session.add(new_associationEmployee)
 
         db.session.commit()  # บันทึกข้อมูลลงฐานข้อมูล
-        print("เพิ่ม Employee เข้าโครงการสำเร็จ")            
+        print("เพิ่ม Employee เข้าโครงการสำเร็จ")    
+                
+    if agency_ids:
+        for agency_id in agency_ids:
+            # สร้างความสัมพันธ์ในตาราง ProgramSupplierAssociation
+            new_associationAgency = ProductAgencyAssociation(
+                product_id=new_item.id,
+                agency_id=agency_id,
+            )
+
+            db.session.add(new_associationAgency)
+
+        db.session.commit()  # บันทึกข้อมูลลงฐานข้อมูล
+        print("เพิ่ม Agency เข้าโครงการสำเร็จ")            
     # print(datas)
     return redirect(url_for('product_blueprint.EditProductSales',id=new_item.id))
 
@@ -597,8 +617,9 @@ def updateProductSale():
     country_id = request.form.get('country') or None
     period_id = request.form.get('period') or None
     term_of_payment_id = request.form.get('term') or None
-    supplier_ids = request.form.getlist('supplier') or None
+    organization_ids = request.form.getlist('organization') or None
     employee_ids = request.form.getlist('employee') or None
+    agency_ids = request.form.getlist('agency') or None
     
     detail = request.form.get('detail') or None
     start = datetime.strptime(request.form.get("start"), "%d-%m-%Y") if request.form["start"] else None 
@@ -746,19 +767,21 @@ def updateProductSale():
     
     db.session.query(ProductSupplierAssociation).filter(ProductSupplierAssociation.product_id == thisItem.id).delete()
     db.session.query(ProductEmployerAssociation).filter(ProductEmployerAssociation.product_id == thisItem.id).delete()
-    db.session.commit()        
-    if supplier_ids:
-        for supplier_id in supplier_ids:
+    db.session.query(ProductOrganizationAssociation).filter(ProductOrganizationAssociation.product_id == thisItem.id).delete()
+    db.session.commit()    
+        
+    if organization_ids:
+        for organization_id in organization_ids:
             # สร้างความสัมพันธ์ในตาราง ProgramSupplierAssociation
-            new_association = ProductSupplierAssociation(
+            new_association = ProductOrganizationAssociation(
                 product_id=thisItem.id,
-                supplier_id=supplier_id,
+                organization_id=organization_id,
             )
 
             db.session.add(new_association)
 
         db.session.commit()  # บันทึกข้อมูลลงฐานข้อมูล
-        print("เพิ่ม Supplier เข้าโครงการสำเร็จ")
+        print("เพิ่ม Organization เข้าโครงการสำเร็จ")
     
         
     if employee_ids:
@@ -774,7 +797,18 @@ def updateProductSale():
         db.session.commit()  # บันทึกข้อมูลลงฐานข้อมูล
         print("เพิ่ม Employee เข้าโครงการสำเร็จ")  
    
-    
+    if agency_ids:
+        for agency_id in agency_ids:
+            # สร้างความสัมพันธ์ในตาราง ProgramSupplierAssociation
+            new_associationAgency = ProductAgencyAssociation(
+                product_id=thisItem.id,
+                agency_id=agency_id,
+            )
+
+            db.session.add(new_associationAgency)
+
+        db.session.commit()  # บันทึกข้อมูลลงฐานข้อมูล
+        print("เพิ่ม Agency เข้าโครงการสำเร็จ")   
     # print(datas)
     return redirect(url_for('product_blueprint.EditProductSales',id=thisItem.id))
 

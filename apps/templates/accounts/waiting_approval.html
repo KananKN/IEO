@@ -1,0 +1,82 @@
+{% extends "layouts/base-fullscreen.html" %}
+
+{% block title %} Register {% endblock %} 
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}
+ <link href="{{ config.ASSETS_ROOT }}/plugins/datatables.net-bs5/css/dataTables.bootstrap5.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/datatables.net-responsive-bs5/css/responsive.bootstrap5.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/select2/dist/css/select2.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/tag-it/css/jquery.tagit.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/select-picker/dist/picker.min.css" rel="stylesheet" />
+
+<style>
+    * {
+        font-family: 'Prompt', sans-serif;
+    }
+     body {
+      background-color:rgb(207, 211, 214);
+      
+    }
+    .card {
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      width: 100%;
+    }
+
+    
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+
+
+<div class="d-flex align-items-center justify-content-center min-vh-100">
+      <div class="col-xl-5 my-5">
+          <div class="card shadow-md rounded-lg" style="background-color: #54627F;">
+              <div class="row p-5">
+                  <!-- ฝั่งซ้าย (สีฟ้า) -->
+                      <div class="text-center text-white my-4">
+                            <h1>ลงทะเบียนสำเร็จ</h1>
+                            <h5>ระบบได้รับข้อมูลของคุณเรียบร้อยแล้ว</h5>
+                            <h5>กรุณารอผู้ดูแลระบบทำการตรวจสอบและอนุมัติบัญชี</h5>
+
+                      </div>
+                      
+                  
+
+
+                 
+              </div>
+          </div>
+      </div>
+  </div>    
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}
+<script>
+    function checkApprovalStatus() {
+        fetch('/check_user_status')
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success' && data.user_status === 'active') {
+                    // ล้าง session backend จะทำให้เองหลัง redirect
+                    window.location.href = "/login";
+                }
+            });
+    }
+
+    // เช็คทุก 5 วินาที
+    setInterval(checkApprovalStatus, 5000);
+</script>
+<script>
+    // ป้องกันปุ่ม back
+    history.pushState(null, '', location.href);
+    window.onpopstate = function () {
+        history.pushState(null, '', location.href);
+    };
+</script>
+
+{% endblock javascripts %}

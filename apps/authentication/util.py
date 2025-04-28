@@ -12,7 +12,8 @@ import binascii
 
 def hash_pass(password):
     """Hash a password for storing."""
-
+    if not isinstance(password, str):
+        password = str(password)
     salt = hashlib.sha256(os.urandom(60)).hexdigest().encode('ascii')
     pwdhash = hashlib.pbkdf2_hmac('sha512', password.encode('utf-8'),
                                   salt, 100000)
