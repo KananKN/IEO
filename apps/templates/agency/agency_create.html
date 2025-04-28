@@ -58,11 +58,11 @@
                                     <div class="mb-3">
                                         <div class="row">
                                             <div class="col-md-6">
-                                            <label for="fullname" class="form-label">ชื่อ</label>
+                                            <label for="fullname" class="form-label">ชื่อ<span class="text-danger">*</span></label>
                                             <input name="fullname" required class="form-control  me-2"  placeholder="ชื่อ">
                                             </div>
                                             <div class="col-md-6">
-                                            <label for="fullname" class="form-label">นามสกุล</label>
+                                            <label for="fullname" class="form-label">นามสกุล<span class="text-danger">*</span></label>
                                             <input name="lastname" required class="form-control "  placeholder="นามสกุล">
                                             </div>
                                         </div>
@@ -72,11 +72,11 @@
                                     <div class="mb-3">
                                         <div class="row">
                                             <div class="col-md-6">
-                                            <label for="email" class="form-label">อีเมล</label>
+                                            <label for="email" class="form-label">อีเมล<span class="text-danger">*</span></label>
                                             <input type="email" class="form-control" name="email" placeholder="อีเมล">
                                             </div>
                                             <div class="col-md-6">
-                                            <label for="email" class="form-label">เบอร์โทร</label>
+                                            <label for="email" class="form-label">เบอร์โทร<span class="text-danger">*</span></label>
                                             <input name="phone" required class="form-control " placeholder="เบอร์โทรศัพท์*">
 
                                             </div>
@@ -86,11 +86,11 @@
                                     <div class="">
                                         <div class="row">
                                             <div class="col-md-6">
-                                            <label for="email" class="form-label">ที่อยู่</label>
+                                            <label for="email" class="form-label">ที่อยู่<span class="text-danger">*</span></label>
                                             <input type="text" class="form-control" name="address" placeholder="ที่อยู่">
                                             </div>
                                             <div class="col-md-6">
-                                            <label for="email" class="form-label">ประเทศ</label>
+                                            <label for="email" class="form-label">ประเทศ<span class="text-danger">*</span></label>
                                             <input class="form-control mb-3" name="country"  placeholder="ประเทศ">
                                             </div>
                                         </div>
@@ -123,7 +123,7 @@
                                             
                                     
                                     <div class="mb-3">
-                                        <label for="password" class="form-label">Username</label>
+                                        <label for="password" class="form-label">Username<span class="text-danger">*</span></label>
                                         <div class="input-group">
                                             <input name="username" required class="form-control " placeholder="Username*" >
                                         </div>
@@ -131,20 +131,22 @@
                                     <div class="mb-3">
                                         <div class="row">
                                             <div class="col-md-6">
-                                            <label for="email" class="form-label">รหัสผ่าน</label>
+                                            <label for="email" class="form-label">รหัสผ่าน<span class="text-danger">*</span></label>
                                             <input name="password" type="password" required class="form-control mb-3" placeholder="รหัสผ่าน*">
                                             </div>
                                             <div class="col-md-6">
-                                            <label for="email" class="form-label">ยืนยันรหัสผ่าน</label>
+                                            <label for="email" class="form-label">ยืนยันรหัสผ่าน<span class="text-danger">*</span></label>
                                             <input name="confirm_password" type="password" required class="form-control mb-3" placeholder="ยืนยันรหัสผ่าน">
                                             </div>
                                         </div>
                                         
                                     </div>
-                                    
-                                    <button type="button" class="btn btn-primary w-100 mb-3" onclick="validateForm()">
-                                        <i class="fa fa-user-check me-2"></i> ลงทะเบียน
-                                    </button>
+                                    <div class="d-flex w-100 justify-content-center" center>
+                                        <button type="button" class="btn btn-primary w-25 mb-3" onclick="validateForm()">
+                                            <i class="fa fa-user-check me-2"></i> บันทึก
+                                        </button>
+                                        
+                                    </div>
 
                                     <hr>
                                     
