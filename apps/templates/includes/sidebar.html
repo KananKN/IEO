@@ -218,18 +218,18 @@
                  <div class="menu-text mt-1">Organization</div></a>
             </div>
              {% endif %}   
-            {% if current_user.has_permission('read_employee')%}
-            <div class="menu-item  {% if segment == 'employee' %} active {% endif %}" >
-                 <a href="/employee" class="menu-link">
+            {% if current_user.has_permission('read_sponsor')%}
+            <div class="menu-item  {% if segment == 'sponsor' %} active {% endif %}" >
+                 <a href="/sponsor" class="menu-link">
                   <div class="menu-icon">
                         <i class="fas fa-file-invoice fs-18px mx-1 mt-1"></i>
                     </div>
-                 <div class="menu-text mt-1">Employee</div></a>
+                 <div class="menu-text mt-1">Sponsor</div></a>
             </div>     
             {% endif %}  
-            {% if current_user.has_permission('read_univercity')%}
-            <div class="menu-item  {% if segment == 'univercity' %} active {% endif %}" >
-                 <a href="/univercity" class="menu-link">
+            {% if current_user.has_permission('read_university')%}
+            <div class="menu-item  {% if segment == 'university' %} active {% endif %}" >
+                 <a href="/university" class="menu-link">
                   <div class="menu-icon">
                         <i class="fas fa-file-invoice fs-18px mx-1 mt-1"></i>
                     </div>
@@ -271,7 +271,7 @@
                         class="menu-item {% if segment == 'list_ProductEmployee' %} active {% endif %}"
                     >
                         <a
-                            href="/employee/list_ProductEmployee"
+                            href="/sponsor/list_ProductEmployee"
                             class="menu-link"
                             ><div class="menu-text">รายการโครงการ Employee</div></a
                         >
@@ -291,7 +291,7 @@
                         <a
                             href="/agency/list_ProductAgency"
                             class="menu-link"
-                            ><div class="menu-text">รายการโครงการ Agency/Univercity</div></a
+                            ><div class="menu-text">รายการโครงการ Agency/University</div></a
                         >
                     </div>
                 </div>

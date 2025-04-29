@@ -1,6 +1,6 @@
 {% extends "layouts/base.html" %}
 
-{% block title %} Employee {% endblock %} 
+{% block title %} Sponsor {% endblock %} 
 
 <!-- Specific Page CSS goes HERE  -->
 {% block stylesheets %}
@@ -22,7 +22,7 @@
             <div class="col-xl-12">
                 <div class="panel panel-inverse">
                     <div class="panel-heading">
-                        <h4 class="panel-title">Employee Update</h4>
+                        <h4 class="panel-title">Sponsor Update</h4>
                         <div class="panel-heading-btn">
                             <a href="javascript:;" class="btn btn-xs btn-icon btn-default" data-toggle="panel-expand"><i class="fa fa-expand"></i></a>
                             <a href="javascript:;" class="btn btn-xs btn-icon btn-success" data-toggle="panel-reload"><i class="fa fa-redo"></i></a>
@@ -47,7 +47,7 @@
                     <div class="card">
                         <div class="card-header bg-white">
                             <div class="d-flex justify-content-between">
-                                <h4 class="card-title my-2">Employee Update</h4>  
+                                <h4 class="card-title my-2">Sponsor Update</h4>  
                                 <div class="panel-heading-btn">
                                     <button type="submit"  class="btn btn-blue"  onclick="func_save()">Save</button>
                                 </div>
@@ -153,7 +153,7 @@
                                             </div>
 
                                             <div class="col-md-8 col-sm-12 col-xs-12 mb-5px text-ellipsis mt-2">
-                                                <a href="{{ url_for('employee_blueprint.downloadEmployee', filename=file_data.filename)}}" style="text-decoration: none; color: black;"><i class="fas fa-lg fa-fw ms-5px  fa-file"></i> <span>{{ file_data.filename }}</span></a> 
+                                                <a href="{{ url_for('sponsor_blueprint.downloadEmployee', filename=file_data.filename)}}" style="text-decoration: none; color: black;"><i class="fas fa-lg fa-fw ms-5px  fa-file"></i> <span>{{ file_data.filename }}</span></a> 
                                                 <a href="#" onclick="sweetAlertDelSign({{file_data.id}},{{datas.id}})">
                                                     <i class="fas fa-lg fa-fw mx-5px fa-trash-can text-danger c_trash"></i>			
                                                 </a> 
@@ -237,7 +237,7 @@ function sweetAlertDelSign(id_file,id) {
         },
     }).then((result) => {
         if (result.dismiss !== "cancel") {
-            post("/employee/employee_delete_file", {
+            post("/sponsor/employee_delete_file", {
                 id_file: id_file,
                 id: id,
                 // path: $("#path").val(),

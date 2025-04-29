@@ -1,6 +1,6 @@
 {% extends "layouts/base.html" %}
 
-{% block title %} รายการโครงการ Agency {% endblock %} 
+{% block title %} รายการโครงการ Agency/University {% endblock %} 
 
 <!-- Specific Page CSS goes HERE  -->
 {% block stylesheets %}
@@ -25,7 +25,7 @@
         <div class="d-flex justify-content-between align-items-center mb-3">
             <!-- ฝั่งซ้าย: รายการอุปกรณ์ + ปุ่มบวก -->
             <div class="d-flex align-items-center">
-                <h6 class="page-header m-0">รายการโครงการ Agency</h6>
+                <h6 class="page-header m-0">รายการโครงการ Agency/University</h6>
                 {% if current_user.has_permission('write_agency') %}
                     
                     
@@ -40,7 +40,7 @@
         <div class="col-xl-12">
             <div class="panel panel-inverse">
                 <div class="panel-heading">
-                    <h4 class="panel-title">รายการโครงการ Agency</h4>
+                    <h4 class="panel-title">รายการโครงการ Agency/University</h4>
                     <div class="panel-heading-btn">
                         <a href="javascript:;" class="btn btn-xs btn-icon btn-default" data-toggle="panel-expand"><i class="fa fa-expand"></i></a>
                         <a href="javascript:;" class="btn btn-xs btn-icon btn-success" data-toggle="panel-reload"><i class="fa fa-redo"></i></a>
@@ -64,8 +64,8 @@
                         <thead>
                             <tr>
                                 <th class="text-center" width="1%">No</th>
-                                <th class="text-nowrap" width="">รหัส Agency</th>
-                                <th class="text-nowrap" width="30%">ชื่อ - นามสกุบ</th>
+                                <th class="text-nowrap" width="">รหัส Agency/University</th>
+                                <th class="text-nowrap" width="30%">ชื่อ - นามสกุล</th>
                                 <th class="text-nowrap" width="20%">ประเทศ</th>
                                 <th class="text-nowrap" width="20%">เบอร์โทร</th>
                                 <th class="text-nowrap text-center" width="10%">โครงการที่เข้าร่วม</th>

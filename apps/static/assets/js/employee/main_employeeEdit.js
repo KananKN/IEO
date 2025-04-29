@@ -18,7 +18,7 @@ function post(path, params, method = "post") {
 function func_save() {
     // console.log("Saving...");
 
-    $('#myForm').attr('action', '/employee/updateEmployee').attr('method', 'POST');
+    $('#myForm').attr('action', '/sponsor/updateEmployee').attr('method', 'POST');
     $('#myForm').submit();
 }
 

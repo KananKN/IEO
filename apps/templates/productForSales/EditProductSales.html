@@ -118,7 +118,7 @@
                             </select>
                         </div>
                     </div>
-                    <div class="form-group row mb-3">
+                    <div class="form-group row mb-3" hidden>
                         <label class="form-label col-form-label col-lg-4">ระยะเวลาโครงการ</label>
                             <div class="col-lg-8">
                                 <div class="input-group input-daterange">
@@ -128,7 +128,7 @@
                                 </div>
                             </div>
                     </div>
-                    <div class="row mb-3"  >
+                    <div class="row mb-3"  hidden>
                         <label class="form-label col-form-label col-md-4">Year</label>
                         <div class="col-md-8">
                             <input  class="form-control"  name="year" id="i_year"  value="{{datas.year}}"  display data-parsley-required="true"/>
@@ -247,6 +247,17 @@
                                 {% endfor %}
                             </select>   
                             
+                        </div>
+                    </div>
+                    <div class="row mb-15px" >
+                        <label class="form-label col-form-label col-md-4">University</label>
+                        <div class="col-md-8">
+                            <input  class="form-control" readonly  value="" hidden  display data-parsley-required="true"/>
+                            <select class="multiple-select2 form-control" multiple name="university" id="i_university" >
+                                {% for university in universitys %}
+                                    <option value="{{university.id}}" {% if university.id in selected_agencys  %} selected {% endif %}>{{university.agency_code}}</option>
+                                {% endfor %}
+                            </select>
                         </div>
                     </div>
                     <div class="row mb-15px" >

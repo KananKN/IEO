@@ -1,6 +1,6 @@
 {% extends "layouts/base.html" %}
 
-{% block title %} ลงทะเบียนสำหรับ Univercity {% endblock %} 
+{% block title %} ลงทะเบียนสำหรับ University {% endblock %} 
 
 <!-- Specific Page CSS goes HERE  -->
 {% block stylesheets %}
@@ -22,7 +22,7 @@
             <div class="col-xl-8">
                 <div class="panel panel-inverse">
                     <div class="panel-heading">
-                        <h4 class="panel-title">ลงทะเบียนสำหรับ Univercity</h4>
+                        <h4 class="panel-title">แก้ไขข้อมูล University</h4>
                         <div class="panel-heading-btn">
                             <a href="javascript:;" class="btn btn-xs btn-icon btn-default" data-toggle="panel-expand"><i class="fa fa-expand"></i></a>
                             <a href="javascript:;" class="btn btn-xs btn-icon btn-success" data-toggle="panel-reload"><i class="fa fa-redo"></i></a>
@@ -47,34 +47,40 @@
                     <div class="card">
                         <div class="card-header bg-white">
                             <div class="d-flex justify-content-between">
-                                <h4 class="card-title my-2">ลงทะเบียนสำหรับ Univercity</h4>  
+                                <h4 class="card-title my-2">แก้ไขข้อมูล University</h4>  
                                
                             </div>
                         </div>   
                         <div class="card-body">
                             <div class="col-12">
-                                
+
                                 <form method="POST" action="/register">
+
+                                    <div class="row mb-3" hidden >
+                                        <label class="form-label col-form-label col-md-4">id</label>
+                                        <div class="col-md-8">
+                                            <input   class="form-control" name="id" id="id-update" data-parsley-required="true" value="{{datas.id}}"/>
+                                        </div>
+                                    </div>   
                                     <div class="mb-3">
                                         <div class="row">
                                             <div class="col-md-12">
                                             <label for="name_univer" class="form-label">ชื่อมหาวิทยาลัย<span class="text-danger">*</span></label>
-                                            <input name="name_univer" required class="form-control  me-2"  placeholder="ชื่อมหาวิทยาลัย">
+                                            <input name="name_univer" required class="form-control  me-2"  placeholder="ชื่อมหาวิทยาลัย" value="{{datas.company_name_th}}" >
                                             </div>
                                             
                                         </div>
                                         
                                     </div>
-                                    <h5>กรอกข้อมูลผู้ประสานงาน</h5>
                                     <div class="mb-3">
                                         <div class="row">
                                             <div class="col-md-6">
                                             <label for="fullname" class="form-label">ชื่อ<span class="text-danger">*</span></label>
-                                            <input name="fullname" required class="form-control  me-2"  placeholder="ชื่อ">
+                                            <input name="fullname" required class="form-control  me-2" value="{{datas.first_name}}" placeholder="ชื่อ">
                                             </div>
                                             <div class="col-md-6">
                                             <label for="fullname" class="form-label">นามสกุล<span class="text-danger">*</span></label>
-                                            <input name="lastname" required class="form-control "  placeholder="นามสกุล">
+                                            <input name="lastname" required class="form-control "  value="{{datas.last_name}}" placeholder="นามสกุล">
                                             </div>
                                         </div>
                                         
@@ -84,11 +90,11 @@
                                         <div class="row">
                                             <div class="col-md-6">
                                             <label for="email" class="form-label">อีเมล<span class="text-danger">*</span></label>
-                                            <input type="email" class="form-control" required name="email" placeholder="อีเมล">
+                                            <input type="email" class="form-control" required name="email" value="{{datas.email}}" placeholder="อีเมล">
                                             </div>
                                             <div class="col-md-6">
                                             <label for="email" class="form-label">เบอร์โทร<span class="text-danger">*</span></label>
-                                            <input name="phone" required class="form-control" placeholder="เบอร์โทรศัพท์*">
+                                            <input name="phone" required class="form-control " value="{{datas.tel}}"placeholder="เบอร์โทรศัพท์*">
 
                                             </div>
                                         </div>
@@ -98,11 +104,11 @@
                                         <div class="row">
                                             <div class="col-md-6">
                                             <label for="email" class="form-label">ที่อยู่<span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" required name="address" placeholder="ที่อยู่">
+                                            <input type="text" class="form-control" required name="address" value="{{datas.address}}" placeholder="ที่อยู่">
                                             </div>
                                             <div class="col-md-6">
                                             <label for="email" class="form-label">ประเทศ<span class="text-danger">*</span></label>
-                                            <input class="form-control mb-3" name="country" required placeholder="ประเทศ">
+                                            <input class="form-control mb-3" name="country"  required value="{{datas.country}}" placeholder="ประเทศ">
                                             </div>
                                         </div>
                                     </div>
@@ -134,26 +140,37 @@
                                             
                                     
                                     <div class="mb-3">
-                                        <label for="password" class="form-label">Username<span class="text-danger">*</span></label>
-                                        <div class="input-group">
-                                            <input name="username" required class="form-control " placeholder="Username*" >
-                                        </div>
-                                    </div>
-                                    <div class="mb-3">
                                         <div class="row">
                                             <div class="col-md-6">
-                                            <label for="email" class="form-label">รหัสผ่าน<span class="text-danger">*</span></label>
-                                            <input name="password" type="password" required class="form-control mb-3" placeholder="รหัสผ่าน*">
+                                                <label for="username" class="form-label">รหัส Univercity</label>
+                                                <div class="input-group">
+                                                    <input name="code" readonly class="form-control-plaintext"  disable value="{{datas.agency_code}}" placeholder="" >
+                                                </div>
                                             </div>
                                             <div class="col-md-6">
-                                            <label for="email" class="form-label">ยืนยันรหัสผ่าน<span class="text-danger">*</span></label>
-                                            <input name="confirm_password" type="password" required class="form-control mb-3" placeholder="ยืนยันรหัสผ่าน">
+                                                <label for="username" class="form-label">Username</label>
+                                                <div class="input-group">
+                                                    <input name="username" readonly class="form-control-plaintext" value="{{datas.user.username}}" placeholder="Username*" >
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                            
+                                    </div>
+                                    <div class="mb-3" >
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                            <label for="email" class="form-label">เปลี่ยนรหัสผ่าน</label>
+                                            <input name="password" type="password"  class="form-control mb-3" placeholder="รหัสผ่าน*">
+                                            </div>
+                                            <div class="col-md-6">
+                                            <label for="email" class="form-label">ยืนยันรหัสผ่าน</label>
+                                            <input name="confirm_password" type="password"  class="form-control mb-3" placeholder="ยืนยันรหัสผ่าน">
                                             </div>
                                         </div>
                                         
                                     </div>
                                     <div class="d-flex w-100 justify-content-center" center>
-                                    
                                         <button type="button" class="btn btn-primary w-25 mb-3" onclick="validateForm()">
                                             <i class="fa fa-user-check me-2"></i> บันทึก
                                         </button>
@@ -226,7 +243,7 @@
 <script src="{{ config.ASSETS_ROOT }}/plugins/@highlightjs/cdn-assets/highlight.min.js"></script>
 <script src="{{ config.ASSETS_ROOT }}/js/demo/render.highlight.js"></script>
 
-<script src="{{ config.ASSETS_ROOT }}/js/univercity/registerUnivercity.js?v1.0"></script>
+<script src="{{ config.ASSETS_ROOT }}/js/agency/registerAgencyEdit.js?v1.0"></script>
 <script>
 function validateForm() {
     let isValid = true;

@@ -44,7 +44,7 @@ function validateForm() {
 function func_save() {
     // console.log("Saving...");
 
-    $('#myForm').attr('action', '/employee/createEmployee').attr('method', 'POST');
+    $('#myForm').attr('action', '/sponsor/createEmployee').attr('method', 'POST');
     $('#myForm').submit();
 }
 
