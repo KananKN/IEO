@@ -65,8 +65,10 @@
                         <thead>
                             <tr>
                                 <th class="text-center" width="1%"></th>
-                                <th class="text-nowrap"width="40%">Product for Sales
-                                </th>
+                                <th class="text-nowrap"width="20%">Product for Sales </th>
+                                <th class="text-nowrap"width="20%">Product Category</th>
+                                <th class="text-nowrap"width="20%">Country</th>
+                                <th class="text-nowrap"width="20%">Period</th>
                                
                                 <th class="text-nowrap text-center"  width="10%">Action</th>
                             </tr>
@@ -75,7 +77,10 @@
                             {% for data in datas %}
                                 <tr class="odd gradeX">
                                     <td width="1%" class="fw-bold text-dark">{{loop.index}}</td>
-                                    <td width="40%">{{data.name}}</td>
+                                    <td ">{{data.name}}</td>
+                                    <td >{{data.category.name}}</td>
+                                    <td >{{data.country.name}}</td>
+                                    <td >{{data.period.name}}</td>
                                    
                                     <td  class="with-btn text-center" width="10%">
                                         {% if current_user.has_permission('write_product') %}

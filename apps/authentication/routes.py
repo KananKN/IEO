@@ -255,14 +255,14 @@ def check_user_status():
 def login1():
     return render_template('accounts/login1.html')
 
-@blueprint.route('/register/univercity', methods=['GET', 'POST'])
-def register_univercity():
+@blueprint.route('/register/university', methods=['GET', 'POST'])
+def register_university():
     
     # else:
-    return render_template('accounts/register_univercity.html' )
+    return render_template('accounts/register_university.html' )
 
-@blueprint.route('/register_univercity_api', methods=['POST'])
-def register_univercity_api():
+@blueprint.route('/register_university_api', methods=['POST'])
+def register_university_api():
     data = request.form
     print("data:",data)
     username = data.get('username')
@@ -301,7 +301,7 @@ def register_univercity_api():
     db.session.commit()
 
     session['waiting_user_id'] = user.id
-    session['waiting_user_type'] = 'univercity'
+    session['waiting_user_type'] = 'university'
     
     nameCompany = AgencyModel.query.filter_by(company_name_th=data.get('name_univer')).first()
     
@@ -309,7 +309,7 @@ def register_univercity_api():
         print("⚠️ ชื่อมหาวิทยาลัยนี้ถูกใช้งานแล้ว")
         return jsonify({'status': 'error', 'message': 'ชื่อมหาวิทยาลัยนี้ถูกใช้งานแล้ว'}), 400
     # สร้าง Agency
-    univercity = AgencyModel(
+    university = AgencyModel(
         user_id=user.id,
         address=data.get('address'),
         country=data.get('country'),
@@ -318,12 +318,12 @@ def register_univercity_api():
         tel=data.get('phone'),
         email=data.get('email'),
         status='appoved',
-        org_type='univercity',
+        org_type='university',
         company_name_th=data.get('name_univer'),
         
         
     )
-    db.session.add(univercity)
+    db.session.add(university)
     db.session.commit()
 
     print('success')

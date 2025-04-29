@@ -20,7 +20,7 @@ function func_save(){
     const form = document.getElementById("myForm"); // ✅ ใช้ ID ของ form
     const formData = new FormData(form);
     console.log("save")
-    fetch("/univercity/create_univercity_api", {
+    fetch("/university/create_university_api", {
           method: "post",
           body: formData
       })
@@ -43,8 +43,9 @@ function func_save(){
                     // text: data.message,
                     confirmButtonText: "ตกลง",
                 }).then(() => {
-                    location.reload();
+                    // location.reload();
                     // window.location.href = "/waiting_approval";
+                    window.location.href = "/login";
                 });
             }
       })

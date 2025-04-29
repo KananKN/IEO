@@ -359,11 +359,14 @@ def createProductSales():
     termOfPaymentModel = term_of_paymentModel.query.order_by(term_of_paymentModel.name).all()
     organization = OrganizationModel.query.order_by(OrganizationModel.name).all()
     employee = EmployeeModel.query.order_by(EmployeeModel.name).all()
-    agency = AgencyModel.query.order_by(AgencyModel.agency_code).all()
+    # agency = AgencyModel.query.order_by(AgencyModel.agency_code).all()
+    # agency = AgencyModel.query.order_by(AgencyModel.agency_code).all()
+    
+    agency = AgencyModel.query.filter(AgencyModel.org_type == 'agency').all()
+    university = AgencyModel.query.filter(AgencyModel.org_type == 'university').all()
     
 
-
-    return render_template('/productForSales/createProductSales.html', segment='productSales' ,productCars=productCar, countrys=country, periods=period,termOfPaymentModels=termOfPaymentModel,organizations=organization,employees=employee,agencys=agency)
+    return render_template('/productForSales/createProductSales.html', segment='productSales' ,productCars=productCar, countrys=country, periods=period,termOfPaymentModels=termOfPaymentModel,organizations=organization,employees=employee,agencys=agency,universitys=university)
 
 @blueprint.route('/EditProductSales/<id>')
 @login_required
@@ -379,7 +382,10 @@ def EditProductSales(id):
     payment = installmentsPaymentModel.query.filter_by(product_for_sales_id=datas.id).all()
     organization = OrganizationModel.query.order_by(OrganizationModel.name).all()
     employee = EmployeeModel.query.order_by(EmployeeModel.name).all()
-    agency = AgencyModel.query.order_by(AgencyModel.agency_code).all()
+    # agency = AgencyModel.query.order_by(AgencyModel.agency_code).all()
+    agency = AgencyModel.query.filter(AgencyModel.org_type == 'agency').all()
+    university = AgencyModel.query.filter(AgencyModel.org_type == 'university').all()
+    
     productSup = ProductOrganizationAssociation.query.filter_by(product_id=id).all()
     selected_organizations = [p.organization_id for p in productSup]
     
@@ -390,7 +396,7 @@ def EditProductSales(id):
     selected_agency = [e.agency_id for e in productAgency]
     
 
-    return render_template('/productForSales/EditProductSales.html', segment='productSales' , datas=datas, productCars=productCar, countrys=country, periods=period,termOfPaymentModels=termOfPaymentModel, file_data=file_data,payments=payment,organizations=organization,employees=employee,selected_organizations=selected_organizations,selected_employee=selected_employee,selected_agencys=selected_agency,agencys=agency)
+    return render_template('/productForSales/EditProductSales.html', segment='productSales' , datas=datas, productCars=productCar, countrys=country, periods=period,termOfPaymentModels=termOfPaymentModel, file_data=file_data,payments=payment,organizations=organization,employees=employee,selected_organizations=selected_organizations,selected_employee=selected_employee,selected_agencys=selected_agency,agencys=agency,universitys=university)
 
 @blueprint.route('/addProductSale', methods=['GET', 'POST'])
 @login_required
@@ -412,6 +418,7 @@ def addProductSale():
     # ✅ ตรวจสอบว่า country_id และ period_id ได้ค่าที่ถูกต้อง (ต้องเป็นตัวเลข ไม่ใช่ function)
     organization_ids = request.form.getlist('organization') or None
     employee_ids = request.form.getlist('employee') or None
+    university_ids = request.form.getlist('university') or None
     agency_ids = request.form.getlist('agency') or None
     if price:
         price = float(price.replace(',', ''))  # 
@@ -588,6 +595,19 @@ def addProductSale():
         db.session.commit()  # บันทึกข้อมูลลงฐานข้อมูล
         print("เพิ่ม Employee เข้าโครงการสำเร็จ")    
                 
+    if university_ids:
+        for university_id in university_ids:
+            # สร้างความสัมพันธ์ในตาราง ProgramSupplierAssociation
+            new_associationAgency = ProductAgencyAssociation(
+                product_id=new_item.id,
+                agency_id=university_id,
+            )
+
+            db.session.add(new_associationAgency)
+
+        db.session.commit()  # บันทึกข้อมูลลงฐานข้อมูล
+        print("เพิ่ม Agency เข้าโครงการสำเร็จ")    
+                
     if agency_ids:
         for agency_id in agency_ids:
             # สร้างความสัมพันธ์ในตาราง ProgramSupplierAssociation
@@ -619,6 +639,7 @@ def updateProductSale():
     term_of_payment_id = request.form.get('term') or None
     organization_ids = request.form.getlist('organization') or None
     employee_ids = request.form.getlist('employee') or None
+    university_ids = request.form.getlist('university') or None
     agency_ids = request.form.getlist('agency') or None
     
     detail = request.form.get('detail') or None
@@ -797,6 +818,19 @@ def updateProductSale():
         db.session.commit()  # บันทึกข้อมูลลงฐานข้อมูล
         print("เพิ่ม Employee เข้าโครงการสำเร็จ")  
    
+    if university_ids:
+        for university_id in university_ids:
+            # สร้างความสัมพันธ์ในตาราง ProgramSupplierAssociation
+            new_associationAgency = ProductAgencyAssociation(
+                product_id=thisItem.id,
+                agency_id=university_id,
+            )
+
+            db.session.add(new_associationAgency)
+
+        db.session.commit()  # บันทึกข้อมูลลงฐานข้อมูล
+        print("เพิ่ม university  เข้าโครงการสำเร็จ")   
+        
     if agency_ids:
         for agency_id in agency_ids:
             # สร้างความสัมพันธ์ในตาราง ProgramSupplierAssociation

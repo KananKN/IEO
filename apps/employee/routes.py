@@ -28,19 +28,19 @@ from collections import defaultdict
 
 # logging.basicConfig(filename='error.log', level=logging.ERROR)
 
-read_permission = Permission(RoleNeed("read_employee"))
-write_permission = Permission(RoleNeed("write_employee"))
-delete_permission = Permission(RoleNeed("delete_employee"))
+read_permission = Permission(RoleNeed("read_sponsor"))
+write_permission = Permission(RoleNeed("write_sponsor"))
+delete_permission = Permission(RoleNeed("delete_sponsor"))
 
 
 # ---------- Fees ------------------------s
 @blueprint.route('/')
 @login_required
 @read_permission.require(http_exception=403)
-def employee():
+def sponsor():
     datas = EmployeeModel.query.all()
     # print(datas)
-    return render_template('employee/employee.html', segment='employee' ,datas=datas, )
+    return render_template('employee/employee.html', segment='sponsor' ,datas=datas, )
 
 @blueprint.route("/get_employee", methods=["POST"])
 @login_required
@@ -186,7 +186,7 @@ def delete_fees():
 def employee_create():
     datas = EmployeeModel.query.all()
     countrylist = CountryModel.query.all()
-    return render_template('employee/employee_create.html', segment='employee' ,datas=datas,countrylist=countrylist,)   
+    return render_template('employee/employee_create.html', segment='sponsor' ,datas=datas,countrylist=countrylist,)   
 
 @blueprint.route('/createEmployee', methods=['POST'])
 @login_required
@@ -207,12 +207,12 @@ def createEmployee():
         existing_employee_by_name = EmployeeModel.query.filter_by(name=name_company).first()
         if existing_employee_by_name:
             flash("ชื่อบริษัทซ้ำ: " + existing_employee_by_name.name, "warning")
-            return redirect(url_for('employee_blueprint.employee_create'))
+            return redirect(url_for('sponsor_blueprint.employee_create'))
 
         existing_employee_by_tax = EmployeeModel.query.filter_by(tax=tax).first()
         if existing_employee_by_tax:
             flash("เลขผู้เสียภาษีซ้ำ: " + existing_employee_by_tax.tax, "warning")
-            return redirect(url_for('employee_blueprint.employee_create'))
+            return redirect(url_for('sponsor_blueprint.employee_create'))
         
         # if name_check:
         #     flash("ไม่สามารถบันทึกข้อมูลได้", "danger")
@@ -259,7 +259,7 @@ def createEmployee():
         # logging.error(f"เกิดข้อผิดพลาด: {e}", exc_info=True)
         db.session.rollback()  # ย้อนกลับการเปลี่ยนแปลงหากเกิดข้อผิดพลาด
 
-    return redirect(url_for('employee_blueprint.employee'))
+    return redirect(url_for('sponsor_blueprint.sponsor'))
     
     
 
@@ -272,7 +272,7 @@ def employee_update(id):
     datas = EmployeeModel.query.filter_by(id=id).first()
     countrylist = CountryModel.query.all()
     file_data = FileEmployeeModel.query.filter_by(employee_id  = datas.id).all()
-    return render_template('employee/employee_update.html', segment='employee' ,datas=datas,countrylist=countrylist,file_data=file_data)    
+    return render_template('employee/employee_update.html', segment='sponsor' ,datas=datas,countrylist=countrylist,file_data=file_data)    
 
 
 @blueprint.route('/downloadEmployee/<filename>')
@@ -313,7 +313,7 @@ def employee_delete_file():
         db.session.commit()
         
 
-    return redirect(url_for('employee_blueprint.employee_update', id=id_employee))
+    return redirect(url_for('sponsor_blueprint.employee_update', id=id_employee))
 
 @blueprint.route('/updateEmployee', methods=['POST'])
 @login_required
@@ -340,7 +340,7 @@ def updateEmployee():
                 name_check = EmployeeModel.query.filter_by(name=name_company).first()
                 if name_check:
                     flash("ไม่สามารถบันทึกข้อมูลได้: ชื่อซ้ำกับในระบบ", "danger")
-                    return redirect(url_for('employee_blueprint.employee'))
+                    return redirect(url_for('sponsor_blueprint.sponsor'))
                 
             thisItem.name=name_company
             thisItem.tax=tax
@@ -383,7 +383,7 @@ def updateEmployee():
         # logging.error(f"เกิดข้อผิดพลาด: {e}", exc_info=True)
         db.session.rollback()  # ย้อนกลับการเปลี่ยนแปลงหากเกิดข้อผิดพลาด
 
-    return redirect(url_for('employee_blueprint.employee_update', id=id))
+    return redirect(url_for('sponsor_blueprint.employee_update', id=id))
 
 
 @blueprint.route('/delete_employee', methods=['POST'])
@@ -410,7 +410,7 @@ def delete_employee():
     db.session.commit()
         
     flash(' Deleted!', 'success')
-    return redirect(url_for('employee_blueprint.employee'))
+    return redirect(url_for('sponsor_blueprint.sponsor'))
 
 
 @blueprint.route('/list_ProductEmployee')

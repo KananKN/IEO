@@ -1,7 +1,7 @@
 
 import time
 import re
-from apps.univercity import blueprint
+from apps.university import blueprint
 from apps.authentication.models import *
 from apps.product.models import *
 from apps.supplier.models import *
@@ -25,18 +25,18 @@ from sqlalchemy.orm import aliased
 from collections import defaultdict
 
 
-read_permission = Permission(RoleNeed("read_univercity"))
-write_permission = Permission(RoleNeed("write_univercity"))
-delete_permission = Permission(RoleNeed("delete_univercity"))
+read_permission = Permission(RoleNeed("read_university"))
+write_permission = Permission(RoleNeed("write_university"))
+delete_permission = Permission(RoleNeed("delete_university"))
 
 
 @blueprint.route('/')
 @login_required
 @read_permission.require(http_exception=403)
-def univercity():
+def university():
     datas = interestedUsersModel.query.all()
     # print(datas)
-    return render_template('univercity/univercity.html', segment='univercity' ,datas=datas)
+    return render_template('university/university.html', segment='university' ,datas=datas)
 
 def model_to_dict(model):
     data = {}
@@ -54,14 +54,14 @@ def generate_code(model, prefix):
     return f"{prefix}{str(next_id).zfill(5)}"
 
 
-@blueprint.route('/create_univercity')
+@blueprint.route('/create_university')
 @login_required
-def create_univercity():
-    return render_template('univercity/univercity_create.html', segment='create_univercity')
+def create_university():
+    return render_template('university/university_create.html', segment='create_university')
 
 
-@blueprint.route('/create_univercity_api', methods=['POST'])
-def create_univercity_api():
+@blueprint.route('/create_university_api', methods=['POST'])
+def create_university_api():
     # print("➡️ args:", request.args)
     ref_code = request.args.get('ref') or request.form.get('referral_code')
     print(f"➡️ ได้ ref_code: {ref_code}")
@@ -132,7 +132,7 @@ def create_univercity_api():
             tel=data.get('phone'),
             email=data.get('email'),
             status='approved',  # แก้ typo
-            org_type='univercity',
+            org_type='university',
             agency_code=generate_code(AgencyModel, prefix),
             referred_by_id=ref_agency.user_id if ref_agency else None,
             company_name_th=data.get('name_univer'),
@@ -151,10 +151,10 @@ def create_univercity_api():
 
 
 
-@blueprint.route("/get_listUnivercity", methods=["POST"])
+@blueprint.route("/get_listUniversity", methods=["POST"])
 @login_required
 @read_permission.require(http_exception=403)
-def get_listUnivercity():
+def get_listUniversity():
     request_data = request.get_json()
     draw = request_data.get("draw", 1)
     start = request_data.get("start", 0)
@@ -173,7 +173,7 @@ def get_listUnivercity():
     
     # ดึงข้อมูลไปแสดงตรงนี้
     # query = db.session.query(UserModel).join(Agency, Agency.user_id == UserModel.id).join(Role, UserModel.role_id == Role.id)
-    query = db.session.query(AgencyModel).filter(AgencyModel.org_type.in_(['univercity']))
+    query = db.session.query(AgencyModel).filter(AgencyModel.org_type.in_(['university']))
         # คำค้นหาจาก DataTable
     if search_value:
         search = f"%{search_value}%"
@@ -244,27 +244,27 @@ def get_listUnivercity():
         "data": data
     })    
     
-@blueprint.route('/univercity_create')
+@blueprint.route('/university_create')
 @login_required
 @read_permission.require(http_exception=403)
-def univercity_create():
+def university_create():
     datas = AgencyModel.query.all()
     countrylist = CountryModel.query.all()
     # file_data = FileOrganizationModel.query.filter_by(organization_id  = datas.id).all()
-    return render_template('univercity/univercity_create.html', segment='univercity' ,datas=datas,countrylist=countrylist)    
+    return render_template('university/university_create.html', segment='university' ,datas=datas,countrylist=countrylist)    
 
-@blueprint.route('/univercity_update/<id>')
+@blueprint.route('/university_update/<id>')
 @login_required
 @read_permission.require(http_exception=403)
-def univercity_update(id):
+def university_update(id):
     datas = AgencyModel.query.filter_by(id=id).first()
     countrylist = CountryModel.query.all()
     # file_data = FileOrganizationModel.query.filter_by(organization_id  = datas.id).all()
-    return render_template('univercity/univercity_update.html', segment='univercity' ,datas=datas,countrylist=countrylist)  
+    return render_template('university/university_update.html', segment='university' ,datas=datas,countrylist=countrylist)  
 
 
-@blueprint.route('/update_univercity_api', methods=['POST'])
-def update_univercity_api():
+@blueprint.route('/update_university_api', methods=['POST'])
+def update_university_api():
             
     data = request.form
     print("data:",data)
@@ -443,9 +443,9 @@ def get_list_ProductAgency():
     })  
     
 
-@blueprint.route('/delete_univercity', methods=['POST'])
+@blueprint.route('/delete_university', methods=['POST'])
 @login_required
-def delete_univercity():
+def delete_university():
     id_del = request.form["id"]
 
     
@@ -467,4 +467,4 @@ def delete_univercity():
     db.session.commit()
         
     flash(' Deleted!', 'success')
-    return redirect(url_for('univercity_blueprint.univercity'))   
+    return redirect(url_for('university_blueprint.university'))   

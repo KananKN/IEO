@@ -1,6 +1,6 @@
 {% extends "layouts/base.html" %}
 
-{% block title %} Employee {% endblock %} 
+{% block title %} Sponsor {% endblock %} 
 
 <!-- Specific Page CSS goes HERE  -->
 {% block stylesheets %}
@@ -25,10 +25,10 @@
         <div class="d-flex justify-content-between align-items-center mb-3">
             <!-- ฝั่งซ้าย: รายการอุปกรณ์ + ปุ่มบวก -->
             <div class="d-flex align-items-center">
-                <h6 class="page-header m-0">Employee</h6>
-                {% if current_user.has_permission('write_employee') %}
+                <h6 class="page-header m-0">Sponsor</h6>
+                {% if current_user.has_permission('write_sponsor') %}
                     
-                     <a href="/employee/employee_create" class="btn btn-success ms-3 shadow-sm  bg-gradient">
+                     <a href="/sponsor/employee_create" class="btn btn-success ms-3 shadow-sm  bg-gradient">
                             <i class="fa fa-plus"></i> เพิ่ม
                     </a>   
                 {% endif %}
@@ -42,7 +42,7 @@
         <div class="col-xl-12">
             <div class="panel panel-inverse">
                 <div class="panel-heading">
-                    <h4 class="panel-title">Employee</h4>
+                    <h4 class="panel-title">Sponsor</h4>
                     <div class="panel-heading-btn">
                         <a href="javascript:;" class="btn btn-xs btn-icon btn-default" data-toggle="panel-expand"><i class="fa fa-expand"></i></a>
                         <a href="javascript:;" class="btn btn-xs btn-icon btn-success" data-toggle="panel-reload"><i class="fa fa-redo"></i></a>
@@ -67,8 +67,8 @@
                             <tr>
                                 <th class="text-center" width="1%">No</th>
                                 <th class="text-nowrap" width="30%">Name</th>
-                                <th class="text-nowrap" width="20%">country</th>
-                                <th class="text-nowrap" width="20%">tel</th>
+                                <th class="text-nowrap" width="20%">Country</th>
+                                <th class="text-nowrap" width="20%">Tel</th>
                                 <th class="text-nowrap text-center" width="10%">Action</th>
                             </tr>
                         </thead>
@@ -135,7 +135,7 @@ function loadDataTable() {
         processing: true,
         serverSide: true,
         ajax: {
-            url: "/employee/get_employee",
+            url: "/sponsor/get_employee",
             type: "POST",
             data: function(d) { 
                 return JSON.stringify(d); 
@@ -154,7 +154,7 @@ function loadDataTable() {
                 className: 'text-center',
                 render: function(data, type, row) {
                     return `
-                        <a href="/employee/employee_update/${row.data_id}" class="btn btn-dark btn-icon btn-circle btn-lg">
+                        <a href="/sponsor/employee_update/${row.data_id}" class="btn btn-dark btn-icon btn-circle btn-lg">
                             <i class="fa fa-pencil-alt"></i>
                         </a>
                         <a class="btn btn-danger btn-icon btn-circle btn-lg" onclick="sweetAlertDel(${row.data_id})">
@@ -194,7 +194,7 @@ function sweetAlertDel(id) {
         },
     }).then((result) => {
         if (result.dismiss !== "cancel") {
-            post("/employee/delete_employee", {
+            post("/sponsor/delete_employee", {
                 id: id
             });
         }

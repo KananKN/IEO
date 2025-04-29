@@ -1,7 +1,7 @@
 from flask import Blueprint
 
 blueprint = Blueprint(
-    'univercity_blueprint',
+    'university_blueprint',
     __name__,
-    url_prefix='/univercity'
+    url_prefix='/university'
 )

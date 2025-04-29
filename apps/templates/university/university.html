@@ -1,6 +1,6 @@
 {% extends "layouts/base.html" %}
 
-{% block title %}Univercity{% endblock %} 
+{% block title %}University{% endblock %} 
 
 <!-- Specific Page CSS goes HERE  -->
 {% block stylesheets %}
@@ -15,9 +15,9 @@
 
 <div id="content" class="app-content">
 
-    <h1 class="page-header">Univercity
-        {% if current_user.has_permission('write_univercity') %}
-            <a href="/univercity/univercity_create" class="btn btn-success ms-3 shadow-sm  bg-gradient">
+    <h1 class="page-header">University
+        {% if current_user.has_permission('write_university') %}
+            <a href="/university/university_create" class="btn btn-success ms-3 shadow-sm  bg-gradient">
                 <i class="fa fa-plus"></i> เพิ่ม
             </a>
         {% endif %}
@@ -27,7 +27,7 @@
         <div class="col-xl-12">
             <div class="panel panel-inverse">
                 <div class="panel-heading">
-                    <h4 class="panel-title">Univercity</h4>
+                    <h4 class="panel-title">University</h4>
                     <div class="panel-heading-btn">
                         <a href="javascript:;" class="btn btn-xs btn-icon btn-default" data-toggle="panel-expand"><i class="fa fa-expand"></i></a>
                         <a href="javascript:;" class="btn btn-xs btn-icon btn-success" data-toggle="panel-reload"><i class="fa fa-redo"></i></a>
@@ -54,7 +54,7 @@
                                 <th class="text-nowrap">Full Name</th>
                                 <th class="text-nowrap">E-mail</th>
                                 <th class="text-nowrap">Phone</th>
-                                <th class="text-nowrap ">รหัส Univercity </th>
+                                <th class="text-nowrap ">รหัส University </th>
                                <!--  <th class="text-nowrap " hidden>ลิงก์</th>
 
                                <th class="text-nowrap" hidden>คนแนะนำ</th>-->
@@ -214,7 +214,7 @@ function loadDataTable() {
         processing: true,
         serverSide: true,
         ajax: {
-            url: "/univercity/get_listUnivercity",
+            url: "/university/get_listUniversity",
             type: "POST",
             data: function(d) { 
                 return JSON.stringify(d); 
@@ -237,7 +237,7 @@ function loadDataTable() {
             //     data: null,
             //     className: 'text-center',
             //     render: function(data, type, row) {
-            //         const baseUrl = window.location.origin + '/register/univercity';
+            //         const baseUrl = window.location.origin + '/register/university';
             //         const fullUrl = `${baseUrl}?ref=${row.agency_code}`;
             //         return `<button class="btn btn-sm btn-primary" onclick="copyLink('${fullUrl}')">Copy Link</button>`;
             //     }
@@ -248,7 +248,7 @@ function loadDataTable() {
                 className: 'text-center',
                 render: function(data, type, row) {
                     return `
-                        <a href="/univercity/univercity_update/${row.data_user.id}" class="btn btn-dark btn-icon btn-circle btn-lg">
+                        <a href="/university/university_update/${row.data_user.id}" class="btn btn-dark btn-icon btn-circle btn-lg">
                             <i class="fa fa-pencil-alt"></i>
                         </a>
                         <a class="btn btn-danger btn-icon btn-circle btn-lg" onclick="sweetAlertDel(${row.data_user.id})">
@@ -514,7 +514,7 @@ function sweetAlertDel(id) {
         },
     }).then((result) => {
         if (result.dismiss !== "cancel") {
-            post("/univercity/delete_univercity", {
+            post("/university/delete_university", {
                 id: id
             });
         }

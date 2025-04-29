@@ -1,6 +1,6 @@
 {% extends "layouts/base.html" %}
 
-{% block title %} รายการโครงการ Employee {% endblock %} 
+{% block title %} รายการโครงการ Sponsor {% endblock %} 
 
 <!-- Specific Page CSS goes HERE  -->
 {% block stylesheets %}
@@ -25,8 +25,8 @@
         <div class="d-flex justify-content-between align-items-center mb-3">
             <!-- ฝั่งซ้าย: รายการอุปกรณ์ + ปุ่มบวก -->
             <div class="d-flex align-items-center">
-                <h6 class="page-header m-0">รายการโครงการ Employee</h6>
-                {% if current_user.has_permission('write_employee') %}
+                <h6 class="page-header m-0">รายการโครงการ Sponsor</h6>
+                {% if current_user.has_permission('write_sponsor') %}
                     
                     
                 {% endif %}
@@ -40,7 +40,7 @@
         <div class="col-xl-12">
             <div class="panel panel-inverse">
                 <div class="panel-heading">
-                    <h4 class="panel-title">รายการโครงการ Employee</h4>
+                    <h4 class="panel-title">รายการโครงการ Sponsor</h4>
                     <div class="panel-heading-btn">
                         <a href="javascript:;" class="btn btn-xs btn-icon btn-default" data-toggle="panel-expand"><i class="fa fa-expand"></i></a>
                         <a href="javascript:;" class="btn btn-xs btn-icon btn-success" data-toggle="panel-reload"><i class="fa fa-redo"></i></a>
@@ -133,7 +133,7 @@ function loadDataTable() {
         processing: true,
         serverSide: true,
         ajax: {
-            url: "/employee/get_listProductemployee",
+            url: "/sponsor/get_listProductemployee",
             type: "POST",
             data: function(d) { 
                 return JSON.stringify(d); 
@@ -193,7 +193,7 @@ function sweetAlertDel(id) {
         },
     }).then((result) => {
         if (result.dismiss !== "cancel") {
-            post("/employee/delete_employee", {
+            post("/sponsor/delete_employee", {
                 id: id
             });
         }

@@ -117,7 +117,7 @@
                             </select>
                         </div>
                     </div>
-                    <div class="form-group row mb-3">
+                    <div class="form-group row mb-3" hidden>
                         <label class="form-label col-form-label col-lg-4">ระยะเวลาโครงการ</label>
                             <div class="col-lg-8">
                                 <div class="input-group input-daterange">
@@ -127,7 +127,7 @@
                                 </div>
                             </div>
                     </div>
-                    <div class="row mb-3"  >
+                    <div class="row mb-3"  hidden>
                         <label class="form-label col-form-label col-md-4">Year</label>
                         <div class="col-md-8">
                             <input  class="form-control"  name="year" id="i_year"  value=""  display data-parsley-required="true"/>
@@ -206,6 +206,17 @@
                         </div>
                     </div>
                     <div class="row mb-15px" >
+                        <label class="form-label col-form-label col-md-4">University</label>
+                        <div class="col-md-8">
+                            <select class="multiple-select2 form-control" multiple name="university" id="i_university">
+                                {% for university in universitys %}
+                                    <option value="{{university.id}}">{{university.agency_code}}</option>
+                                {% endfor %}
+                            </select>   
+                            
+                        </div>
+                    </div>
+                    <div class="row mb-15px" >
                         <label class="form-label col-form-label col-md-4">Agency</label>
                         <div class="col-md-8">
                             <select class="multiple-select2 form-control" multiple name="agency" id="i_agency">
@@ -218,7 +229,7 @@
                     </div>
                 </div>
                 <div class="col-sm-6">
-                    <div class="form-group row">
+                    <div class="form-group row" >
                         <label class="form-label col-form-label col-lg-4">รายละเอียดโครงการ</label>
                         <div class="col-lg-8">
                             <textarea class="form-control" id="detail" rows="4" cols="50"  name="detail" placeholder="" ></textarea>
