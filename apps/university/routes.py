@@ -447,6 +447,7 @@ def get_list_ProductAgency():
 @login_required
 def delete_university():
     id_del = request.form["id"]
+    id_user = request.form["id_user"]
 
     
     # file_list = FileSupplierModel.query.filter_by(supplier_id=id_del).all()
@@ -461,8 +462,10 @@ def delete_university():
     #         except Exception as e:
     #             print(f"⚠️ เกิดข้อผิดพลาดขณะลบไฟล์: {e}")
     # thisFile.flag_delete = True
+    
     db.session.query(AgencyModel).filter(AgencyModel.id == id_del).delete()
     ProductAgencyAssociation.query.filter_by(agency_id=id_del).delete()
+    UserModel.query.filter_by(id=id_user).delete()
 
     db.session.commit()
         
