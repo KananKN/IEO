@@ -251,7 +251,7 @@ function loadDataTable() {
                         <a href="/university/university_update/${row.data_user.id}" class="btn btn-dark btn-icon btn-circle btn-lg">
                             <i class="fa fa-pencil-alt"></i>
                         </a>
-                        <a class="btn btn-danger btn-icon btn-circle btn-lg" onclick="sweetAlertDel(${row.data_user.id})">
+                        <a class="btn btn-danger btn-icon btn-circle btn-lg" onclick="sweetAlertDel(${row.data_user.id},${row.data_user.user_id})">
                             <i class="fas fa-trash"></i>
                         </a>
                     `;
@@ -491,7 +491,7 @@ function sweetAlertReject(id_check,mode ){
 }
 
 
-function sweetAlertDel(id) {
+function sweetAlertDel(id,id_user) {
     swal({
         title: "Are you sure?",
         text: "Delete!",
@@ -515,7 +515,8 @@ function sweetAlertDel(id) {
     }).then((result) => {
         if (result.dismiss !== "cancel") {
             post("/university/delete_university", {
-                id: id
+                id: id,
+                id_user: id_user
             });
         }
     });

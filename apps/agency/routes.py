@@ -473,7 +473,13 @@ def delete_agency():
     #         except Exception as e:
     #             print(f"⚠️ เกิดข้อผิดพลาดขณะลบไฟล์: {e}")
     # thisFile.flag_delete = True
-    db.session.query(AgencyModel).filter(AgencyModel.id == id_del).delete()
+    item_Del = AgencyModel.query.get(id_del)
+
+    if item_Del:
+        db.session.delete(item_Del)
+        db.session.commit()
+    
+    # db.session.query(AgencyModel).filter(AgencyModel.id == id_del).delete()
     ProductAgencyAssociation.query.filter_by(agency_id=id_del).delete()
 
     db.session.commit()
