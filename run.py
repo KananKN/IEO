@@ -17,6 +17,8 @@ from flask import request, redirect, url_for
 from datetime import datetime
 
 from flask import render_template
+# from pyngrok import ngrok
+
 
 # WARNING: Don't run with debug turned on in production!
 DEBUG = (os.getenv('DEBUG', 'False') == 'True')
@@ -95,5 +97,7 @@ if DEBUG:
     app.logger.info('ASSETS_ROOT = ' + app_config.ASSETS_ROOT)
 
 if __name__ == "__main__":
+    # public_url = ngrok.connect(5003)
+    # print(" * ngrok tunnel:", public_url)
     # app.run()
     app.run(host='0.0.0.0',port=5003)

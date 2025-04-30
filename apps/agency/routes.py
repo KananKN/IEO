@@ -381,6 +381,8 @@ def get_list_ProductAgency():
     outerjoin(ProductAgencyAssociation, Agency.id == ProductAgencyAssociation.agency_id).\
     outerjoin(Product, Product.id == ProductAgencyAssociation.product_id).\
     outerjoin(CountryModel, CountryModel.id == Agency.country_id)
+    
+    
 
 
     if search_value:
@@ -440,9 +442,16 @@ def get_list_ProductAgency():
     data = []
     for agency in grouped.values():
         # สร้าง badge สำหรับแต่ละ product
-        agency["product"] = ', '.join(
-            [f'<span class="badge bg-info text-white me-1">{p.strip()}</span>' for p in sorted(agency["product"])]
-        ) if agency["product"] else "ไม่มีโครงการ"
+        if agency["product"]:
+            badges = list(sorted(agency["product"]))
+            badge_html = ""
+            for i, p in enumerate(badges):
+                comma = "," if i < len(badges) - 1 else ""
+                badge_html += f'<span class="badge bg-info text-white mb-1">{p.strip()}</span>{comma}'
+            
+            agency["product"] = f'<div class="product-badges">{badge_html}</div>'
+        else:
+            agency["product"] = "ไม่มีโครงการ"
 
         data.append(agency)
 

@@ -29,8 +29,7 @@ class UserModel(db.Model, UserMixin):
     'AgencyModel',
     back_populates='user',
     foreign_keys='AgencyModel.user_id',
-    uselist=False
-    )
+    uselist=False)
     
     
     # oauth_github  = db.Column(db.String(100), nullable=True)
@@ -194,7 +193,9 @@ class AgencyModel(db.Model):
     referred_by_id = db.Column(db.Integer, db.ForeignKey('agency.id'), nullable=True)
 
 
-    user = db.relationship('UserModel',back_populates='agency',foreign_keys=[user_id],uselist=False)
+    # user = db.relationship('UserModel',back_populates='agency',foreign_keys=[user_id],uselist=False)
+    user = db.relationship('UserModel',back_populates='agency',foreign_keys=[user_id], uselist=False,cascade="all, delete"
+)
     referred_by = db.relationship('AgencyModel', foreign_keys=[referred_by_id], remote_side=[id], backref='referrals', uselist=False)
 
 

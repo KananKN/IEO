@@ -10,6 +10,19 @@
 <link href="{{ config.ASSETS_ROOT }}/plugins/select2/dist/css/select2.min.css" rel="stylesheet" />
 <link href="{{ config.ASSETS_ROOT }}/plugins/tag-it/css/jquery.tagit.css" rel="stylesheet" />
 <link href="{{ config.ASSETS_ROOT }}/plugins/select-picker/dist/picker.min.css" rel="stylesheet" />
+
+<style>
+    .product-badges {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        gap: 4px;
+        max-width: 100%; /* หรือกำหนดตามความกว้าง cell */
+    }
+    .product-badges .badge {
+        white-space: nowrap;
+    }
+</style>
 {% endblock stylesheets %}
 
 {% block content %}
@@ -64,10 +77,10 @@
                         <thead>
                             <tr>
                                 <th class="text-center" width="1%">No</th>
-                                <th class="text-nowrap" width="30%">Name</th>
+                                <th class="text-nowrap" width="20%">Name</th>
                                 <th class="text-nowrap" width="20%">country</th>
                                 <th class="text-nowrap" width="20%">tel</th>
-                                <th class="text-nowrap text-center" width="10%">โครงการที่เข้าร่วม</th>
+                                <th class="text-nowrap text-center" width="25%">โครงการที่เข้าร่วม</th>2
                             </tr>
                         </thead>
                         <tbody>
