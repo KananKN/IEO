@@ -82,7 +82,9 @@ class SupplierModel(db.Model):
     files_supplier = db.relationship(
         "FileSupplierModel", backref="files_supplier", cascade="all, delete", lazy=True )
     
-    products = db.relationship("ProductForSalesModel",secondary="product_supplier_association",backref="suppliers",passive_deletes=True)
+   
+    
+ 
     
     created_at = db.Column(db.DateTime,  default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime,  default=db.func.current_timestamp(),

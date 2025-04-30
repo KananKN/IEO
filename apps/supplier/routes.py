@@ -767,16 +767,20 @@ def get_Productsupplier():
     #         )
     #     )
     
-    query = db.session.query(Supplier, Product.name).\
-    outerjoin(ProductSupplierAssociation, Supplier.id == ProductSupplierAssociation.supplier_id).\
-    outerjoin(Product, Product.id == ProductSupplierAssociation.product_id).\
-    outerjoin(CountryModel, CountryModel.id == Supplier.country_id).\
-    outerjoin(SupplierType, SupplierType.id == Supplier.supplierType_id)
+    # query = db.session.query(Supplier, Product.name).\
+    # outerjoin(ProductSupplierAssociation, Supplier.id == ProductSupplierAssociation.supplier_id).\
+    # outerjoin(Product, Product.id == ProductSupplierAssociation.product_id).\
+    # outerjoin(CountryModel, CountryModel.id == Supplier.country_id).\
+    # outerjoin(SupplierType, SupplierType.id == Supplier.supplierType_id)
 
-
+    base_query = db.session.query(Supplier.id).\
+        outerjoin(CountryModel).\
+        outerjoin(ProductSupplierAssociation, Supplier.id == ProductSupplierAssociation.supplier_id).\
+        outerjoin(Product, Product.id == ProductSupplierAssociation.product_id)
+        
     if search_value:
         search = f"%{search_value}%"
-        query = query.filter(
+        base_query = base_query.filter(
             or_(
                 Supplier.name.ilike(search),
                 Supplier.tel.ilike(search),
@@ -787,24 +791,37 @@ def get_Productsupplier():
         )
 
     # การจัดเรียง
-    if order:
-        column_index = int(order[0]["column"])
-        column_order = column_map.get(column_index, Supplier.id)  # ✅ ใช้ alias
-        sort_direction = order[0]["dir"]
-        if sort_direction == "desc":
-            column_order = column_order.desc()
-        query = query.order_by(column_order)
-    else:
-        query = query.order_by(Supplier.id)
+    # if order:
+    #     column_index = int(order[0]["column"])
+    #     column_order = column_map.get(column_index, Supplier.id)  # ✅ ใช้ alias
+    #     sort_direction = order[0]["dir"]
+    #     if sort_direction == "desc":
+    #         column_order = column_order.desc()
+    #     query = query.order_by(column_order)
+    # else:
+    #     query = query.order_by(Supplier.id)
 
     # Pagination
-    total_records = query.count()
-    query = query.offset(start).limit(length)
+    base_query = base_query.distinct()  # กันซ้ำ
+    # Pagination
+    total_records = db.session.query(Supplier.id).distinct().count()
+    filtered_records = base_query.count()
+
+    # Step 2: paginate ที่ระดับ organization
+    supplier_id = base_query.offset(start).limit(length).all()
+    supplier_id = [e.id for e in supplier_id]
+    
+    query = db.session.query(Supplier, Product.name).\
+        filter(Supplier.id.in_(supplier_id)).\
+        outerjoin(ProductSupplierAssociation, Supplier.id == ProductSupplierAssociation.supplier_id).\
+        outerjoin(Product, Product.id == ProductSupplierAssociation.product_id).\
+        outerjoin(CountryModel, CountryModel.id == Supplier.country_id).\
+        order_by(Supplier.id)
     rows = query.all()
 
     # รวม product ด้วย supplier_id
     grouped = {}
-    display_index = 1 
+    display_index = start + 1 
     for supplier, product_name in rows:
         supplier_id = supplier.id
 
@@ -825,18 +842,23 @@ def get_Productsupplier():
     # แปลง set → string
     data = []
     for supplier in grouped.values():
-        # supplier["product"] = ', '.join(sorted(supplier["product"])) if supplier["product"] else "-ไม่มีโครงการ"
-        # supplier["product"] = ', '.join(sorted(supplier["product"])) if supplier["product"] else "-ไม่มีโครงการ"
-        supplier["product"] = ', '.join(
-            [f'<span class="badge bg-info text-white me-1">{p.strip()}</span>' for p in sorted(supplier["product"])]
-        ) if supplier["product"] else "ไม่มีโครงการ"
+        if supplier["product"]:
+            badges = list(sorted(supplier["product"]))
+            badge_html = ""
+            for i, p in enumerate(badges):
+                comma = "," if i < len(badges) - 1 else ""
+                badge_html += f'<span class="badge bg-info text-white mb-1">{p.strip()}</span>{comma}'
+            
+            supplier["product"] = f'<div class="product-badges">{badge_html}</div>'
+        else:
+            supplier["product"] = "ไม่มีโครงการ"
         data.append(supplier)
 
     # ส่งออก
     return jsonify({
         "draw": draw,
                 "recordsTotal": total_records,
-        "recordsFiltered": total_records,
+        "recordsFiltered": filtered_records,
         "data": data
     })             
     

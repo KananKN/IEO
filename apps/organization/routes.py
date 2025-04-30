@@ -375,17 +375,15 @@ def get_listProductorganization():
         3: Organization.tel,         # คอลัมน์ที่ 3 -> tel
         4: Product.name          # คอลัมน์ที่ 4 -> product
     }
-    
-    # ค้นหาข้อมูล
-    query = db.session.query(Organization, Product.name).\
-    outerjoin(ProductOrganizationAssociation, Organization.id == ProductOrganizationAssociation.organization_id).\
-    outerjoin(Product, Product.id == ProductOrganizationAssociation.product_id).\
-    outerjoin(CountryModel, CountryModel.id == Organization.country_id)
-
+   
+    base_query = db.session.query(Organization.id).\
+        outerjoin(CountryModel).\
+        outerjoin(ProductOrganizationAssociation, Organization.id == ProductOrganizationAssociation.organization_id).\
+        outerjoin(Product, Product.id == ProductOrganizationAssociation.product_id)
 
     if search_value:
         search = f"%{search_value}%"
-        query = query.filter(
+        base_query = base_query.filter(
             or_(
                 Organization.name.ilike(search),
                 Organization.tel.ilike(search),
@@ -394,29 +392,29 @@ def get_listProductorganization():
             )
         )
 
-    # จัดเรียงลำดับข้อมูล
-    if order:
-        column_index = int(order[0]["column"])  # ดึง index ของคอลัมน์ที่ต้องการเรียง
-        column_order = column_map.get(column_index, Organization.id)  # คอลัมน์ที่ใช้เรียง
-        sort_direction = order[0]["dir"]  # asc / desc
-
-        if sort_direction == "desc":
-            column_order = column_order.desc()
-        query = query.order_by(column_order)
-    else:
-        query = query.order_by(Organization.id)
-
+    base_query = base_query.distinct()  # กันซ้ำ
     # Pagination
-    total_records = query.count()
-    query = query.offset(start).limit(length)
-    rows = query.all()
+    total_records = db.session.query(Organization.id).distinct().count()
+    filtered_records = base_query.count()
 
+    # Step 2: paginate ที่ระดับ organization
+    organization_ids = base_query.offset(start).limit(length).all()
+    organization_ids = [e.id for e in organization_ids]
+    
+    query = db.session.query(Organization, Product.name).\
+        filter(Organization.id.in_(organization_ids)).\
+        outerjoin(ProductOrganizationAssociation, Organization.id == ProductOrganizationAssociation.organization_id).\
+        outerjoin(Product, Product.id == ProductOrganizationAssociation.product_id).\
+        outerjoin(CountryModel, CountryModel.id == Organization.country_id).\
+        order_by(Organization.id)
+
+    rows = query.all()
     # Group ข้อมูลตาม employee_id
     grouped = {}
-    display_index = 1  # 👈 เริ่มนับลำดับที่ 1
+    display_index = start + 1  # 👈 เริ่มนับลำดับที่ 1
 
 
-    for index, (organization, product_name) in enumerate(rows,start=start):
+    for organization, product_name in rows:
         organization_id = organization.id
 
         if organization_id not in grouped:
@@ -435,17 +433,23 @@ def get_listProductorganization():
     # แปลง set → string และแสดงผลเป็น badge
     data = []
     for organization in grouped.values():
+        if organization["product"]:
+            badges = list(sorted(organization["product"]))
+            badge_html = ""
+            for i, p in enumerate(badges):
+                comma = "," if i < len(badges) - 1 else ""
+                badge_html += f'<span class="badge bg-info text-white mb-1">{p.strip()}</span>{comma}'
+            
+            organization["product"] = f'<div class="product-badges">{badge_html}</div>'
+        else:
+            organization["product"] = "ไม่มีโครงการ"
         # สร้าง badge สำหรับแต่ละ product
-        organization["product"] = ', '.join(
-            [f'<span class="badge bg-info text-white me-1">{p.strip()}</span>' for p in sorted(organization["product"])]
-        ) if organization["product"] else "ไม่มีโครงการ"
-
         data.append(organization)
 
     # ส่งออกข้อมูล
     return jsonify({
         "draw": draw,
         "recordsTotal": total_records,
-        "recordsFiltered": total_records,
+        "recordsFiltered": filtered_records,
         "data": data
     })     

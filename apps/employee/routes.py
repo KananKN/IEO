@@ -447,16 +447,15 @@ def get_listProductemployee():
         4: Product.name          # คอลัมน์ที่ 4 -> product
     }
     
-    # ค้นหาข้อมูล
-    query = db.session.query(Employee, Product.name).\
-    outerjoin(ProductEmployerAssociation, Employee.id == ProductEmployerAssociation.employee_id).\
-    outerjoin(Product, Product.id == ProductEmployerAssociation.product_id).\
-    outerjoin(CountryModel, CountryModel.id == Employee.country_id)
-
+    # Step 1: Query employee ที่ตรงกับ search/filter ก่อน (distinct id)
+    base_query = db.session.query(Employee.id).\
+        outerjoin(CountryModel).\
+        outerjoin(ProductEmployerAssociation, Employee.id == ProductEmployerAssociation.employee_id).\
+        outerjoin(Product, Product.id == ProductEmployerAssociation.product_id)
 
     if search_value:
         search = f"%{search_value}%"
-        query = query.filter(
+        base_query = base_query.filter(
             or_(
                 Employee.name.ilike(search),
                 Employee.tel.ilike(search),
@@ -465,61 +464,68 @@ def get_listProductemployee():
             )
         )
 
-    # จัดเรียงลำดับข้อมูล
-    if order:
-        column_index = int(order[0]["column"])  # ดึง index ของคอลัมน์ที่ต้องการเรียง
-        column_order = column_map.get(column_index, Employee.id)  # คอลัมน์ที่ใช้เรียง
-        sort_direction = order[0]["dir"]  # asc / desc
+    base_query = base_query.distinct()  # กันซ้ำ
 
-        if sort_direction == "desc":
-            column_order = column_order.desc()
-        query = query.order_by(column_order)
-    else:
-        query = query.order_by(Employee.id)
+    total_records = db.session.query(Employee.id).distinct().count()
+    filtered_records = base_query.count()
 
-    # Pagination
-    total_records = query.count()
-    query = query.offset(start).limit(length)
+    # Step 2: paginate ที่ระดับ employee
+    employee_ids = base_query.offset(start).limit(length).all()
+    employee_ids = [e.id for e in employee_ids]
+
+    # Step 3: ดึงข้อมูลจริง
+    query = db.session.query(Employee, Product.name).\
+        filter(Employee.id.in_(employee_ids)).\
+        outerjoin(ProductEmployerAssociation, Employee.id == ProductEmployerAssociation.employee_id).\
+        outerjoin(Product, Product.id == ProductEmployerAssociation.product_id).\
+        outerjoin(CountryModel, CountryModel.id == Employee.country_id).\
+        order_by(Employee.id)
+
     rows = query.all()
 
-    # Group ข้อมูลตาม employee_id
+    # Step 4: Group ตาม Employee เหมือนเดิม
     grouped = {}
-    display_index = 1  # 👈 เริ่มนับลำดับที่ 1
+    display_index = start + 1
 
-
-    for index, (employee, product_name) in enumerate(rows,start=start):
+    for employee, product_name in rows:
         employee_id = employee.id
-
         if employee_id not in grouped:
             grouped[employee_id] = {
-                "id": display_index ,
+                "id": display_index,
                 "data_id": employee.id,
                 "name": employee.name,
                 "country": employee.country.name if employee.country else "-",
                 "tel": employee.tel,
                 "product": set()
             }
-            display_index += 1 
+            display_index += 1
         if product_name:
             grouped[employee_id]["product"].add(product_name)
 
-    # แปลง set → string และแสดงผลเป็น badge
+    # format product เป็น badge
     data = []
     for employee in grouped.values():
-        # สร้าง badge สำหรับแต่ละ product
-        employee["product"] = ', '.join(
-            [f'<span class="badge bg-info text-white me-1">{p.strip()}</span>' for p in sorted(employee["product"])]
-        ) if employee["product"] else "ไม่มีโครงการ"
+        if employee["product"]:
+            badges = list(sorted(employee["product"]))
+            badge_html = ""
+            for i, p in enumerate(badges):
+                comma = "," if i < len(badges) - 1 else ""
+                badge_html += f'<span class="badge bg-info text-white mb-1">{p.strip()}</span>{comma}'
+            
+            employee["product"] = f'<div class="product-badges">{badge_html}</div>'
+        else:
+            employee["product"] = "ไม่มีโครงการ"
 
         data.append(employee)
 
-    # ส่งออกข้อมูล
+
+    # ส่งข้อมูลออก
     return jsonify({
         "draw": draw,
         "recordsTotal": total_records,
-        "recordsFiltered": total_records,
+        "recordsFiltered": filtered_records,
         "data": data
-    })     
+    })      
     # # ดึงข้อมูลตามลำดับและช่วงที่กำหนด
     # employees = query.order_by(column_order).offset(start).limit(length).all()
     # # แปลงข้อมูลเป็น JSON
