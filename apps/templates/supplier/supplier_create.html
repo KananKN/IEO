@@ -108,35 +108,13 @@
                                             <textarea class="form-control" id="i_address" rows="4" cols="50" required name="address" placeholder="" ></textarea>
                                         </div>
                                     </div> 
-
-                                    
-                                    
-
-                                
-                                    
-                                
-                                </div>
-                                <div class="col-sm-6 border-right">
-                                    <h4 class="card-title mb-2">ข้อมูลผู้ติดต่อ</h4>  
-                                    
-                                    <div class="form-group row mb-3">
-                                        <label class="form-label col-form-label col-lg-4">ชื่อ-นามสกุล<span class="text-danger">*</span></label>
-                                        <div class="col-lg-8">
-                                            <input type="text" class="form-control" placeholder="" name="name_coondinator" id="name_coondinator" data-parsley-required="true" required/>
+                                    <div class="row mb-3"  >
+                                        <label class="form-label col-form-label col-md-4">เบอร์โทรบริษัท<span class="text-danger">*</span></label>
+                                        <div class="col-md-8">
+                                            <input type="text" class="form-control" placeholder="" name="tel" data-parsley-required="true" required />
+                                                
                                         </div>
-                                    </div>
-                                    <div class="form-group row mb-3">
-                                        <label class="form-label col-form-label col-lg-4">อีเมล<span class="text-danger">*</span></label>
-                                        <div class="col-lg-8">
-                                            <input type="text" class="form-control" placeholder="" name="email" id="email" data-parsley-required="true" required />
-                                        </div>
-                                    </div>
-                                    <div class="form-group row mb-3">
-                                        <label class="form-label col-form-label col-lg-4">เบอร์โทร<span class="text-danger">*</span></label>
-                                        <div class="col-lg-8">
-                                            <input type="text" class="form-control" placeholder="" name="tel" id="tel" data-parsley-required="true" required />
-                                        </div>
-                                    </div>
+                                    </div> 
                                     <div class="form-group row mb-3">
                                         <label class="form-label col-form-label col-lg-4">เอกสารแนบ (File Uploads)</label>
                                         <div class="col-lg-8">
@@ -144,13 +122,120 @@
                                         
                                         </div>
                                     </div>
+
+                                
+                                </div>
+                                <div class="col-sm-6 border-right pe-0">
+                                    <h4 class="card-title mb-2">ข้อมูลผู้ติดต่อ <a class="add_item addInputButton btn btn-primary btn-icon btn-circle "  title="เพิ่มรายการนี้"  data-device='' >
+                                        <i class="fa fa-plus "></i></a></h4>        
+                                    <div class="item-row">
+                                        <div class="form-group row ">
+                                            <label class="form-label col-form-label col-lg-4">ชื่อผู้ติดต่อ <span class="text-danger">*</span></label> 
+                                        </div>
+                                        <div class="row mb-3">
+                                            <div class="col-lg-4 pe-0">
+                                                <input type="text" class="form-control" placeholder="ชื่อ-นามสกุล*" name="name_coordinator" data-parsley-required="true" required/>
+                                            </div>
+                                            <div class="col-lg-4 pe-0">
+                                                <input type="text" class="form-control" placeholder="อีเมล*" name="name_coordinatorTell" data-parsley-required="true" required />
+                                            </div>
+                                            <div class="col-lg-3 pe-0">
+                                                <input type="text" class="form-control" placeholder="เบอร์โทร*" name="name_coordinatorEmail" data-parsley-required="true" required />
+                                                
+                                            </div>
+                                            <div class="col-lg-1">
+                                                <a href="javascript:;" class="add_item btn btn-sm btn-icon btn-danger text-center mt-1" onclick="func_deleteItem(this)"><i class="fa fa-minus text-center"></i></a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div id="extra-inputs"></div>
+                                    
+                                    
                                     
                                 </div>
                             </div>
-                            
+    <hr class="my-3">    
+    <div class="row">
+        <div class="col-6">
+            <h4 class="panel-title">ข้อมูลธนาคาร</h4>
+            <div class="form-group row mb-3">   
+                <label class="form-label col-form-label col-lg-4">ธนาคาร</label>
+                <div class="col-lg-8">
+                    <input type="text" class="form-control" placeholder="" name="n_bank" id="i_bank" data-parsley-required="true" />
+                </div>
+            </div>
+            <div class="form-group row mb-3">   
+                <label class="form-label col-form-label col-lg-4">ชื่อบัญชี</label>
 
+                <div class="col-lg-8">
+                    <input type="text" class="form-control" placeholder="" name="n_accountName" id="i_accountName" data-parsley-required="true" />
+                </div>
+            </div>
+            <div class="form-group row mb-3">   
+                <label class="form-label col-form-label col-lg-4">เลขที่บัญชี</label>
+
+                <div class="col-lg-8">
+                    <input type="text" class="form-control" placeholder="" name="n_accountNumber" id="i_accountNumber" data-parsley-required="true" />
+                </div>
+            </div>
+            <div class="form-group row mb-3">   
+                <label class="form-label col-form-label col-lg-4">สาขาธนาคาร</label>
+
+                <div class="col-lg-8">
+                    <input type="text" class="form-control" placeholder="" name="n_bankBranch" id="i_bankBranch" data-parsley-required="true" />
+                </div>
+            </div>
+            <div class="row ">
+                <div class="col-4">
+                    <h6 class="my-3">ประเภทบัญชี</h6>
+                </div>
+                <div class="col-8">
+                    <div class="row">
+                        <div class="col-md-9 pt-2 mb-2">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" id="i_savings" name="account_type" value="1" checked/>
+                                <label class="form-check-label" for="inlineRadio1">ออมทรัพย์</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" id="daily_current" name="account_type" value="2" />
+                                <label class="form-check-label" for="customRadio2">กระแสรายวัน</label>
+                            </div>
                             
-                                
+                        </div>
+                    </div>
+                </div>
+        </div>
+        </div>
+        <div class="col-6">
+            <h4 class="panel-title mt-3">ข้อมูลเพิ่มเติมสำหรับธนาคารต่างประเทศ</h4>
+            <div class="row mb-3"> 
+                <label class="form-label col-form-label col-md-4">ธนาคาร</label> 
+                <div class="col-md-8">
+                    <input type="text" class="form-control" placeholder="" name="foreign_banks" id="i_foreign_banks" data-parsley-required="true" />
+                </div>
+            </div>
+            <div class="form-group row mb-3">   
+                <label class="form-label col-form-label col-lg-4">ชื่อบัญชี</label>
+
+                <div class="col-lg-8">
+                    <input type="text" class="form-control" placeholder="" name="foreign_banks_name" id="foreign_banks_name" data-parsley-required="true" />
+                </div>
+            </div>
+            <div class="row mb-3"> 
+                <label class="form-label col-form-label col-md-4">Swift Code</label> 
+                <div class="col-md-8">
+                    <input type="text" class="form-control" placeholder="" name="n_swiftCode" id="i_swiftCode" data-parsley-required="true" />
+                </div>
+            </div>
+            <div class="row mb-3"> 
+                <label class="form-label col-form-label col-md-4">ที่อยู่ธนาคาร</label> 
+                <div class="col-md-8">
+                    <textarea class="form-control" id="i_bank_address" rows="2" cols="50"  name="n_bank_address" placeholder="" ></textarea>
+                </div>
+            </div>  
+        </div>
+    </div>
+                
                         </div>
 
                         
@@ -197,8 +282,97 @@
 <script src="{{ config.ASSETS_ROOT }}/js/supplier/main_supplier.js?v1.0"></script>
 
 <script>
+let inputCount = 1;
+$(document).ready(function () {
 
+    $('.addInputButton').click(function (e) {
+        
+        if (inputCount >= 5) {
+            alert("ไม่สามารถเพิ่มได้เกิน 5 รายการ");
+            return; // หยุดการทำงานของฟังก์ชัน
+        }
 
+        inputCount++;
+        console.log(inputCount)
+        e.preventDefault();
+
+            let newRow = `<div class="item-row">
+                            <div class="form-group row">
+                                <label class="form-label col-form-label col-lg-4">ชื่อผู้ติดต่อ </label> 
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-lg-4 pe-0">
+                                    <input type="text" class="form-control" placeholder="ชื่อ-นามสกุล*" name="name_coordinator" required/>
+                                </div>
+                                <div class="col-lg-4 pe-0">
+                                    <input type="text" class="form-control" placeholder="อีเมล*" name="name_coordinatorTell" />
+                                </div>
+                                <div class="col-lg-3 pe-0">
+                                    <input type="text" class="form-control" placeholder="เบอร์โทร*" name="name_coordinatorEmail" />
+                                </div>
+                                <div class="col-lg-1">
+                                    <a href="javascript:;" class="btn btn-sm btn-icon btn-danger text-center mt-1" onclick="func_deleteItem(this)">
+                                        <i class="fa fa-minus text-center"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>`;
+            
+        $('#extra-inputs').append(newRow);
+      
+    });
+
+      
+
+});
+
+function func_deleteItem(el) {
+
+    $(el).closest('.item-row').remove();
+
+     if (inputCount > 0) {
+        inputCount--;
+    }
+
+    if ($('#extra-inputs .item-row').length === 0) {
+        $('#extra-inputs').append(createContactRow());
+        inputCount = 1;
+    }
+}
+
+function removeInputIdEx() {
+     const inputId = $(this).data('target'); // ดึง ID ของ input ที่จะลบจาก data attribute
+    // inputCount--;
+    // ลบค่าใน input ที่ระบุ
+    $('#' + inputId).val(''); // ลบค่าของ input
+    
+
+}  
+
+function createContactRow() {
+    return `
+    <div class="item-row">
+        <div class="form-group row">
+            <label class="form-label col-form-label col-lg-4">ชื่อผู้ติดต่อ <span class="text-danger">*</span></label> 
+        </div>
+        <div class="row mb-3">
+            <div class="col-lg-4 pe-0">
+                <input type="text" class="form-control" placeholder="ชื่อ-นามสกุล*" name="name_coordinator" required/>
+            </div>
+            <div class="col-lg-4 pe-0">
+                <input type="text" class="form-control" placeholder="อีเมล*" name="name_coordinatorTell" required />
+            </div>
+            <div class="col-lg-3 pe-0">
+                <input type="text" class="form-control" placeholder="เบอร์โทร*" name="name_coordinatorEmail" required />
+            </div>
+            <div class="col-lg-1">
+                <a href="javascript:;" class="btn btn-sm btn-icon btn-danger text-center mt-1" onclick="func_deleteItem(this)">
+                    <i class="fa fa-minus text-center"></i>
+                </a>
+            </div>
+        </div>
+    </div>`;
+}
 
 
 </script>
