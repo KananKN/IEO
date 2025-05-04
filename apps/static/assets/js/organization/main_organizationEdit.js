@@ -51,3 +51,29 @@ function validateFile(input) {
         }
     }
 }
+
+
+function validateForm() {
+    let isValid = true;
+
+    // เช็คทุก input, textarea, select ที่ required
+    $('#myForm').find('input[required], textarea[required], select[required]').each(function () {
+        if (!$(this).val().trim()) {
+            $(this).addClass('border-red-500');
+            isValid = false;
+        } else {
+            $(this).removeClass('border-red-500');
+        }
+    });
+
+    if (!isValid) {
+        swal({
+            icon: 'warning',
+            title: 'กรุณากรอกข้อมูลให้ครบถ้วน',
+        });
+        return;
+    }
+
+    // ✅ ถ้าข้อมูลครบ เรียกฟังก์ชันบันทึก
+    func_save();
+}

@@ -49,7 +49,7 @@
                             <div class="d-flex justify-content-between">
                                 <h4 class="card-title my-2">Organization Update</h4>  
                                 <div class="panel-heading-btn">
-                                    <button type="submit"  class="btn btn-blue"  onclick="func_save()">Save</button>
+                                    <button type="submit"  class="btn btn-blue"  onclick="validateForm()">Save</button>
                                 </div>
                             </div>
                         </div>   
@@ -404,17 +404,17 @@ $(document).ready(function () {
 
             let newRow = `<div class="item-row">
                             <div class="form-group row">
-                                <label class="form-label col-form-label col-lg-4">ชื่อผู้ติดต่อ </label> 
+                                <label class="form-label col-form-label col-lg-4">ชื่อผู้ติดต่อ<span class="text-danger">*</span> </label> 
                             </div>
                             <div class="row mb-3">
                                 <div class="col-lg-4 pe-0">
-                                    <input type="text" class="form-control" placeholder="ชื่อ-นามสกุล*" name="name_coordinator" required/>
+                                    <input type="text" class="form-control" placeholder="ชื่อ-นามสกุล*" name="name_coordinator" required />
                                 </div>
                                 <div class="col-lg-4 pe-0">
-                                    <input type="text" class="form-control" placeholder="อีเมล*" name="name_coordinatorEmail" />
+                                    <input type="text" class="form-control" placeholder="อีเมล*" name="name_coordinatorEmail" required />
                                 </div>
                                 <div class="col-lg-3 pe-0">
-                                    <input type="text" class="form-control" placeholder="เบอร์โทร*" name="name_coordinatorTell" />
+                                    <input type="text" class="form-control" placeholder="เบอร์โทร*" name="name_coordinatorTell" required />
                                 </div>
                                 <div class="col-lg-1">
                                     <a href="javascript:;" class="btn btn-sm btn-icon btn-danger text-center mt-1" onclick="func_deleteItem(this)">
@@ -458,7 +458,7 @@ function createContactRow() {
     return `
     <div class="item-row">
         <div class="form-group row">
-            <label class="form-label col-form-label col-lg-4">ชื่อผู้ติดต่อ <span class="text-danger">*</span></label> 
+            <label class="form-label col-form-label col-lg-4">ชื่อผู้ติดต่อ<span class="text-danger">*</span></label> 
         </div>
         <div class="row mb-3">
             <div class="col-lg-4 pe-0">
