@@ -85,6 +85,18 @@ def create_agency_api():
         
     data = request.form
     print("data:",data)
+    type_bank = data.get('account_type')
+    bank = data.get('n_bank')
+    account_number = data.get('n_accountNumber')
+    bank_branch = data.get('n_bankBranch')
+    type_bank = data.get('account_type')
+    foreign_banks = data.get('foreign_banks')
+    swiftCode = data.get('n_swiftCode')
+    bank_address = data.get('n_bank_address')
+    note = data.get('n_note')
+    account_name = data.get('n_accountName')
+    foreign_banks_name = data.get('foreign_banks_name')
+    
     username = data.get('username')
     password = data.get('password')
     confirm_password = data.get('confirm_password')
@@ -133,7 +145,17 @@ def create_agency_api():
             status='approved',  # แก้ typo
             org_type='agency',
             agency_code=generate_code(AgencyModel, prefix),
-            referred_by_id=ref_agency.id if ref_agency else None
+            referred_by_id=ref_agency.id if ref_agency else None,
+            bank=bank,
+            account_number=account_number,
+            bank_branch=bank_branch,
+            type_bank=type_bank,
+            foreign_banks=foreign_banks,
+            swiftCode=swiftCode,
+            bank_address=bank_address,
+            note=note,
+            account_name=account_name,
+            foreign_banks_name=foreign_banks_name,
         )
 
         db.session.add(agency)
@@ -290,7 +312,19 @@ def update_agency_api():
     country=data.get('country')
     tel=data.get('phone')
     email=data.get('email')
-        #     email=data.get('email'),
+    
+    type_bank = data.get('account_type')
+    bank = data.get('n_bank')
+    account_number = data.get('n_accountNumber')
+    bank_branch = data.get('n_bankBranch')
+    type_bank = data.get('account_type')
+    foreign_banks = data.get('foreign_banks')
+    swiftCode = data.get('n_swiftCode')
+    bank_address = data.get('n_bank_address')
+    note = data.get('n_note')
+    account_name = data.get('n_accountName')
+    foreign_banks_name = data.get('foreign_banks_name')
+    #     email=data.get('email'),
 
 
     if password != confirm_password:
@@ -324,6 +358,16 @@ def update_agency_api():
         thisItem.country = country
         thisItem.tel = tel
         thisItem.email = email
+        thisItem.bank=bank
+        thisItem.account_number=account_number
+        thisItem.bank_branch=bank_branch
+        thisItem.type_bank=type_bank
+        thisItem.foreign_banks=foreign_banks
+        thisItem.swiftCode=swiftCode
+        thisItem.bank_address=bank_address
+        thisItem.note=note
+        thisItem.account_name=account_name
+        thisItem.foreign_banks_name=foreign_banks_name
         
         # สร้าง User
         thisUser = UserModel.query.filter_by(id=thisItem.user_id).first()

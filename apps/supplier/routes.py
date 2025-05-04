@@ -5,6 +5,7 @@ from apps.supplier import blueprint
 from apps.authentication.models import *
 from apps.product.models import *
 from apps.supplier.models import *
+from apps.coordinator.models import *
 from apps import db
 from flask import render_template, request, redirect, url_for, flash, Markup, jsonify, abort, send_file
 from flask_login import login_required, current_user, logout_user
@@ -424,6 +425,7 @@ def get_supplier():
                 "name": supplier.name,
                 "supplier_type": supplier.supplier_type.name if supplier.supplier_type else "-",
                 "country": supplier.country.name if supplier.country else "-",
+                # "tel": [coordinator.tel for coordinator in supplier.coordinator] if supplier.coordinator else ["-"],
                 "tel": supplier.tel,
                 "product": set()
             }
@@ -467,25 +469,26 @@ def createMainSupplier():
         tax =request.form.get('n_tax')
         country =request.form.get('n_country')
         address =request.form.get('address')
-        name_coondinator =request.form.get('name_coondinator')
+        # name_coondinator =request.form.get('name_coondinator')
         email =request.form.get('email')
         tel =request.form.get('tel')
         
-        
-        # name_check = SupplierModel.query.filter_by(name=name_company).first()
-        # ตรวจสอบว่ามี supplier ที่ซ้ำไหม
-        # existing_supplier = SupplierModel.query.filter(
-        #     or_(
-        #         SupplierModel.name == name_company,
-        #         SupplierModel.tax == tax,
-        #         # SupplierModel.email == email,
-        #         # SupplierModel.tel == tel
-        #     )
-        # ).first()
+        bank = request.form.get('n_bank')
+        account_number = request.form.get('n_accountNumber')
+        bank_branch = request.form.get('n_bankBranch')
+        type_bank = request.form.get('account_type')
+        foreign_banks = request.form.get('foreign_banks')
+        swiftCode = request.form.get('n_swiftCode')
+        bank_address = request.form.get('n_bank_address')
+        note = request.form.get('n_note')
+        account_name = request.form.get('n_accountName')
+        foreign_banks_name = request.form.get('foreign_banks_name')
 
-        # if existing_supplier:
-        #     flash("มี Supplier ที่ข้อมูลซ้ำอยู่แล้วในระบบ", "warning")
-        #     return redirect(url_for('supplier_blueprint.supplier_create'))
+        # ดึงข้อมูลลิสต์จากฟอร์ม
+        name_coordinators_list = request.form.getlist('name_coordinator')
+        coordinatorTell_list = request.form.getlist('name_coordinatorTell')
+        coordinatorEmail_list = request.form.getlist('name_coordinatorEmail')
+        
         
         existing_supplier_by_name = SupplierModel.query.filter_by(name=name_company).first()
         if existing_supplier_by_name:
@@ -506,10 +509,44 @@ def createMainSupplier():
                                     email=email,
                                     supplierType_id=supplierType,
                                     country_id=country,
-                                    name_coondinator=name_coondinator
+                                    bank=bank,
+                                    account_number=account_number,
+                                    bank_branch=bank_branch,
+                                    type_bank=type_bank,
+                                    foreign_banks=foreign_banks,
+                                    swiftCode=swiftCode,
+                                    bank_address=bank_address,
+                                    note=note,
+                                    account_name=account_name,
+                                    foreign_banks_name=foreign_banks_name,
                                     )
             db.session.add(newItem)
             db.session.commit()
+            
+            if len(name_coordinators_list) > 0:
+                # ตรวจสอบว่าลิสต์มีขนาดเท่ากัน
+                print("coordinatorTell_list")
+                if len(name_coordinators_list) == len(coordinatorTell_list) == len(coordinatorEmail_list):
+                    for name_coordinator, coordinatorTell, coordinatorEmail in zip(
+                        name_coordinators_list, coordinatorTell_list, coordinatorEmail_list
+                    ):
+                        
+                        print(name_coordinators_list)
+                        print(coordinatorTell_list)
+                        print(coordinatorEmail_list)
+                        order_item = CoordinatorModel(
+                            supplier_id=newItem.id,
+                            name=name_coordinator,
+                            tel=coordinatorTell,
+                            email=coordinatorEmail,
+                            
+                        )
+                        db.session.add(order_item)
+                    db.session.commit()
+                else:
+                    flash("Error: Coordinator lists have mismatched lengths!", "danger")
+                    return redirect(url_for('supplier_blueprint.supplier_main'))
+
             flash("Add success!", "success")
             
         if  request.files:
@@ -555,8 +592,9 @@ def supplier_update(id):
     datas = SupplierModel.query.filter_by(id=id).first()
     supplierTypelist = SupplierTypeModel.query.all()
     countrylist = CountryModel.query.all()
+    coordinators = CoordinatorModel.query.filter_by(supplier_id  = datas.id).all()
     file_data = FileSupplierModel.query.filter_by(supplier_id  = datas.id).all()
-    return render_template('supplier/supplier_update.html', segment='supplier_main' ,datas=datas, supplierTypelist=supplierTypelist,countrylist=countrylist,file_data=file_data)    
+    return render_template('supplier/supplier_update.html', segment='supplier_main' ,datas=datas, supplierTypelist=supplierTypelist,countrylist=countrylist,file_data=file_data,coordinators=coordinators)    
 
 
 @blueprint.route('/downloadSupplier/<filename>')
@@ -615,8 +653,23 @@ def updateMainSupplier():
         name_coondinator =request.form.get('name_coondinator') or None
         email =request.form.get('email') or None
         tel =request.form.get('tel') or None
-            
-       
+        
+        type_bank = request.form.get('account_type')
+        bank = request.form.get('n_bank')
+        account_number = request.form.get('n_accountNumber')
+        bank_branch = request.form.get('n_bankBranch')
+        type_bank = request.form.get('account_type')
+        foreign_banks = request.form.get('foreign_banks')
+        swiftCode = request.form.get('n_swiftCode')
+        bank_address = request.form.get('n_bank_address')
+        note = request.form.get('n_note')
+        account_name = request.form.get('n_accountName')
+        foreign_banks_name = request.form.get('foreign_banks_name')
+
+        # ดึงข้อมูลลิสต์จากฟอร์ม
+        name_coordinators_list = request.form.getlist('name_coordinator')
+        coordinatorTell_list = request.form.getlist('name_coordinatorTell')
+        coordinatorEmail_list = request.form.getlist('name_coordinatorEmail')
             
         thisItem = SupplierModel.query.filter_by(id=id).first()
         
@@ -652,7 +705,44 @@ def updateMainSupplier():
             thisItem.name_coondinator=name_coondinator 
             thisItem.email=email
             thisItem.tel=tel
+            thisItem.bank=bank,
+            thisItem.account_number=account_number,
+            thisItem.bank_branch=bank_branch,
+            thisItem.type_bank=type_bank,
+            thisItem.foreign_banks=foreign_banks,
+            thisItem.swiftCode=swiftCode,
+            thisItem.bank_address=bank_address,
+            thisItem.note=note,
+            thisItem.account_name=account_name,
+            thisItem.foreign_banks_name=foreign_banks_name,
             db.session.commit()
+            
+            db.session.query(CoordinatorModel).filter(CoordinatorModel.supplier_id == id).delete()
+            db.session.commit()
+            
+            if len(name_coordinators_list) > 0:
+                # ตรวจสอบว่าลิสต์มีขนาดเท่ากัน
+                print("coordinatorTell_list")
+                if len(name_coordinators_list) == len(coordinatorTell_list) == len(coordinatorEmail_list):
+                    for name_coordinator, coordinatorTell, coordinatorEmail in zip(
+                        name_coordinators_list, coordinatorTell_list, coordinatorEmail_list
+                    ):
+                        
+                        print(name_coordinators_list)
+                        print(coordinatorTell_list)
+                        print(coordinatorEmail_list)
+                        order_item = CoordinatorModel(
+                            supplier_id=thisItem.id,
+                            name=name_coordinator,
+                            tel=coordinatorTell,
+                            email=coordinatorEmail,
+                            
+                        )
+                        db.session.add(order_item)
+                    db.session.commit()
+                else:
+                    flash("Error: Coordinator lists have mismatched lengths!", "danger")
+                    return redirect(url_for('supplier_blueprint.supplier_main'))
             flash("Update success!", "success")
         
             

@@ -69,6 +69,21 @@ class SupplierModel(db.Model):
     id: int
     supplierType_id: int
     name:str
+    status_company: int
+    zip_code: str
+    shipping_address: str
+    office_number: str
+    fax_number: str
+    bank: str
+    account_number: str
+    bank_branch: str
+    type_bank: str
+    foreign_banks: str
+    swiftCode: str
+    bank_address: str
+    note: str
+    account_name:str
+    foreign_banks_name:str
     
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(), nullable=False)
@@ -78,14 +93,29 @@ class SupplierModel(db.Model):
     email = db.Column(db.String(), nullable=True)
     supplierType_id = db.Column(db.Integer, db.ForeignKey("supplier_type.id", ondelete='SET NULL'))
     country_id = db.Column(db.Integer, db.ForeignKey("country.id", ondelete='CASCADE'))
-    name_coondinator = db.Column(db.String(), nullable=False)
+    name_coondinator = db.Column(db.String(), nullable=True)
     files_supplier = db.relationship(
         "FileSupplierModel", backref="files_supplier", cascade="all, delete", lazy=True )
     
-   
+    status_company = db.Column(db.Integer, comment='1:headquarters,2:branch')
+    zip_code = db.Column(db.String(), nullable=False,server_default='00000')
+    shipping_address = db.Column(db.String(), nullable=True)
+    office_number = db.Column(db.String(), nullable=True)
+    fax_number = db.Column(db.String(), nullable=True)
+    bank = db.Column(db.String(), nullable=True)
+    account_number = db.Column(db.String(), nullable=True)
+    bank_branch = db.Column(db.String(), nullable=True)
+    type_bank = db.Column(db.Integer, nullable=True, comment='1:savings,2:daily_current')
+    foreign_banks = db.Column(db.String(), nullable=True)
+    swiftCode = db.Column(db.String(), nullable=True)
+    bank_address = db.Column(db.String(), nullable=True)
+    note = db.Column(db.String(), nullable=True)
+    account_name = db.Column(db.String(), nullable=True)
+    foreign_banks_name = db.Column(db.String(), nullable=True)
     
- 
     
+    coordinator = db.relationship(
+        "CoordinatorModel", backref="supplier", cascade="all, delete", lazy=True ) 
     created_at = db.Column(db.DateTime,  default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime,  default=db.func.current_timestamp(),
                            onupdate=db.func.current_timestamp())
@@ -102,6 +132,14 @@ class SupplierModel(db.Model):
             "supplierType_id": self.supplierType_id,
             "country_id": self.country_id,
             "name_coondinator": self.name_coondinator,
+            "coordinators": [
+                {
+                    "id": c.id,
+                    "name": c.name,
+                    "email": c.email,
+                    "tel": c.tel
+                } for c in self.coordinator
+            ]
             
         }        
 

@@ -198,6 +198,22 @@ class AgencyModel(db.Model):
 )
     referred_by = db.relationship('AgencyModel', foreign_keys=[referred_by_id], remote_side=[id], backref='referrals', uselist=False)
 
+    
+    status_company = db.Column(db.Integer, comment='1:headquarters,2:branch')
+    zip_code = db.Column(db.String(), nullable=False,server_default='00000')
+    shipping_address = db.Column(db.String(), nullable=True)
+    office_number = db.Column(db.String(), nullable=True)
+    fax_number = db.Column(db.String(), nullable=True)
+    bank = db.Column(db.String(), nullable=True)
+    account_number = db.Column(db.String(), nullable=True)
+    bank_branch = db.Column(db.String(), nullable=True)
+    type_bank = db.Column(db.Integer, nullable=True, comment='1:savings,2:daily_current')
+    foreign_banks = db.Column(db.String(), nullable=True)
+    swiftCode = db.Column(db.String(), nullable=True)
+    bank_address = db.Column(db.String(), nullable=True)
+    note = db.Column(db.String(), nullable=True)
+    account_name = db.Column(db.String(), nullable=True)
+    foreign_banks_name = db.Column(db.String(), nullable=True)
 
     created_at = db.Column(db.DateTime,  default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime,  default=db.func.current_timestamp(),
