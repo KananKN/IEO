@@ -132,28 +132,28 @@
                                             <div class="form-group row mb-3">   
                                                 <label class="form-label col-form-label col-lg-4">ธนาคาร</label>
                                                 <div class="col-lg-8">
-                                                    <input type="text" class="form-control" placeholder="" name="n_bank" id="i_bank" data-parsley-required="true" value="{{datas.bank}}" />
+                                                    <input type="text" class="form-control" placeholder="" name="n_bank" id="i_bank" data-parsley-required="true" value="{{ '' if datas.bank is none else datas.bank }}" />
                                                 </div>
                                             </div>
                                             <div class="form-group row mb-3">   
                                                 <label class="form-label col-form-label col-lg-4">ชื่อบัญชี</label>
 
                                                 <div class="col-lg-8">
-                                                    <input type="text" class="form-control" placeholder="" name="n_accountName" id="i_accountName" data-parsley-required="true" value="{{datas.account_name}}" />
+                                                    <input type="text" class="form-control" placeholder="" name="n_accountName" id="i_accountName" data-parsley-required="true" value="{{ '' if datas.account_name is none else datas.account_name }}" />
                                                 </div>
                                             </div>
                                             <div class="form-group row mb-3">   
                                                 <label class="form-label col-form-label col-lg-4">เลขที่บัญชี</label>
 
                                                 <div class="col-lg-8">
-                                                    <input type="text" class="form-control" placeholder="" name="n_accountNumber" id="i_accountNumber"value="{{datas.account_number}}" data-parsley-required="true" />
+                                                    <input type="text" class="form-control" placeholder="" name="n_accountNumber" id="i_accountNumber" value="{{ '' if datas.account_number is none else datas.account_number }}" data-parsley-required="true" />
                                                 </div>
                                             </div>
                                             <div class="form-group row mb-3">   
                                                 <label class="form-label col-form-label col-lg-4">สาขาธนาคาร</label>
 
                                                 <div class="col-lg-8">
-                                                    <input type="text" class="form-control" placeholder="" name="n_bankBranch" id="i_bankBranch" value="{{datas.bank_branch}}" data-parsley-required="true" />
+                                                    <input type="text" class="form-control" placeholder="" name="n_bankBranch" id="i_bankBranch" value="{{ '' if datas.bank_branch is none else datas.bank_branch }}"   data-parsley-required="true" />
                                                 </div>
                                             </div>
                                             <div class="row ">
@@ -164,7 +164,7 @@
                                                     <div class="row">
                                                         <div class="col-md-12 pt-2 mb-2">
                                                             <div class="form-check form-check-inline">
-                                                                <input class="form-check-input" type="radio" id="i_savings" name="account_type" value="1" {% if datas.type_bank == 1 %}checked{% endif %} />
+                                                                <input class="form-check-input" type="radio" id="i_savings" name="account_type" value="1" {% if datas.type_bank in [None, 1] %}checked{% endif %} />
                                                                 <label class="form-check-label" for="inlineRadio1">ออมทรัพย์</label>
                                                             </div>
                                                             <div class="form-check form-check-inline">
@@ -182,26 +182,26 @@
                                             <div class="row mb-3"> 
                                                 <label class="form-label col-form-label col-md-4">ธนาคาร</label> 
                                                 <div class="col-md-8">
-                                                    <input type="text" class="form-control" placeholder="" name="foreign_banks" id="i_foreign_banks" data-parsley-required="true" value="{{datas.foreign_banks}}" />
+                                                    <input type="text" class="form-control" placeholder="" name="foreign_banks" id="i_foreign_banks" data-parsley-required="true" value="{{ '' if datas.foreign_banks is none else datas.foreign_banks }}"  />
                                                 </div>
                                             </div>
                                             <div class="form-group row mb-3">   
                                                 <label class="form-label col-form-label col-lg-4">ชื่อบัญชี</label>
 
                                                 <div class="col-lg-8">
-                                                    <input type="text" class="form-control" placeholder="" name="foreign_banks_name" value="{{datas.foreign_banks_name}}" id="foreign_banks_name" data-parsley-required="true" />
+                                                    <input type="text" class="form-control" placeholder="" name="foreign_banks_name" value="{{ '' if datas.foreign_banks_name is none else datas.foreign_banks_name }}" id="foreign_banks_name" data-parsley-required="true" />
                                                 </div>
                                             </div>
                                             <div class="row mb-3"> 
                                                 <label class="form-label col-form-label col-md-4">Swift Code</label> 
                                                 <div class="col-md-8">
-                                                    <input type="text" class="form-control" placeholder="" name="n_swiftCode" id="i_swiftCode" value="{{datas.swiftCode}}"  data-parsley-required="true" />
+                                                    <input type="text" class="form-control" placeholder="" name="n_swiftCode" id="i_swiftCode" value="{{ '' if datas.swiftCode is none else datas.swiftCode }}"  data-parsley-required="true" />
                                                 </div>
                                             </div>
                                             <div class="row mb-3"> 
                                                 <label class="form-label col-form-label col-md-4">ที่อยู่ธนาคาร</label> 
                                                 <div class="col-md-8">
-                                                    <textarea class="form-control" id="i_bank_address" rows="2" cols="50"  name="n_bank_address" placeholder="" >{{datas.bank_address}}</textarea>
+                                                    <textarea class="form-control" id="i_bank_address" rows="2" cols="50"  name="n_bank_address" placeholder="" > {{ '' if datas.bank_address is none else datas.bank_address }}</textarea>
                                                 </div>
                                             </div>  
                                         </div>
