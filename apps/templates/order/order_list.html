@@ -1,0 +1,644 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} รายการใบสั่งซื้อ (Orders) {% endblock %} 
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}
+<link href="{{ config.ASSETS_ROOT }}/plugins/datatables.net-bs5/css/dataTables.bootstrap5.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/datatables.net-responsive-bs5/css/responsive.bootstrap5.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/select2/dist/css/select2.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/tag-it/css/jquery.tagit.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/select-picker/dist/picker.min.css" rel="stylesheet" />
+{% endblock stylesheets %}
+
+{% block content %}
+
+<div id="content" class="app-content">
+
+    <h1 class="page-header">รายการใบสั่งซื้อ (Orders)
+        {% if current_user.has_permission('write_order') %}
+            <!-- <a href="/order/order_create" class="btn btn-success ms-3 shadow-sm  bg-gradient">
+                <i class="fa fa-plus"></i> เพิ่ม
+            </a>  -->
+        {% endif %}
+    </h1>
+    
+    <div class="row">
+        <div class="col-xl-12">
+            <div class="panel panel-inverse">
+                <div class="panel-heading">
+                    <h4 class="panel-title">รายการใบสั่งซื้อ (Orders)</h4>
+                    <div class="panel-heading-btn">
+                        <a href="javascript:;" class="btn btn-xs btn-icon btn-default" data-toggle="panel-expand"><i class="fa fa-expand"></i></a>
+                        <a href="javascript:;" class="btn btn-xs btn-icon btn-success" data-toggle="panel-reload"><i class="fa fa-redo"></i></a>
+                        <a href="javascript:;" class="btn btn-xs btn-icon btn-warning" data-toggle="panel-collapse"><i class="fa fa-minus"></i></a>
+                        <a href="javascript:;" class="btn btn-xs btn-icon btn-danger" data-toggle="panel-remove"><i class="fa fa-times"></i></a>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for categorie, message in messages %}
+                                <div class="alert alert-{{categorie}} alert-dismissible fade show mb-2 mt-1">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}                    
+                        {% endif %}
+                    {% endwith %}
+                    <table id="data-table-responsive" width="100%" class="table table-striped table-bordered align-middle text-nowrap">
+                        <thead>
+                            <tr>
+                                <th width="1%"></th>
+                                <th class="text-nowrap ">รหัส Order</th>
+                                <th class="text-nowrap">ลูกค้า</th>
+                                <th class="text-nowrap">สินค้า</th>
+                                <th class="text-nowrap w-150px">ยอดสุทธิ</th>
+                                <th class="text-nowrap">วันที่สั่ง</th>
+                                <th class="text-nowrap">สถานะ</th>
+                                <!-- <th class="text-nowrap">Action</th> -->
+                            </tr>
+                        </thead>
+                        <tbody>
+                            
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<a href="javascript:;" class="btn btn-icon btn-circle btn-primary btn-scroll-to-top" data-toggle="scroll-to-top"><i class="fa fa-angle-up"></i></a>
+
+<div class="modal fade" id="modal-order">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form  method="POST" data-parsley-validate="true">
+                <div class="modal-header">
+                    <h4 class="modal-title">รหัส Order: </h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true"></button>
+                </div>
+                <div class="modal-body">
+                     <div class="row mb-3"  hidden>
+                        <label class="form-label col-form-label col-md-4">id</label>
+                        <div class="col-md-8">
+                            <input type="text"  class="form-control" name="id"  id="id-update" data-parsley-required="true"/>
+                            <input type="text"  class="form-control" name="id_product" hidden id="id_product" data-parsley-required="true"/>
+                        </div>
+                    </div>    
+                    <div class="mb-3" >
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h5>ข้อมูลลูกค้า </h5>
+                                
+                            </div>
+                        </div>
+                        
+                    </div>
+                    <div class="mb-3">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="fullname" class="form-label">ชื่อ-นามสกุล</label>
+                                <input name="fullname" required class="form-control-plaintext  me-2" readonly placeholder="ชื่อ">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">อีเมล</label>
+                                <input type="email" class="form-control-plaintext" name="email" placeholder="อีเมล">
+                            </div>
+                        </div>
+                        
+                    </div>
+                    <div class="mb-3" hidden>
+                              <div class="row">
+                                <div class="col-md-6">
+                                  <label for="nickname" class="form-label">ชื่อเล่น</label>
+                                  <input name="nickname"  class="form-control-plaintext  me-2"  placeholder="ชื่อเล่น">
+                                </div>
+                                <div class="col-md-6">
+                                  <label for="birth_date" class="form-label">วันเกิด</label>
+                                  <input type="text" class="form-control-plaintext" id="masked-input-date" name="birth_date" placeholder="dd/mm/yyyy">
+                                  
+                                </div>
+                              </div>
+                            
+                          </div>
+                    <div class="mb-3">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">เบอร์โทร</label>
+                                <input name="phone" required class="form-control-plaintext " placeholder="เบอร์โทรศัพท์*">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">ชื่อโครงการ</label>
+                                <input type="text" class="form-control-plaintext" name="name_project" placeholder="">
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3" hidden>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">หมวดหมู่โครงการ</label>
+                                <input type="text" class="form-control-plaintext" name="category" placeholder="">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">ประเทศ</label>
+                                <input class="form-control-plaintext" name="country"  placeholder="">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">ชื่อ Agency</label>
+                                <input class="form-control-plaintext" name="name_agency"  placeholder="">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">ราคา</label>
+                                <input type="text" class="form-control-plaintext" name="price" placeholder="" onchange="formatNumberWithCommas(this)" >
+                            
+                            </div>
+                        </div>
+                    </div>
+                    <div class="">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <!-- <h6>จำนวนงวดที่ต้องชำระ</h6> -->
+                                <h5 class="" name="termOFpayment"   ></h6>
+                            
+                            </div>
+                            
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h5>งวดการชำระเงิน</h5>
+                                <ul id="installments-list"></ul>
+
+                                
+                            
+                            </div>
+                            
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h5>การชำระเงิน</h5>
+                                <div class="row mb-3">
+                                    <label class="form-label col-form-label col-md-4">จำนวนเงิน<span class="text-danger">*</span> </label>
+                                    <div class="col-lg-8">
+                                        <input class="form-control" required="" name="" id="amount" value="" data-parsley-required="true">
+                                    </div>
+                                </div>
+                               
+                            </div>
+                            
+                        </div>
+                    </div> 
+
+                    <hr class="mt-3">
+                    <div class="mb-3">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label">หมายเหตุ <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="i_note" rows="4" cols="50" required name="note" placeholder="" >{{datas.address}}</textarea>
+                            
+                            </div>
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">สถานะชำระเงิน <span class="text-danger">*</span></label>
+                                <select class="default-select2 form-control col-4" id="status_modeOrder" name="status_modeOrder">
+                                        <option value="new">ใหม่ (New)</option>
+                                        <option value="contacted">ติดต่อแล้ว (Contacted)</option>
+                                        <option value="pending">รอการตัดสินใจ (Pending)</option>
+                                        <option value="approved">ปิดการขายแล้ว (Approved)</option>
+                                        <option value="lost">ไม่สนใจแล้ว (Lost)</option>
+                                </select>
+                            </div>
+                            
+                        </div>
+                    </div>
+
+                    
+                    
+                    <div class="mb-3" hidden>
+                        <label for="password" class="form-label">Username</label>
+                        <div class="input-group">
+                            <input name="username" required class="form-control " placeholder="Username*" >
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <!-- <button type="button" class="btn btn-primary w-100px" onclick="func_save($(this))">บันทึก</button> -->
+                    <button type="button" class="btn btn-success w-100px" onclick="func_createOrder($(this))">สร้าง Order</button>
+                    <!-- <button type="button" class="btn btn-danger" onclick="func_save('rejected',$(this))">Rejected</button>
+                    <button type="button" class="btn btn-success" onclick="func_save('active',$(this))">Appove</button> -->
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}
+
+<script src="{{ config.ASSETS_ROOT }}/plugins/datatables.net/js/dataTables.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/datatables.net-bs5/js/dataTables.bootstrap5.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/datatables.net-responsive/js/dataTables.responsive.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/datatables.net-responsive-bs5/js/responsive.bootstrap5.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/js/demo/table-manage-responsive.demo.js"></script>
+
+<script src="{{ config.ASSETS_ROOT }}/plugins/parsleyjs/dist/parsley.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/@highlightjs/cdn-assets/highlight.min.js"></script>
+
+<script src="{{ config.ASSETS_ROOT }}/plugins/select2/dist/js/select2.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/jquery-migrate/dist/jquery-migrate.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/tag-it/js/tag-it.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/select-picker/dist/picker.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/sweetalert/dist/sweetalert.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+$(document).ready(function() {
+    loadDataTable();
+});
+
+
+function loadDataTable() {
+    if ($.fn.DataTable.isDataTable('#data-table-responsive')) {
+        $('#data-table-responsive').DataTable().destroy(); // ลบ DataTable เดิมก่อน
+    }
+
+    const table = $('#data-table-responsive').DataTable({
+        responsive: true,
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: "/order/get_order",
+            type: "POST",
+            data: function(d) { 
+                return JSON.stringify(d); 
+            },
+            contentType: "application/json",
+            dataType: "json"
+        },
+        columns: [
+            { data: "id", className: "text-center" },
+            { data: null,
+                render: function(data, type, row) {
+                    const rowData = JSON.stringify(row).replace(/"/g, '&quot;'); 
+                    return `
+                    <a href="/order/order_update/${data.data_user.id}"  >
+                    ${data.order_number}</a>
+                    </a> `;
+                }
+            
+            } ,
+            { data: "customer_name"} ,
+            { data: "product_name" },
+            { data: "price",
+                render: function(data, type, row) {
+                    if (type === 'display' || type === 'filter') {
+                        // Format ตัวเลขให้มีเครื่องหมายคอมม่าและ 2 ทศนิยม
+                        return Number(data).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    }
+                    return data; // ถ้าไม่ใช่สำหรับการแสดงผล ให้ส่งคืนค่าตามเดิม
+                } 
+            },
+            
+            {
+                data: "created_at",
+                render: function (data) {
+                    const d = new Date(data);
+                    return d.toLocaleDateString("th-TH"); // แสดงวันที่แบบไทย
+                }
+            },
+            {
+                data: null,
+                render: function(data, type, row) {
+                    let status = data.data_user.status;
+                    let color_text = '';
+                    if (status.startsWith('installment_')) {
+                        const installmentNumber = status.split('_')[1];  // ดึงตัวเลขงวดจาก 'installment_1'
+                        color_text = 'info';
+                        text = `ชำระเงินงวดที่ ${installmentNumber}`;
+                    } else if (status === 'completed') {
+                        color_text = 'success';
+                        text = 'จบโครงการ';
+                    } else if (status === 'cancelled') {
+                        color_text = 'danger';
+                        text = 'ยกเลิก';
+                    } else {
+                        color_text = 'secondary';
+                        text = 'สถานะไม่ทราบแน่ชัด';
+                    }
+                    return `<span class=" text-${color_text} mb-1">${text}</span>`;
+                }
+            },
+            //{ 
+            //    data: null,  
+            //    orderable: false, // ปิดการเรียงลำดับในคอลัมน์นี้
+            //    render: function(data, type, row) {
+            //        const rowData = JSON.stringify(row).replace(/"/g, '&quot;'); 
+            //        return `
+            //        <a href="javascript:;" class="btn btn-success  btn-icon btn-circle " hidden><i class="fas fa-check" //onclick="sweetAlertAppove('${data.data_user.id}','active')"></i></a>
+                                           
+            //        <a href="javascript:;" onclick="sweetAlertReject('${data.data_user.id}','rejected')" hidden class=" btn btn-danger btn-icon btn-circle "><i class="fas fa-times"></i></a>
+            //        <a  href="javascript:;" onclick="func_modal_order('${rowData}')" hidden class=" btn btn-success btn-sm "  > <i class="fa fa-plus"></i> ดูรายละเอียด </a>
+            //        <a href="/order/order_update/${data.lead.id}" class="btn btn-success ms-3 btn-sm hidden bg-gradient" >
+            //           <i class="fa fa-plus"></i> สร้าง Order </a>
+            //        </a> `;
+            //        
+            //    }
+            //}
+        ],
+        order: [[0, "asc"]],  // เรียงลำดับจาก ID
+        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+        pageLength: 10
+    });
+
+    setInterval(function () {
+        table.ajax.reload(null, false); // false = ไม่ reset pagination
+    }, 10000);
+}
+
+function func_modal(data) {
+    //console.log(data)
+    
+    data = JSON.parse(data); 
+    
+    // console.log(data.data_user)
+    // console.log(data.product.term_of_payment.name)
+    
+
+    $('#modal-dialog').modal('show');
+
+    // $('form').attr('action', '/customer/edit');
+    $('.modal-title').html(`Name: ${data.first_name} ${data.last_name}`);
+    $('.c_add').hide()
+    $('.c_edit').show()
+
+    $('[name="id"]').val(data.data_user.id);
+    $('[name="fullname"]').val(data.first_name);
+    $('[name="lastname"]').val(data.last_name);
+    $('[name="nickname"]').val(data.data_user.nick_name);
+    $('[name="email"]').val(data.data_user.email);
+    $('[name="phone"]').val(data.data_user.tel);
+    $('[name="name_project"]').val(data.product_name);
+    $('[name="category"]').val(data.category);
+    $('[name="country"]').val(data.country);
+    $('[name="name_agency"]').val(data.agency);
+    $('[name="remask"]').val(data.data_user.remask);
+    $('[name="status_mode"]').val(data.data_user.status);
+    
+
+
+    if (data.data_user.birth_date) {
+            const date = new Date(data.data_user.birth_date);  // แปลงเป็น Date object
+            if (!isNaN(date)) {
+                const day = String(date.getDate()).padStart(2, '0');
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const year = date.getFullYear();
+                const formattedDate = `${day}/${month}/${year}`;
+                $('[name="birth_date"]').val(formattedDate);
+            }
+        } else {
+            $('[name="birth_date"]').val("");  // ถ้าไม่มีวันเกิดให้ใส่ค่าว่าง
+        }
+   
+
+}
+</script>
+<script>
+    function func_modal_order(data){
+        data = JSON.parse(data); 
+        
+        console.log(data)
+    
+        $('#modal-order').modal('show');
+    
+        // $('form').attr('action', '/customer/edit');
+        //$('.modal-title').html(`Name: ${data.customer_name} `);
+        $('.modal-title').html(`รหัส Order : ${data.order_number} `);
+        $('.c_add').hide()
+        $('.c_edit').show()
+    
+        $('[name="id"]').val(data.id);
+        $('[name="id_product"]').val(data.data_user.product_id);
+        $('[name="order_code"]').html('รหัส Order: ' + data.order_number);
+    
+        $('[name="fullname"]').val(data.customer_name);
+        $('[name="nickname"]').val(data.data_user.nick_name);
+        $('[name="email"]').val(data.email);
+        $('[name="phone"]').val(data.lead.tel);
+        $('[name="name_project"]').val(data.product_name);
+        $('[name="category"]').val(data.category);
+        $('[name="country"]').val(data.country);
+        $('[name="name_agency"]').val(data.agency_name);
+        $('[name="note"]').val(data.data_user.note);
+        $('[name="status_modeOrder"]').val(data.data_user.status);
+        $('[name="price"]').val(parseFloat(data.price).toLocaleString('en-US'));
+        $('[name="termOFpayment"]').html('จำนวนงวดที่ต้องชำระ '+ data.term + ' งวด');
+
+        //for (let i = 0; i < data.installments.length; i++) {
+        //    const item = data.installments[i];
+        //    console.log(`งวดที่ ${i + 1}: ${item.amount} บาท`);
+        //     console.log(`รายละเอียด: ${item.term_detail}`);
+        //  }
+        const installments = data.installments
+
+        const list = document.getElementById('installments-list');
+        
+        installments.forEach((item, index) => {
+            const li = document.createElement('li');
+            //li.innerHTML = `<strong>งวดที่ ${index + 1}</strong>: ${item.amount} บาท<br>รายละเอียด: ${item.term_detail}`;
+            li.innerHTML = `<strong>งวดที่ ${index + 1}</strong>: ${item.amount} บาท`;
+            list.appendChild(li);
+          });
+    
+    
+    
+        if (data.data_user.birth_date) {
+                const date = new Date(data.data_user.birth_date);  // แปลงเป็น Date object
+                if (!isNaN(date)) {
+                    const day = String(date.getDate()).padStart(2, '0');
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const year = date.getFullYear();
+                    const formattedDate = `${day}/${month}/${year}`;
+                    $('[name="birth_date"]').val(formattedDate);
+                }
+        } else {
+            $('[name="birth_date"]').val("");  // ถ้าไม่มีวันเกิดให้ใส่ค่าว่าง
+        }
+       
+    
+    }
+    </script>
+<script>
+function func_save(x){
+    
+    x.attr('disabled', true);   
+
+       fetch("/lead/check_statusLead", {
+            method: "post",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+
+                id: $('[name="id"]').val(),
+                status: $('[name="status_mode"]').val(),
+                remask: $('[name="remask"]').val(),
+            
+            }),
+        })
+        .then((response) => response.json())
+        .then((data) => {
+            console.log(data);
+            x.attr('disabled',true);
+            swal({
+                icon: "success",
+                title: "Successfully!",
+                timer: 1500
+            });
+
+            location.reload();
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+            swal({
+                icon: "error",
+                title: "Error !",
+                confirmButtonText: "OK",  // ✅ ใช้ได้กับ Swal.fire()
+                showConfirmButton: true
+            });
+            x.attr('disabled', false);
+        });     
+    
+    
+}
+function sweetAlertAppove(id_check,mode ){
+    console.log(mode)
+    swal({
+            title: "ยืนยันการดำเนินการ?",
+            text: `คุณแน่ใจหรือไม่ว่าจะอนุมัติ ผู้ใช้นี้?`,
+            icon: "warning",
+            buttons: {
+                cancel: {
+                    text: "ยกเลิก",
+                    visible: true,
+                    className: "btn btn-gray-300",
+                    closeModal: true,
+                },
+                confirm: {
+                    text: "ยืนยัน",
+                    visible: true,
+                    className: "btn btn-primary",
+                    closeModal: false, // ปิด modal หลังจาก fetch เสร็จ
+                }
+            },
+            dangerMode: true,
+        }).then((willApprove) => {
+            if (willApprove) {
+                fetch("/user_request/check_appovedUser", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        id: id_check,
+                        status: mode
+                    }),
+                })
+                .then((response) => response.json())
+                .then((data) => {
+                    console.log(data);
+                    swal({
+                        icon: "success",
+                        title: "ดำเนินการสำเร็จ!",
+                        text: `ผู้ใช้ถูกอนุมัติเรียบร้อยแล้ว`,
+                        confirmButtonText: "OK"
+                    }).then(() => {
+                        location.reload();
+                    });
+                })
+                .catch((error) => {
+                    console.error("Error:", error);
+                    swal({
+                        icon: "error",
+                        title: "เกิดข้อผิดพลาด!",
+                        text: "ไม่สามารถดำเนินการได้ กรุณาลองใหม่",
+                    });
+                });
+            }
+        });
+        
+        
+}
+function sweetAlertReject(id_check,mode ){
+    swal({
+            title: "ยืนยันการดำเนินการ?",
+            text: `คุณแน่ใจหรือไม่ว่าต้องการปฏิเสธผู้ใช้นี้?`,
+            icon: "warning",
+            buttons: {
+                cancel: {
+                    text: "ยกเลิก",
+                    visible: true,
+                    className: "btn btn-gray-300",
+                    closeModal: true,
+                },
+                confirm: {
+                    text: "ยืนยัน",
+                    visible: true,
+                    className: "btn btn-primary",
+                    closeModal: false, // ปิด modal หลังจาก fetch เสร็จ
+                }
+            },
+            dangerMode: true,
+        }).then((willApprove) => {
+            if (willApprove) {
+                fetch("/user_request/check_appovedUser", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        id: id_check,
+                        status: mode
+                    }),
+                })
+                .then((response) => response.json())
+                .then((data) => {
+                    console.log(data);
+                    swal({
+                        icon: "success",
+                        title: "ดำเนินการสำเร็จ!",
+                        text: `ปฏิเสธการอนุมัติผู้ใช้เรียบร้อยแล้ว`,
+                        confirmButtonText: "OK"
+                    }).then(() => {
+                        location.reload();
+                    });
+                })
+                .catch((error) => {
+                    console.error("Error:", error);
+                    swal({
+                        icon: "error",
+                        title: "เกิดข้อผิดพลาด!",
+                        text: "ไม่สามารถดำเนินการได้ กรุณาลองใหม่",
+                    });
+                });
+            }
+        }); 
+    
+    
+}
+</script>
+{% endblock javascripts %}

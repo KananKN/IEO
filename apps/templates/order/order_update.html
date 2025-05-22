@@ -1,0 +1,576 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} ใบสั่งซื้อ Order {% endblock %} 
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}
+
+<link href="{{ config.ASSETS_ROOT }}/plugins/datatables.net-bs5/css/dataTables.bootstrap5.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/datatables.net-responsive-bs5/css/responsive.bootstrap5.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/select2/dist/css/select2.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/tag-it/css/jquery.tagit.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/select-picker/dist/picker.min.css" rel="stylesheet" />
+{% endblock stylesheets %}
+
+{% block content %}
+
+<form  id="myForm" data-parsley-validate="true" enctype="multipart/form-data"> 
+
+    <div id="content" class="app-content">
+            
+        <div class="row">
+            <div class="col-xl-12">
+                <div class="panel panel-inverse">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">ใบสั่งซื้อ Order </h4>
+                        <div class="panel-heading-btn">
+                            <a href="javascript:;" class="btn btn-xs btn-icon btn-default" data-toggle="panel-expand"><i class="fa fa-expand"></i></a>
+                            <a href="javascript:;" class="btn btn-xs btn-icon btn-success" data-toggle="panel-reload"><i class="fa fa-redo"></i></a>
+                            <a href="javascript:;" class="btn btn-xs btn-icon btn-warning" data-toggle="panel-collapse"><i class="fa fa-minus"></i></a>
+                            <a href="javascript:;" class="btn btn-xs btn-icon btn-danger" data-toggle="panel-remove"><i class="fa fa-times"></i></a>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                {% for categorie, message in messages %}
+                                    <div class="alert alert-{{categorie}} alert-dismissible fade show mb-2 mt-1">
+                                        {{ message }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    </div>
+                                {% endfor %}                    
+                            {% endif %}
+                        {% endwith %}
+
+                    <div class="row">
+
+                        <div class="card">
+                            <div class="card-header bg-white">
+                                <div class="d-flex justify-content-between">
+                                    <h4 class="card-title my-2">สร้างใบสั่งซื้อ Order</h4>  
+                                    <div class="panel-heading-btn">
+                                        <button type="button"  class="btn btn-blue"  onclick="validateForm()">Save</button>
+                                    </div>
+                                </div>
+                            </div>   
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-sm-6">
+                                        <h4 class="card-title mb-2">ข้อมูลลูกค้า  </h4>  
+                                        <div class="row mb-3" hidden >
+                                            <label class="form-label col-form-label col-md-4">id</label>
+                                            <div class="col-md-8">
+                                                <input type="hidden"  class="form-control" name="id" id="id_order" value="{{datas.id}}" data-parsley-required="true"/>
+                                                <input type="hidden"  class="form-control" name="id_member" id="id_member" value="{{members.member_code}}" data-parsley-required="true"/>
+                                                <input type="hidden"  class="form-control" name="order_code" id="order_code" value="{{datas.order_number}}" data-parsley-required="true"/>
+                                            </div>
+                                        </div>    
+
+                                        <div class="row mb-3">
+                                            <label class="form-label col-form-label col-md-4">รหัส Member:</label>
+                                            <div class="col-lg-8">
+                                                <input name="member_code" required class="form-control-plaintext  me-2" value="{{members.member_code}}" readonly placeholder="ชื่อ">
+                                            </div>
+                                        </div>                        
+                                        <div class="row mb-3">
+                                            <label class="form-label col-form-label col-md-4">ชื่อ-นามสกุล</label>
+                                            <div class="col-lg-8">
+                                                <input name="fullname" required class="form-control-plaintext  me-2" value="{{members.first_name}} {{members.last_name}}" readonly placeholder="ชื่อ">
+                                            </div>
+                                        </div>                        
+                                        <div class="form-group row mb-3" >
+                                            <label class="form-label col-form-label col-lg-4">E-mail<span class="text-danger">*</span></label>
+
+                                            <div class="col-lg-8">
+                                                <input type="email" class="form-control-plaintext" name="email" value="{{members.email}}" placeholder="อีเมล">
+
+                                            </div>
+                
+                                        </div>
+                                        <div class="row mb-3">
+                                            <label class="form-label col-form-label col-md-4">ชื่อเล่น</label>
+                                            <div class="col-lg-8">
+                                                <input name="nickname"  class="form-control-plaintext me-2" value="{{members.nick_name}}"  placeholder="ชื่อเล่น">
+                                            </div>
+                                        </div>
+
+                                        <div class="row mb-3">
+                                            <label class="form-label col-form-label col-md-4">วันเกิด</label>
+                                            <div class="col-lg-8">
+                                                <input type="text" class="form-control-plaintext" id="masked-input-date" name="birth_date" value="{{ members.birth_date.strftime('%d/%m/%Y') if members.birth_date else '' }}" placeholder="dd/mm/yyyy">
+                                            </div>
+                                        </div>
+                                    
+                                        <div class="row mb-15px">
+                                            <label class="form-label col-form-label col-md-4">เบอร์โทร</label>
+                                            <div class="col-md-8">
+                                                <input name="phone" required value="{{members.phone}}" class="form-control-plaintext " placeholder="เบอร์โทรศัพท์*">
+                                            </div>
+                                        </div>
+
+                                        
+                                        <div class="form-group row mb-3" hidden>
+                                            <label class="form-label col-form-label col-lg-4">เอกสารแนบ (File Uploads)</label>
+                                            <div class="col-lg-8">
+                                                <input class="form-control" type="file" id="formFile" name="formFile" placeholder=""  multiple accept=".jpg, .jpeg, .png"  onchange="validateFile(this)"/>
+                                            
+                                            </div>
+                                        </div>
+
+                                    
+                                    </div>
+                                    <div class="col-sm-6 border-right pe-0">
+                                        <h4>รหัส Order {{ datas.order_number }}</h4>
+                                        <div class="row mb-3"  >
+                                            <label class="form-label col-form-label col-md-4">ชื่อโครงการ</label>
+                                            <div class="col-md-8">
+                                                <input type="text" class="form-control-plaintext" name="name_project" value="{{orderItem.product.name}}" placeholder="">
+                                            </div>
+                                        </div> 
+                                        <div class="row mb-3"  >
+                                            <label class="form-label col-form-label col-md-4">ราคา</label>
+                                            <div class="col-md-8">
+                                                <input type="text" class="form-control-plaintext" name="price" value="{{ orderItem.product.price | comma }}" placeholder="" onchange="formatNumberWithCommas(this)" >                                                
+                                            </div>
+                                        </div> 
+
+                                        <div class="row mb-3"  >
+                                            <label class="form-label col-form-label col-md-4">จำนวนงวด</label>
+                                            <div class="col-md-8">
+                                                <input type="text" class="form-control-plaintext" name="termOFpayment" value="{{product.term_of_payment.name}}" placeholder="" onchange="formatNumberWithCommas(this)" >                                                
+                                            </div>
+                                        </div> 
+                                        
+                                        {% for payment in payments %}
+                                            <div class="row mb-15px">
+                                                <label class="form-label col-form-label col-md-4">จำนวนงวด {{ loop.index }}</label>
+                                                <div class="col-md-4">
+                                                    <input type="text" class="form-control" hidden name="term_id" value="{{payment.id}}" placeholder="รายละเอียด">
+                                                    <input type="text" class="form-control" name="term_detail" value="{{payment.term_detail}}" placeholder="รายละเอียด">
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <input type="text" class="form-control price-input" name="installments" value="{{ payment.amount | comma }}" oninput="formatNumberWithCommas(this)" placeholder="จำนวนงวด ${i + 1}">
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+    
+                                    </div>
+                                </div>     
+                                <div class="row mt-3 ">
+                                    <div class="col-sm-6">
+                                        <h5>การชำระเงิน</h5>
+                                        <div class="row mb-3"  hidden>
+                                            <label for="term" class="form-label col-form-label col-md-4">สถานะชำระเงิน </label>
+                                            <div class="col-md-8">
+                                                <input type="text" class="form-control-plaintext text-primary" name="status_payment" readonly
+                                                    value="{% if datas.status.startswith('installment_') %}ชำระเงินงวดที่ {{ datas.status.split('_')[1] }}
+                                                           {% elif datas.status == 'completed' %}จบโครงการ
+                                                           {% elif datas.status == 'cancelled' %}ยกเลิก
+                                                           {% else %}สถานะไม่ทราบแน่ชัด
+                                                           {% endif %}">
+                                            </div>
+                                        </div> 
+                                        <div class="row mb-3"  >
+                                            <label for="term" class="form-label col-form-label col-md-4">สถานะชำระเงิน <span class="text-danger">*</span> </label>
+                                            <div class="col-md-8">
+                                                <select class="default-select2 form-control col-4" id="installment" name="cash_payment">
+                                                    {% for payment in payments %}
+                                                        <option value="installment_{{ loop.index }}" {% if datas.status == 'installment_' ~ loop.index %}selected{% endif %}>ชำระเงินงวด {{ loop.index }}</option>
+                                                    {% endfor %}
+                                                    <option value="cancelled" {% if datas.status == 'cancelled' %}selected{% endif %}>ยกเลิก</option>
+                                                    <option value="completed" {% if datas.status == 'completed' %}selected{% endif %}>จบโครงการ</option>
+                                                </select>
+                                            </div>
+                                        </div> 
+                                        <div class="row mb-3"  >
+                                            <label class="form-label col-form-label col-md-4">จำนวนเงิน <span class="text-danger">*</span></label>
+                                            <div class="col-md-8">
+                                                <input type="text" class="form-control" name="amount" value="0" placeholder="" oninput="formatNumberInter(this)" >                                                
+                                            </div>
+                                        </div> 
+                                        <div class="row mb-3"  >
+                                            <label class="form-label col-form-label col-md-4">วันที่จ่ายเงิน <span class="text-danger">*</span></label>
+                                            <div class="col-md-8">
+                                                <div class="input-group date" id="datepicker-disabled-past" data-date-format="dd-mm-yyyy" >
+                                                    <input type="text" class="form-control" placeholder="Select Date" id="kt_daterangepicker_2" name="payment_date"  autocomplete="off" />
+                                                    <span class="input-group-text input-group-addon"><i class="fa fa-calendar"></i></span>
+                                                </div>                                            
+                                            </div>
+                                        </div> 
+                                        <div class="row mb-3"  >
+                                            <label class="form-label col-form-label col-md-4">Note</label>
+                                            <div class="col-md-8">
+                                                <input type="text" class="form-control" name="note" value="" placeholder=""  >                                                                                          
+                                            </div>
+                                        </div> 
+                                        <div class="row mb-15px">
+                                            <label class="form-label col-form-label col-md-4">UPload สลิปการโอน <span class="text-danger">*</span></label>
+                                            <div class="col-md-8">
+                                                <input class="form-control" type="file" id="formFile_payment" name="formFile_payment" placeholder=""  multiple accept=".pdf, .jpg, .jpeg, .png"  onchange="validateFile(this)"/>
+                                            </div>
+            
+                                            
+                                        </div> 
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <div class="row"> 
+                                            <h5>
+                                                หลักฐานการโอนเงิน
+                                            </h5>
+
+                                        </div>
+                                        {% for file_data in file_datas %}
+                                            
+                                            <div class="row ">
+            
+                                                <div class="col-md-12 col-sm-12 col-xs-12 mb-5px mt-2">
+                                                    <a href="{{ url_for('order_blueprint.downloadPayment', filename=file_data.filename)}}" style="text-decoration: none; color: black;"><i class="fas fa-lg fa-fw ms-5px  fa-file"></i> <span>{{ file_data.filename }}</span></a> 
+                                                    <a href="#" onclick="sweetAlertDelfile({{file_data.id}},{{datas.lead_id}})">
+                                                        <i class="fas fa-lg fa-fw mx-5px fa-trash-can text-danger c_trash"></i>			
+                                                    </a> 
+                                                </div>
+                                            </div>
+                                            
+                                        {% endfor %}
+                                    </div>
+                                </div>               
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+</form>
+<a href="javascript:;" class="btn btn-icon btn-circle btn-primary btn-scroll-to-top" data-toggle="scroll-to-top"><i class="fa fa-angle-up"></i></a>
+
+
+
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}
+<script src="{{ config.ASSETS_ROOT }}/plugins/datatables.net/js/dataTables.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/datatables.net-bs5/js/dataTables.bootstrap5.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/datatables.net-responsive/js/dataTables.responsive.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/datatables.net-responsive-bs5/js/responsive.bootstrap5.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/js/demo/table-manage-responsive.demo.js"></script>
+
+<script src="{{ config.ASSETS_ROOT }}/plugins/moment/min/moment.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/bootstrap-daterangepicker/daterangepicker.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/select2/dist/js/select2.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/bootstrap-datepicker/dist/js/bootstrap-datepicker.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/bootstrap-timepicker/js/bootstrap-timepicker.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/ion-rangeslider/js/ion.rangeSlider.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/jquery.maskedinput/src/jquery.maskedinput.js"></script>
+
+<script src="{{ config.ASSETS_ROOT }}/plugins/jquery-migrate/dist/jquery-migrate.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/tag-it/js/tag-it.min.js"></script>
+
+<script src="{{ config.ASSETS_ROOT }}/plugins/clipboard/dist/clipboard.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/spectrum-colorpicker2/dist/spectrum.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/select-picker/dist/picker.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/js/demo/form-plugins.demo.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/@highlightjs/cdn-assets/highlight.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/js/demo/render.highlight.js"></script>
+
+<script src="{{ config.ASSETS_ROOT }}/js/supplier/main_supplier.js?v1.0"></script>
+
+<script>
+let inputCount = 1;
+$(document).ready(function () {
+
+    function generateInputs(termValue, payments = []) {
+        let termNumber = parseInt(termValue, 10); 
+        let extraInputsContainer = $("#extra-inputs");
+
+        extraInputsContainer.empty(); 
+
+        if (!isNaN(termNumber) && termNumber > 0) { 
+            for (let i = 0; i < termNumber; i++) {
+                let defaultID = payments[i] ? payments[i].id : "";
+                let defaultDetail = payments[i] ? payments[i].term_detail : "";
+                let defaultAmount = payments[i] ? payments[i].amount : "";
+
+                let newRow = `
+                    <div class="row mb-15px">
+                        <label class="form-label col-form-label col-md-4">จำนวนงวด ${i + 1}</label>
+                        <div class="col-md-4">
+                            <input type="text" class="form-control" hidden name="term_id" value="${defaultID}" placeholder="รายละเอียด">
+                            <input type="text" class="form-control" name="term_detail" value="${defaultDetail}" placeholder="รายละเอียด">
+                        </div>
+                        <div class="col-md-4">
+                            <input type="text" class="form-control price-input" name="installments" value="${defaultAmount}" oninput="formatNumberWithCommas(this)" placeholder="จำนวนงวด ${i + 1}">
+                        </div>
+                    </div>
+                `;
+                extraInputsContainer.append(newRow);
+            }
+        }
+    }
+
+    let payments = JSON.parse($("#paymentData").val() || "[]");
+
+    let initialTermValue = $("#i_term").val();
+    if (initialTermValue) {
+        generateInputs(initialTermValue, payments);
+    }
+
+    $("#i_term").change(function () {
+        let termValue = $(this).val().trim();
+        generateInputs(termValue, payments);
+    });
+
+//----------------------------------------------------
+
+    $('.addInputButton').click(function (e) {
+        
+        if (inputCount >= 5) {
+            alert("ไม่สามารถเพิ่มได้เกิน 5 รายการ");
+            return; // หยุดการทำงานของฟังก์ชัน
+        }
+
+        inputCount++;
+        console.log(inputCount)
+        e.preventDefault();
+
+            let newRow = `<div class="item-row">
+                            <div class="form-group row">
+                                <label class="form-label col-form-label col-lg-4">ชื่อผู้ติดต่อ<span class="text-danger">*</span> </label> 
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-lg-4 pe-0">
+                                    <input type="text" class="form-control" placeholder="ชื่อ-นามสกุล*" name="name_coordinator" required/>
+                                </div>
+                                <div class="col-lg-4 pe-0">
+                                    <input type="text" class="form-control" placeholder="อีเมล*" name="name_coordinatorEmail" required />
+                                </div>
+                                <div class="col-lg-3 pe-0">
+                                    <input type="text" class="form-control" placeholder="เบอร์โทร*" name="name_coordinatorTell" required />
+                                </div>
+                                <div class="col-lg-1">
+                                    <a href="javascript:;" class="btn btn-sm btn-icon btn-danger text-center mt-1" onclick="func_deleteItem(this)">
+                                        <i class="fa fa-minus text-center"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>`;
+            
+        $('#extra-inputs').append(newRow);
+      
+    });
+
+      
+
+});
+
+function func_deleteItem(el) {
+
+    $(el).closest('.item-row').remove();
+
+     if (inputCount > 0) {
+        inputCount--;
+    }
+
+    if ($('#extra-inputs .item-row').length === 0) {
+        $('#extra-inputs').append(createContactRow());
+        inputCount = 1;
+    }
+}
+
+function removeInputIdEx() {
+     const inputId = $(this).data('target'); // ดึง ID ของ input ที่จะลบจาก data attribute
+    // inputCount--;
+    // ลบค่าใน input ที่ระบุ
+    $('#' + inputId).val(''); // ลบค่าของ input
+    
+
+}  
+
+function createContactRow() {
+    return `
+    <div class="item-row">
+        <div class="form-group row">
+            <label class="form-label col-form-label col-lg-4">ชื่อผู้ติดต่อ <span class="text-danger">*</span></label> 
+        </div>
+        <div class="row mb-3">
+            <div class="col-lg-4 pe-0">
+                <input type="text" class="form-control" placeholder="ชื่อ-นามสกุล*" name="name_coordinator" required/>
+            </div>
+            <div class="col-lg-4 pe-0">
+                <input type="text" class="form-control" placeholder="อีเมล*" name="name_coordinatorEmail" required />
+            </div>
+            <div class="col-lg-3 pe-0">
+                <input type="text" class="form-control" placeholder="เบอร์โทร*" name="name_coordinatorTell" required />
+            </div>
+            <div class="col-lg-1">
+                <a href="javascript:;" class="btn btn-sm btn-icon btn-danger text-center mt-1" onclick="func_deleteItem(this)">
+                    <i class="fa fa-minus text-center"></i>
+                </a>
+            </div>
+        </div>
+    </div>`;
+}
+
+
+function formatNumberWithCommas(input) {
+    let value = input.value;
+
+    // ลบ comma ที่มีอยู่ทั้งหมด
+    value = value.replace(/,/g, '');
+
+    // ตรวจสอบว่าค่าเป็นตัวเลขหรือไม่
+    if (!isNaN(value) && value !== '') {
+        value = parseFloat(value).toLocaleString('en-US'); 
+    }
+
+    // อัปเดตค่ากลับเข้า input
+    input.value = value;
+}
+function validateFile(input) {
+    const allowedExtensions = ['jpg', 'jpeg', 'png']; // นามสกุลไฟล์ที่อนุญาต
+    const file = input.files[0];
+
+    if (file) {
+        const fileExtension = file.name.split('.').pop().toLowerCase(); // ดึงนามสกุลไฟล์
+
+        if (!allowedExtensions.includes(fileExtension)) {
+            check_fail('อนุญาตให้เลือกเฉพาะไฟล์ JPG, JPEG, PNG เท่านั้น!');
+            input.value = ''; // เคลียร์ค่า input
+        }
+    }
+}
+
+function formatNumberInter(input) {
+
+    let value = input.value;
+
+    // ลบ comma ออกจากค่าที่ป้อน
+    value = value.replace(/,/g, '');
+
+    let regex = /^\d+(\.\d{0,2})?$/;
+    if (!regex.test(value)) {
+        input.value = input.value.slice(0, -1); // ลบตัวอักษรสุดท้ายที่เกินออก
+        return;
+    }
+
+    // แปลงค่าเป็นตัวเลข
+    let number = parseFloat(value);
+
+    // แยกส่วนหน้าและส่วนทศนิยม
+    let parts = value.split('.');
+    parts[0] = parseInt(parts[0], 10).toLocaleString(); // เพิ่ม comma ให้เฉพาะส่วนหน้า
+
+    // รวมค่ากลับ
+    input.value = parts.length > 1 ? parts.join('.') : parts[0];
+}
+
+
+</script>
+<script>
+    function post(path, params, method = "post") {
+        const form = document.createElement("form");
+        form.method = method;
+        form.action = path;
+        for (const key in params) {
+            if (params.hasOwnProperty(key)) {
+                const hiddenField = document.createElement("input");
+                hiddenField.type = "hidden";
+                hiddenField.name = key;
+                hiddenField.value = params[key];
+                form.appendChild(hiddenField);
+            }
+        }
+        document.body.appendChild(form);
+        form.submit();
+    }
+    
+    function func_save() {
+        // console.log("Saving...");
+    
+        $('#myForm').attr('action', '/order/save_payment').attr('method', 'POST');
+        $('#myForm').submit();
+    }
+    
+    // let inputIds = [];
+    
+    let inputIds = [];
+    
+    $('#myForm').submit(function(e) {
+        e.preventDefault(); // ป้องกันการ submit แบบปกติ
+    
+        let isValid = true;
+       
+        if (isValid) {
+            // สามารถใช้บรรทัดนี้เพื่อส่งฟอร์มไปยัง backend:
+            // $('#myForm').attr('action', route).attr('method', 'POST');
+            this.submit(); // ทำการ submit ฟอร์มจริง
+        }
+    });
+
+    
+    
+    function validateForm() {
+        let isValid = true;
+    
+        // เช็คทุก input, textarea, select ที่ required
+        $('#myForm').find('input[required], textarea[required], select[required]').each(function () {
+            if (!$(this).val().trim()) {
+                $(this).addClass('border-red-500');
+                isValid = false;
+            } else {
+                $(this).removeClass('border-red-500');
+            }
+        });
+    
+        if (!isValid) {
+            swal({
+                icon: 'warning',
+                title: 'กรุณากรอกข้อมูลให้ครบถ้วน',
+            });
+            return;
+        }
+    
+        // ✅ ถ้าข้อมูลครบ เรียกฟังก์ชันบันทึก
+        func_save();
+    }
+</script>
+<script>
+    
+function sweetAlertDelfile(id_file,id_lead) {
+    swal({
+        title: "Are you sure?",
+        text: "Delete?",
+        icon: "error",
+        buttons: {
+            cancel: {
+                text: "Cancel",
+                value: null,
+                visible: true,
+                className: "btn btn-dark",
+                closeModal: true,
+            },
+            confirm: {
+                text: "Yes, Delete.",
+                value: true,
+                visible: true,
+                className: "btn btn-danger",
+                closeModal: true,
+            },
+        },
+    }).then((result) => {
+        if (result.dismiss !== "cancel") {
+            post("/order/delete_file", {
+                id_file: id_file,
+                id_lead: id_lead,
+                // path: $("#path").val(),
+            });
+        }
+    });
+}
+</script>
+
+{% endblock javascripts %}

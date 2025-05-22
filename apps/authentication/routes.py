@@ -17,6 +17,8 @@ from apps import db, login_manager
 from apps.authentication import blueprint
 from apps.authentication.forms import LoginForm, CreateAccountForm, CreateAgencyForm
 from apps.authentication.models import *
+from apps.product.models import *
+from apps.lead.models import *
 
 from apps.authentication.util import verify_pass
 import base64
@@ -25,6 +27,7 @@ from flask_principal import Identity, identity_changed
 
 from datetime import datetime
 import uuid
+from sqlalchemy import and_, func, case, asc, or_, cast, String
 
 
 
@@ -128,11 +131,41 @@ def login():
 @blueprint.route('/register', methods=['GET', 'POST'])
 def register_interest():
     
-    # agency = AgencyModel.query.filter(AgencyModel.status == 'active').first()
-    if session.get('waiting_user_id') and session.get('waiting_user_type') == 'user':
-        return redirect(url_for('authentication_blueprint.waiting_approval'))
-    return render_template('accounts/register_interest.html',)
+    category = ProductCategoryModel.query.all()
+    country = CountryModel.query.all()
+    agencies = AgencyModel.query.all()
+    agencies_with_IEO=[]
+    agencies_with_IEO = [agency.__dict__.copy() for agency in agencies]
+    agencies_with_IEO.append({'id': None, 'agency_code': 'IEO'})
+    product = ProductForSalesModel.query.all()
 
+    social_channels = [
+        {"id": 1, "name": "Facebook"},
+        {"id": 2, "name": "Instagram"},
+        {"id": 3, "name": "YouTube"},
+        {"id": 4, "name": "TikTok"},
+        {"id": 5, "name": "Line"},
+        {"id": 6, "name": "อื่น ๆ"},
+    ]
+    # agency = AgencyModel.query.filter(AgencyModel.status == 'active').first()
+    # if session.get('waiting_user_id') and session.get('waiting_user_type') == 'user':
+    #     return redirect(url_for('authentication_blueprint.waiting_approval'))
+    return render_template('accounts/register_interest.html',categorys=category,countrys=country, agencys=agencies_with_IEO,product=product,social_channels=social_channels)
+
+@blueprint.route('/api/get_countries_by_category/<int:category_id>')
+def get_countries_by_category(category_id):
+    countries = db.session.query(CountryModel).join(ProductForSalesModel)\
+        .filter(ProductForSalesModel.product_category_id == category_id)\
+        .distinct().all()
+    return jsonify([{'id': c.id, 'name': c.name} for c in countries])
+
+@blueprint.route('/api/get_projects/<int:category_id>/<int:country_id>')
+def get_projects(category_id, country_id):
+    products = ProductForSalesModel.query.filter_by(
+        product_category_id=category_id,
+        country_id=country_id
+    ).all()
+    return jsonify([{'id': p.id, 'name': p.name} for p in products])
 
 @blueprint.route('/logout')
 def logout():
@@ -370,36 +403,105 @@ def register_api():
 
     if birth_date_raw:
         try:
-            # ลองแปลงก่อนทั้งแบบมี '/' และ '-'
             birth_date_str = birth_date_raw.replace('/', '-')
             birth_date = datetime.strptime(birth_date_str, "%d-%m-%Y")
         except ValueError:
-            birth_date = None  # หาก format ผิด
+            birth_date = None
     else:
         birth_date = None
 
-    
-    # สร้าง Agency
-    user = interestedUsersModel(
-        # user_id=user.id,
-        first_name=data.get('fullname'),
-        last_name=data.get('lastname'),
-        tel=data.get('phone'),
-        email=data.get('email'),
-        status='pending',
-        gender=data.get('gender'),
-        line_id=data.get('line_id'),
-        birth_date=birth_date,
-        nick_name=data.get('nickname'),
-        # org_type='agency',
-    )
-    db.session.add(user)
+    # เตรียมข้อมูล
+    agency_id = data.get('agency')
+    agency_id = int(agency_id) if agency_id not in [None, '', 'None'] else None
+
+    print("Raw agency_id:", data.get('agency_id'))
+    print("Final agency_id:", agency_id)
+
+    email = data.get('email')
+    tel = data.get('phone')
+    product_id = data.get('project')
+    product = ProductForSalesModel.query.filter_by(id=product_id).first()
+
+    first_name = data.get('fullname')
+    last_name = data.get('lastname')
+    gender = data.get('gender')
+    line_id = data.get('line_id')
+    nick_name = data.get('nickname')
+    category_id = data.get('category')
+    country_id = data.get('country')
+    social = data.get('social')
+    remask = data.get('remask')
+
+    # เช็คว่า lead มีอยู่หรือยัง
+    lead = leadModel.query.filter(
+        or_(
+            leadModel.email == email,
+            leadModel.tel == tel
+        )
+    ).first()
+
+    if not lead:
+        lead = leadModel(
+            first_name=first_name,
+            last_name=last_name,
+            tel=tel,
+            email=email,
+            status='new',
+            gender=gender,
+            line_id=line_id,
+            birth_date=birth_date,
+            nick_name=nick_name,
+            category_id=category_id,
+            country_id=country_id,
+            agency_id=agency_id,
+            product_id=product_id,
+            social=social,
+            remask=remask
+        )
+        db.session.add(lead)
+        db.session.flush()  # ให้ DB สร้าง lead.id ก่อน
+    else:
+        # อัปเดตข้อมูล lead เดิม
+        lead.first_name = first_name
+        lead.last_name = last_name
+        lead.nick_name = nick_name
+        lead.tel = tel
+        lead.email = email
+        lead.gender = gender
+        lead.line_id = line_id
+        lead.birth_date = birth_date
+        lead.agency_id = agency_id
+        lead.category_id = category_id
+        lead.country_id = country_id
+        lead.product_id = product_id
+        lead.social = social
+        lead.remask = remask
+
     db.session.commit()
-    
-    session['waiting_user_id'] = user.id
+
+    # # สร้างหรืออัปเดต LeadProgram
+    # lead_program = LeadProgram.query.filter_by(lead_id=lead.id).first()
+    # if lead_program:
+    #     lead_program.product_id = product.id
+    #     lead_program.agency_id = agency_id
+    #     lead_program.status = 'pending'
+    #     lead_program.remask = remask
+    # else:
+    lead_program = LeadProgram(
+            lead_id=lead.id,
+            product_id=product.id,
+            agency_id=agency_id,
+            status='new',
+            remask=remask
+        )
+    db.session.add(lead_program)
+
+    db.session.commit()
+
+    # เก็บ session
+    session['waiting_user_id'] = lead.id
     session['waiting_user_type'] = 'user'
 
-    print('success')
     return jsonify({'status': 'success', 'message': 'ลงทะเบียนสำเร็จ รอการอนุมัติจากแอดมิน'}), 201
 
 

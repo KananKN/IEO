@@ -26,7 +26,10 @@ class ProductCategoryModel(db.Model):
     created_at = db.Column(db.DateTime,  default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime,  default=db.func.current_timestamp(),
                            onupdate=db.func.current_timestamp())
-    
+    # interested_users = db.relationship("interestedUsersModel", back_populates="category", lazy=True)
+    lead = db.relationship("leadModel", back_populates="category", lazy=True)
+
+
     def to_dict(self):
         return {
             "id": self.id,
@@ -51,6 +54,9 @@ class CountryModel(db.Model):
     updated_at = db.Column(db.DateTime,  default=db.func.current_timestamp(),
                            onupdate=db.func.current_timestamp())
     
+    # interested_users = db.relationship("interestedUsersModel", back_populates="country", lazy=True)
+    lead = db.relationship("leadModel", back_populates="country", lazy=True)
+
     def to_dict(self):
         return {
             "id": self.id,
@@ -111,7 +117,7 @@ class ProductForSalesModel(db.Model):
     country_id: int
     name: str   
     year: str   
-    detail : str
+    # detail : str
     price: float  # ✅ เพิ่มฟิลด์ price 
     images: str
 
@@ -128,13 +134,14 @@ class ProductForSalesModel(db.Model):
     images = db.relationship("MD_Image", back_populates="product", cascade="all, delete", lazy=True)
     files = db.relationship("FileModel", back_populates="product", cascade="all, delete", lazy=True)
     installments= db.relationship("installmentsPaymentModel", back_populates="product", cascade="all, delete", lazy=True)
+    # interested_users = db.relationship("interestedUsersModel", back_populates="product", lazy=True)
+    lead = db.relationship("leadModel", back_populates="product", lazy=True)
+    orders = db.relationship("OrderModel", back_populates="product", lazy=True)
+    payments = db.relationship("PaymentModel", back_populates="product", cascade="all, delete", lazy=True)
+    order_items = db.relationship("OrderItemModel", back_populates="product",lazy=True)
     
-    # suppliers = db.relationship(
-    #     'SupplierModel',
-    #     secondary='product_supplier_association',
-    #     back_populates='products'
-    # )
-    
+    leads = db.relationship("leadModel", secondary="lead_program", back_populates="products", overlaps="lead_product_links")
+
     detail = db.Column(db.Text(),default=None)
     start_at = db.Column(db.DateTime,  default=None)
     end_at = db.Column(db.DateTime,  default=None)
@@ -196,5 +203,4 @@ class installmentsPaymentModel(db.Model):
     created_at = db.Column(db.DateTime,  default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime,  default=db.func.current_timestamp(),
                            onupdate=db.func.current_timestamp())
-    
     
