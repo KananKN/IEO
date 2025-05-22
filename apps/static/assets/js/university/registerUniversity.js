@@ -43,8 +43,8 @@ function func_save(){
                     // text: data.message,
                     confirmButtonText: "ตกลง",
                 }).then(() => {
-                    location.reload();
-                    // window.location.href = "/waiting_approval";
+                    // location.reload();
+                    window.location.href = "/university";
                 });
             }
       })

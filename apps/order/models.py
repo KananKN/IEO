@@ -1,0 +1,145 @@
+from flask_login import UserMixin
+
+from sqlalchemy.orm import relationship
+
+from apps import db, login_manager
+
+from apps.authentication.util import hash_pass
+
+from flask import jsonify
+
+from dataclasses import dataclass
+
+from sqlalchemy import Column, Integer, String, ForeignKey
+
+
+@dataclass
+class OrderModel(db.Model):
+    __tablename__ = "order"
+
+    id: int
+    note: str
+    order_number: str
+    payment_method: str
+    status: str
+    total_price: float
+
+    id = db.Column(db.Integer, primary_key=True)
+    note = db.Column(db.String(), nullable=False)
+    order_number = db.Column(db.String(), nullable=True)
+    payment_method = db.Column(db.String(), nullable=False)
+    status = db.Column(db.String(250), default='pending', comment='pending, partially_paid, paid')
+    total_price = db.Column(db.Float, nullable=False)
+
+    lead_id = db.Column(db.Integer, db.ForeignKey("lead.id", ondelete="CASCADE"))
+    lead = db.relationship("leadModel", back_populates="orders", lazy="select")
+
+    product_id = db.Column(db.Integer, db.ForeignKey("product_for_sales.id", ondelete="CASCADE"))
+    product = db.relationship("ProductForSalesModel", back_populates="orders")
+
+    member_id = db.Column(db.Integer, db.ForeignKey("member.id", ondelete="CASCADE"))
+    member = db.relationship("MemberModel", back_populates="orders", lazy="select")
+
+    order_items = db.relationship("OrderItemModel", back_populates="order", cascade="all, delete")
+    payments = db.relationship("PaymentModel", back_populates="order", cascade="all, delete", lazy=True)
+
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
+
+
+@dataclass
+class OrderItemModel(db.Model):
+    __tablename__ = "order_items"
+
+    id: int
+    order_id: int
+    product_id: int
+
+    id = db.Column(db.Integer, primary_key=True)
+    unit_price = db.Column(db.Float, nullable=False)
+    order_id = db.Column(db.Integer, db.ForeignKey("order.id", ondelete="CASCADE"))
+    product_id = db.Column(db.Integer, db.ForeignKey("product_for_sales.id", ondelete="CASCADE"))
+    product_name = db.Column(db.String(), nullable=True)
+    order_number = db.Column(db.String(), nullable=True)
+
+    order = db.relationship("OrderModel", back_populates="order_items")
+    product = db.relationship("ProductForSalesModel", back_populates="order_items")
+
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
+
+    
+@dataclass
+class MemberModel(db.Model):
+    __tablename__ = "member"
+
+    id = db.Column(db.Integer, primary_key=True)
+    member_code = db.Column(db.String(), unique=True)
+    first_name = db.Column(db.String(100))
+    last_name = db.Column(db.String(100))
+    nick_name = db.Column(db.String(100))
+    phone = db.Column(db.String(30))
+    email = db.Column(db.String(100))
+    status = db.Column(db.String(20))  # New, Contacted, Converted, Dropped
+    gender = db.Column(db.String(20))  # pending / approved / rejected
+    line_id = db.Column(db.String(20))  # pending / approved / rejected
+    approved_by = db.Column(db.String(100))
+    approved_at = db.Column(db.DateTime)
+    birth_date = db.Column(db.DateTime,  default=None)
+
+    orders = db.relationship("OrderModel", back_populates="member", cascade="all, delete")
+
+    created_at = db.Column(db.DateTime,  default=db.func.current_timestamp())
+    updated_at = db.Column(db.DateTime,  default=db.func.current_timestamp(),
+                           onupdate=db.func.current_timestamp())
+
+@dataclass
+class PaymentModel(db.Model):
+    __tablename__ = "payments"
+
+    id:int
+
+    id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey("order.id", ondelete="CASCADE"))
+    order = db.relationship("OrderModel", back_populates="payments", lazy=True)
+    
+    product_id = db.Column(db.Integer, db.ForeignKey("product_for_sales.id", ondelete="CASCADE"))
+    product = db.relationship("ProductForSalesModel", back_populates="payments")
+    amount = db.Column(db.Float, nullable=False) 
+
+    payment_date = db.Column(db.DateTime,  default=None)
+    payment_method = db.Column(db.String(250)) 
+    payment_no = db.Column(db.String(250)) 
+    note = db.Column(db.String(250)) 
+    status = db.Column(db.String(100))  # New, Contacted, Converted, Dropped
+
+
+    created_at = db.Column(db.DateTime,  default=db.func.current_timestamp())
+    updated_at = db.Column(db.DateTime,  default=db.func.current_timestamp(),
+                           onupdate=db.func.current_timestamp())
+    
+
+
+@dataclass
+class FilePaymentModel(db.Model):
+    __tablename__ = 'filesPayment'
+    id :int
+
+    
+    id = db.Column(db.Integer, primary_key=True)
+    filename = db.Column(db.String(255), default=False)  # ชื่อไฟล์
+    filepath = db.Column(db.String(512), default=False)  # พาธของไฟล์
+    file_type  = db.Column(db.Integer, comment='1:PS')
+
+    payment_id = db.Column(db.Integer, db.ForeignKey("payments.id", ondelete="CASCADE"))
+    order_id = db.Column(db.Integer, db.ForeignKey("order.id", ondelete="CASCADE"))
+    flag_delete = db.Column(db.Boolean, default=False)
+
+    created_at = db.Column(db.DateTime,  default=db.func.current_timestamp())
+    updated_at = db.Column(db.DateTime,  default=db.func.current_timestamp(),
+                           onupdate=db.func.current_timestamp())
+
+
+
+    
+ 

@@ -33,7 +33,7 @@ delete_permission = Permission(RoleNeed("delete_agency"))
 @login_required
 @read_permission.require(http_exception=403)
 def agency():
-    datas = interestedUsersModel.query.all()
+    datas = AgencyModel.query.all()
     # print(datas)
     return render_template('agency/agency.html', segment='agency' ,datas=datas)
 

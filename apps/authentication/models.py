@@ -214,6 +214,10 @@ class AgencyModel(db.Model):
     note = db.Column(db.String(), nullable=True)
     account_name = db.Column(db.String(), nullable=True)
     foreign_banks_name = db.Column(db.String(), nullable=True)
+    # interested_users = db.relationship("interestedUsersModel", back_populates="agency", lazy=True)
+    lead = db.relationship("leadModel", back_populates="agency", lazy=True)
+    lead_programs = db.relationship("LeadProgram", back_populates="agency", overlaps="products,agency")
+
 
     created_at = db.Column(db.DateTime,  default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime,  default=db.func.current_timestamp(),
@@ -233,32 +237,10 @@ class ProductAgencyAssociation(db.Model):
 
     product = db.relationship('ProductForSalesModel', backref='agency_links')
     employee = db.relationship('AgencyModel', backref='product_links')    
-@dataclass
-class interestedUsersModel(db.Model):
-    __tablename__ = 'interested_users'
-
-    id = db.Column(db.Integer, primary_key=True)
-    # user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), unique=True)
-
-    first_name = db.Column(db.String(100))
-    last_name = db.Column(db.String(100))
-    nick_name = db.Column(db.String(100))
-    tel = db.Column(db.String(30))
-    email = db.Column(db.String(100))
-    status = db.Column(db.String(20))  # pending / approved / rejected
-    gender = db.Column(db.String(20))  # pending / approved / rejected
-    line_id = db.Column(db.String(20))  # pending / approved / rejected
-    approved_by = db.Column(db.String(100))
-    approved_at = db.Column(db.DateTime)
-    birth_date = db.Column(db.DateTime,  default=None)
-    created_at = db.Column(db.DateTime,  default=db.func.current_timestamp())
-    updated_at = db.Column(db.DateTime,  default=db.func.current_timestamp(),
-                           onupdate=db.func.current_timestamp())
     
     
    
 
 
-    # user = db.relationship('UserModel', back_populates='interested', uselist=False)
 
 

@@ -34,7 +34,7 @@ delete_permission = Permission(RoleNeed("delete_university"))
 @login_required
 @read_permission.require(http_exception=403)
 def university():
-    datas = interestedUsersModel.query.all()
+    datas = AgencyModel.query.all()
     # print(datas)
     return render_template('university/university.html', segment='university' ,datas=datas)
 

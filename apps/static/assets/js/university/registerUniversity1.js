@@ -20,7 +20,7 @@ function func_save(){
     const form = document.getElementById("myForm"); // ✅ ใช้ ID ของ form
     const formData = new FormData(form);
     console.log("save")
-    fetch("/agency/create_agency_api", {
+    fetch("/university/create_university_api", {
           method: "post",
           body: formData
       })
@@ -43,8 +43,8 @@ function func_save(){
                     // text: data.message,
                     confirmButtonText: "ตกลง",
                 }).then(() => {
-                    // location.reload();
-                    window.location.href = "/agency";
+                    location.reload();
+                    // window.location.href = "/waiting_approval";
                 });
             }
       })
@@ -59,4 +59,8 @@ function func_save(){
           });
         //      .attr('disabled', false);
       });
+}
+
+ if (window.history.replaceState) {
+      window.history.replaceState(null, null, window.location.href);
 }

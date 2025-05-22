@@ -1,0 +1,380 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} ใบสั่งซื้อ Order {% endblock %} 
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}
+
+<link href="{{ config.ASSETS_ROOT }}/plugins/datatables.net-bs5/css/dataTables.bootstrap5.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/datatables.net-responsive-bs5/css/responsive.bootstrap5.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/select2/dist/css/select2.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/tag-it/css/jquery.tagit.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/select-picker/dist/picker.min.css" rel="stylesheet" />
+{% endblock stylesheets %}
+
+{% block content %}
+
+<form  id="myForm" data-parsley-validate="true" enctype="multipart/form-data"> 
+
+    <div id="content" class="app-content">
+            
+        <div class="row">
+            <div class="col-xl-12">
+                <div class="panel panel-inverse">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">ใบสั่งซื้อ Order </h4>
+                        <div class="panel-heading-btn">
+                            <a href="javascript:;" class="btn btn-xs btn-icon btn-default" data-toggle="panel-expand"><i class="fa fa-expand"></i></a>
+                            <a href="javascript:;" class="btn btn-xs btn-icon btn-success" data-toggle="panel-reload"><i class="fa fa-redo"></i></a>
+                            <a href="javascript:;" class="btn btn-xs btn-icon btn-warning" data-toggle="panel-collapse"><i class="fa fa-minus"></i></a>
+                            <a href="javascript:;" class="btn btn-xs btn-icon btn-danger" data-toggle="panel-remove"><i class="fa fa-times"></i></a>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                {% for categorie, message in messages %}
+                                    <div class="alert alert-{{categorie}} alert-dismissible fade show mb-2 mt-1">
+                                        {{ message }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    </div>
+                                {% endfor %}                    
+                            {% endif %}
+                        {% endwith %}
+
+                <div class="row">
+
+                    <div class="card">
+                        <div class="card-header bg-white">
+                            <div class="d-flex justify-content-between">
+                                <h4 class="card-title my-2">สร้างใบสั่งซื้อ Order</h4>  
+                                <div class="panel-heading-btn">
+                                    <button type="button"  class="btn btn-blue"  onclick="validateForm()">Save</button>
+                                </div>
+                            </div>
+                        </div>   
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <h4 class="card-title mb-2">ข้อมูลการติดต่อ</h4>  
+                                    <div class="row mb-3" hidden >
+                                        <label class="form-label col-form-label col-md-4">id</label>
+                                        <div class="col-md-8">
+                                            <input type="hidden"  class="form-control" name="id" id="id-update" data-parsley-required="true"/>
+                                        </div>
+                                    </div>    
+
+                                    <div class="row mb-3">
+                                        <label class="form-label col-form-label col-md-4">ชื่อ-นามสกุล<span class="text-danger">*</span> </label>
+                                        <div class="col-lg-8">
+                                            <input name="fullname" required class="form-control-plaintext  me-2" value="{{lead.first_name}} {{lead.last_name}}" readonly placeholder="ชื่อ">
+                                        </div>
+                                    </div>                        
+                                    <div class="form-group row mb-3" >
+                                        <label class="form-label col-form-label col-lg-4">ประเภทของบริษัท<span class="text-danger">*</span></label>
+
+                                        <div class="col-lg-8">
+                                            <select  class="default-select2 form-control"  name="supplierType" id="supplierType"  ">
+                                                <option value="0">ไม่มี</option>
+                                                    {% for supplier in supplierTypelist %}
+                                                        <option value="{{supplier.id}}">{{supplier.name}}</option>
+                                                    {% endfor %}
+                                            </select>
+                                        </div>
+            
+                                    </div>
+                                    <div class="row mb-3">
+                                        <label class="form-label col-form-label col-md-4">เลขทะเบียนบริษัท<span class="text-danger">*</span></label>
+                                        <div class="col-lg-8">
+                                            <input  class="form-control" name="n_tax" id="i_tax"  value=""  required data-parsley-required="true"/>
+                                        </div>
+                                    </div>
+                                
+                                    <div class="row mb-15px">
+                                        <label class="form-label col-form-label col-md-4">ประเทศ<span class="text-danger">*</span></label>
+                                        <div class="col-md-8">
+                                            <select  class="default-select2 form-control"  name="n_country" id="i_country"  ">
+                                                <option value="0">ไม่มี</option>
+                                                    {% for country in countrylist %}
+                                                        <option value="{{country.id}}">{{country.name}}</option>
+                                                    {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="row mb-3"  >
+                                        <label class="form-label col-form-label col-md-4">ที่อยู่บริษัท (Company Address)</label>
+                                        <div class="col-md-8">
+                                            <textarea class="form-control" id="i_address" rows="4" cols="50" required name="address" placeholder="" ></textarea>
+                                        </div>
+                                    </div> 
+                                    <div class="row mb-3"  >
+                                        <label class="form-label col-form-label col-md-4">เบอร์โทรบริษัท<span class="text-danger">*</span></label>
+                                        <div class="col-md-8">
+                                            <input type="text" class="form-control" placeholder="" name="tel" data-parsley-required="true" required />
+                                                
+                                        </div>
+                                    </div> 
+                                    <div class="form-group row mb-3">
+                                        <label class="form-label col-form-label col-lg-4">เอกสารแนบ (File Uploads)</label>
+                                        <div class="col-lg-8">
+                                            <input class="form-control" type="file" id="formFile" name="formFile" placeholder=""  multiple accept=".pdf, .jpg, .jpeg, .png"  onchange="validateFile(this)"/>
+                                        
+                                        </div>
+                                    </div>
+
+                                
+                                </div>
+                                <div class="col-sm-6 border-right pe-0">
+                                    <h4 class="card-title mb-2">ข้อมูลผู้ติดต่อ <a class="add_item addInputButton btn btn-primary btn-icon btn-circle "  title="เพิ่มรายการนี้"  data-device='' >
+                                        <i class="fa fa-plus "></i></a></h4>        
+                                    <div class="item-row">
+                                        <div class="form-group row ">
+                                            <label class="form-label col-form-label col-lg-4">ชื่อผู้ติดต่อ <span class="text-danger">*</span></label> 
+                                        </div>
+                                        <div class="row mb-3">
+                                            <div class="col-lg-4 pe-0">
+                                                <input type="text" class="form-control" placeholder="ชื่อ-นามสกุล*" name="name_coordinator" data-parsley-required="true" required/>
+                                            </div>
+                                            <div class="col-lg-4 pe-0">
+                                                <input type="text" class="form-control" placeholder="อีเมล*" name="name_coordinatorEmail" data-parsley-required="true" required />
+                                            </div>
+                                            <div class="col-lg-3 pe-0">
+                                                <input type="text" class="form-control" placeholder="เบอร์โทร*" name="name_coordinatorTell" data-parsley-required="true" required />
+                                                
+                                            </div>
+                                            <div class="col-lg-1">
+                                                <a href="javascript:;" class="add_item btn btn-sm btn-icon btn-danger text-center mt-1" onclick="func_deleteItem(this)"><i class="fa fa-minus text-center"></i></a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div id="extra-inputs"></div>
+                                    
+                                    
+                                    
+                                </div>
+                            </div>
+    <hr class="my-3">    
+    <div class="row">
+        <div class="col-6">
+            <h4 class="panel-title">ข้อมูลธนาคาร</h4>
+            <div class="form-group row mb-3">   
+                <label class="form-label col-form-label col-lg-4">ธนาคาร</label>
+                <div class="col-lg-8">
+                    <input type="text" class="form-control" placeholder="" name="n_bank" id="i_bank" data-parsley-required="true" />
+                </div>
+            </div>
+            <div class="form-group row mb-3">   
+                <label class="form-label col-form-label col-lg-4">ชื่อบัญชี</label>
+
+                <div class="col-lg-8">
+                    <input type="text" class="form-control" placeholder="" name="n_accountName" id="i_accountName" data-parsley-required="true" />
+                </div>
+            </div>
+            <div class="form-group row mb-3">   
+                <label class="form-label col-form-label col-lg-4">เลขที่บัญชี</label>
+
+                <div class="col-lg-8">
+                    <input type="text" class="form-control" placeholder="" name="n_accountNumber" id="i_accountNumber" data-parsley-required="true" />
+                </div>
+            </div>
+            <div class="form-group row mb-3">   
+                <label class="form-label col-form-label col-lg-4">สาขาธนาคาร</label>
+
+                <div class="col-lg-8">
+                    <input type="text" class="form-control" placeholder="" name="n_bankBranch" id="i_bankBranch" data-parsley-required="true" />
+                </div>
+            </div>
+            <div class="row ">
+                <div class="col-4">
+                    <h6 class="my-3">ประเภทบัญชี</h6>
+                </div>
+                <div class="col-8">
+                    <div class="row">
+                        <div class="col-md-9 pt-2 mb-2">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" id="i_savings" name="account_type" value="1" checked/>
+                                <label class="form-check-label" for="inlineRadio1">ออมทรัพย์</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" id="daily_current" name="account_type" value="2" />
+                                <label class="form-check-label" for="customRadio2">กระแสรายวัน</label>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+        </div>
+        </div>
+        <div class="col-6">
+            <h4 class="panel-title mt-3">ข้อมูลเพิ่มเติมสำหรับธนาคารต่างประเทศ</h4>
+            <div class="row mb-3"> 
+                <label class="form-label col-form-label col-md-4">ธนาคาร</label> 
+                <div class="col-md-8">
+                    <input type="text" class="form-control" placeholder="" name="foreign_banks" id="i_foreign_banks" data-parsley-required="true" />
+                </div>
+            </div>
+            <div class="form-group row mb-3">   
+                <label class="form-label col-form-label col-lg-4">ชื่อบัญชี</label>
+
+                <div class="col-lg-8">
+                    <input type="text" class="form-control" placeholder="" name="foreign_banks_name" id="foreign_banks_name" data-parsley-required="true" />
+                </div>
+            </div>
+            <div class="row mb-3"> 
+                <label class="form-label col-form-label col-md-4">Swift Code</label> 
+                <div class="col-md-8">
+                    <input type="text" class="form-control" placeholder="" name="n_swiftCode" id="i_swiftCode" data-parsley-required="true" />
+                </div>
+            </div>
+            <div class="row mb-3"> 
+                <label class="form-label col-form-label col-md-4">ที่อยู่ธนาคาร</label> 
+                <div class="col-md-8">
+                    <textarea class="form-control" id="i_bank_address" rows="2" cols="50"  name="n_bank_address" placeholder="" ></textarea>
+                </div>
+            </div>  
+        </div>
+    </div>
+                
+                        </div>
+
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</form>
+<a href="javascript:;" class="btn btn-icon btn-circle btn-primary btn-scroll-to-top" data-toggle="scroll-to-top"><i class="fa fa-angle-up"></i></a>
+
+
+
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}
+<script src="{{ config.ASSETS_ROOT }}/plugins/datatables.net/js/dataTables.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/datatables.net-bs5/js/dataTables.bootstrap5.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/datatables.net-responsive/js/dataTables.responsive.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/datatables.net-responsive-bs5/js/responsive.bootstrap5.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/js/demo/table-manage-responsive.demo.js"></script>
+
+<script src="{{ config.ASSETS_ROOT }}/plugins/moment/min/moment.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/bootstrap-daterangepicker/daterangepicker.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/select2/dist/js/select2.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/bootstrap-datepicker/dist/js/bootstrap-datepicker.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/bootstrap-timepicker/js/bootstrap-timepicker.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/ion-rangeslider/js/ion.rangeSlider.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/jquery.maskedinput/src/jquery.maskedinput.js"></script>
+
+<script src="{{ config.ASSETS_ROOT }}/plugins/jquery-migrate/dist/jquery-migrate.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/tag-it/js/tag-it.min.js"></script>
+
+<script src="{{ config.ASSETS_ROOT }}/plugins/clipboard/dist/clipboard.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/spectrum-colorpicker2/dist/spectrum.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/select-picker/dist/picker.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/js/demo/form-plugins.demo.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/@highlightjs/cdn-assets/highlight.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/js/demo/render.highlight.js"></script>
+
+<script src="{{ config.ASSETS_ROOT }}/js/supplier/main_supplier.js?v1.0"></script>
+
+<script>
+let inputCount = 1;
+$(document).ready(function () {
+
+    $('.addInputButton').click(function (e) {
+        
+        if (inputCount >= 5) {
+            alert("ไม่สามารถเพิ่มได้เกิน 5 รายการ");
+            return; // หยุดการทำงานของฟังก์ชัน
+        }
+
+        inputCount++;
+        console.log(inputCount)
+        e.preventDefault();
+
+            let newRow = `<div class="item-row">
+                            <div class="form-group row">
+                                <label class="form-label col-form-label col-lg-4">ชื่อผู้ติดต่อ<span class="text-danger">*</span> </label> 
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-lg-4 pe-0">
+                                    <input type="text" class="form-control" placeholder="ชื่อ-นามสกุล*" name="name_coordinator" required/>
+                                </div>
+                                <div class="col-lg-4 pe-0">
+                                    <input type="text" class="form-control" placeholder="อีเมล*" name="name_coordinatorEmail" required />
+                                </div>
+                                <div class="col-lg-3 pe-0">
+                                    <input type="text" class="form-control" placeholder="เบอร์โทร*" name="name_coordinatorTell" required />
+                                </div>
+                                <div class="col-lg-1">
+                                    <a href="javascript:;" class="btn btn-sm btn-icon btn-danger text-center mt-1" onclick="func_deleteItem(this)">
+                                        <i class="fa fa-minus text-center"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>`;
+            
+        $('#extra-inputs').append(newRow);
+      
+    });
+
+      
+
+});
+
+function func_deleteItem(el) {
+
+    $(el).closest('.item-row').remove();
+
+     if (inputCount > 0) {
+        inputCount--;
+    }
+
+    if ($('#extra-inputs .item-row').length === 0) {
+        $('#extra-inputs').append(createContactRow());
+        inputCount = 1;
+    }
+}
+
+function removeInputIdEx() {
+     const inputId = $(this).data('target'); // ดึง ID ของ input ที่จะลบจาก data attribute
+    // inputCount--;
+    // ลบค่าใน input ที่ระบุ
+    $('#' + inputId).val(''); // ลบค่าของ input
+    
+
+}  
+
+function createContactRow() {
+    return `
+    <div class="item-row">
+        <div class="form-group row">
+            <label class="form-label col-form-label col-lg-4">ชื่อผู้ติดต่อ <span class="text-danger">*</span></label> 
+        </div>
+        <div class="row mb-3">
+            <div class="col-lg-4 pe-0">
+                <input type="text" class="form-control" placeholder="ชื่อ-นามสกุล*" name="name_coordinator" required/>
+            </div>
+            <div class="col-lg-4 pe-0">
+                <input type="text" class="form-control" placeholder="อีเมล*" name="name_coordinatorEmail" required />
+            </div>
+            <div class="col-lg-3 pe-0">
+                <input type="text" class="form-control" placeholder="เบอร์โทร*" name="name_coordinatorTell" required />
+            </div>
+            <div class="col-lg-1">
+                <a href="javascript:;" class="btn btn-sm btn-icon btn-danger text-center mt-1" onclick="func_deleteItem(this)">
+                    <i class="fa fa-minus text-center"></i>
+                </a>
+            </div>
+        </div>
+    </div>`;
+}
+
+
+</script>
+
+{% endblock javascripts %}
