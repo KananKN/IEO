@@ -122,7 +122,6 @@ def get_order():
         2: leadModel.first_name,  # ปรับชื่อให้ตรงกับ model
         3: ProductForSalesModel.name,
         4: ProductForSalesModel.price,
-        5: OrderModel.status,
         6: OrderModel.created_at,
     }
 

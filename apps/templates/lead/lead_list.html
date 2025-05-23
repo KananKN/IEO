@@ -62,7 +62,7 @@
                         <thead>
                             <tr>
                                 <th width="1%"></th>
-                                <th class="text-nowrap ">ชื่อ</th>
+                                <th class="text-nowrap ">ชื่อ - นามสกุล</th>
                                 <th class="text-nowrap">อีเมล</th>
                                 <th class="text-nowrap">เบอร์โทร</th>
                                 <th class="text-nowrap w-150px">สนใจโครงการ</th>
@@ -196,13 +196,18 @@
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label for="email" class="form-label">ชื่อ Agency</label>
-                                <select class="default-select2 form-control" id="name_agency" required  name="name_agency">
+                                <label for="agency" class="form-label">ชื่อ Agency</label>
+                                <select class="default-select2  form-control" id="name_agency" required  name="name_agency">
                                     {% for agency in agencys %}
-                                      <option  value="{{agency.id}}">{{agency.agency_code}}</option>
+                                      <option  value="{{agency.id}}">{{agency.first_name}} {{agency.last_name}}</option>
                                     {% endfor %}
                                 </select>
                             </div>
+                           
+                           
+                            
+
+                            
                         </div>
                     </div>
                     <div class="mb-3">
@@ -261,157 +266,7 @@
     </div>
 </div>
 
-<div class="modal fade" id="modal-order">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <form  method="POST" data-parsley-validate="true">
-                <div class="modal-header">
-                    <h4 class="modal-title">Name : </h4>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true"></button>
-                </div>
-                <div class="modal-body">
-                     <div class="row mb-3" >
-                        <label class="form-label col-form-label col-md-4">id</label>
-                        <div class="col-md-8">
-                            <input type="text"  class="form-control" name="id" hidden id="id-update" data-parsley-required="true"/>
-                            <input type="text"  class="form-control" name="id_products" hidden id="id_products" data-parsley-required="true"/>
-                        </div>
-                    </div>    
-                    <div class="mb-3">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <label for="fullname" class="form-label">ชื่อ</label>
-                                <input name="fullname" required class="form-control-plaintext  me-2" readonly placeholder="ชื่อ">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="fullname" class="form-label">นามสกุล</label>
-                                <input name="lastname" required class="form-control-plaintext "  placeholder="นามสกุล">
-                            </div>
-                        </div>
-                        
-                    </div>
-                    <div class="mb-3" hidden>
-                              <div class="row">
-                                <div class="col-md-6">
-                                  <label for="nickname" class="form-label">ชื่อเล่น</label>
-                                  <input name="nickname"  class="form-control-plaintext  me-2"  placeholder="ชื่อเล่น">
-                                </div>
-                                <div class="col-md-6">
-                                  <label for="birth_date" class="form-label">วันเกิด</label>
-                                  <input type="text" class="form-control-plaintext" id="masked-input-date" name="birth_dates" placeholder="dd/mm/yyyy">
-                                  
-                                </div>
-                                </div>
-                              </div>
-                            
-                          </div>
-                    <div class="mb-3">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <label for="email" class="form-label">อีเมล</label>
-                                <input type="email" class="form-control-plaintext" name="email" placeholder="อีเมล">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="email" class="form-label">เบอร์โทร</label>
-                                <input name="phone" required class="form-control-plaintext " placeholder="เบอร์โทรศัพท์*">
 
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <label for="email" class="form-label">Line ID</label>
-                                
-                            </div>
-                            <div class="col-md-6">
-                                
-
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mb-3" hidden>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <label for="email" class="form-label">หมวดหมู่โครงการ</label>
-                                <input type="text" class="form-control-plaintext" name="category" placeholder="">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="email" class="form-label">ประเทศ</label>
-                                <input class="form-control-plaintext" name="country"  placeholder="">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <label for="email" class="form-label">ชื่อโครงการ</label>
-                                <input type="text" class="form-control-plaintext" name="name_projects" placeholder="">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="email" class="form-label">ชื่อ Agency</label>
-                                <input class="form-control-plaintext" name="name_agency"  placeholder="">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <label for="email" class="form-label">ราคา</label>
-                                <input type="text" class="form-control-plaintext" name="price" placeholder="" onchange="formatNumberWithCommas(this)" >
-                            
-                            </div>
-                            <div class="col-md-6">
-                                
-                            </div>
-                        </div>
-                    </div>
-                    <hr class="mt-3">
-                    <div class="mb-3">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <label class="form-label">หมายเหตุ / บันทึกการติดต่อ <span class="text-danger">*</span></label>
-                                <textarea class="form-control" id="i_remask" rows="4" cols="50" required name="remask" placeholder="" >{{datas.address}}</textarea>
-                            
-                            </div>
-                            <div class="col-md-6">
-                                <label for="email" class="form-label">สถานะ Lead <span class="text-danger">*</span></label>
-                                <select class="default-select2 form-control col-4" id="status_modeOrder" name="status_modeOrder">
-                                        <option value="new">ใหม่ (New)</option>
-                                        <option value="contacted">ติดต่อแล้ว (Contacted)</option>
-                                        <option value="pending">รอการตัดสินใจ (Pending)</option>
-                                        <option value="converted">ปิดการขายแล้ว (Converted)</option>
-                                        <option value="lost">ไม่สนใจแล้ว (Lost)</option>
-                                </select>
-                            </div>
-                            
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <div class="row">
-                            <div class="col-md-6">
-                                
-                            </div>
-                            
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3" hidden>
-                        <label for="password" class="form-label">Username</label>
-                        <div class="input-group">
-                            <input name="username" required class="form-control " placeholder="Username*" >
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <!-- <button type="button" class="btn btn-primary w-100px" onclick="func_save($(this))">บันทึก</button> -->
-                    <button type="button" class="btn btn-success w-100px" onclick="func_createOrder($(this))">สร้าง Order</button>
-                    <!-- <button type="button" class="btn btn-danger" onclick="func_save('rejected',$(this))">Rejected</button>
-                    <button type="button" class="btn btn-success" onclick="func_save('active',$(this))">Appove</button> -->
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 
 
 
@@ -450,11 +305,14 @@
         autoclose: true
     });   
 
+
+
 $('#productFilter').select2({
-    placeholder: "เลือกหรือค้นหาสินค้า",
+    placeholder: "ค้นหาสินค้า",
     allowClear: true,
     width: 'resolve'  // ทำให้ขนาดเต็ม input
 });
+
 
 
 $('#productFilter').on('change', function() {
@@ -464,6 +322,7 @@ $('#productFilter').on('change', function() {
 $(document).ready(function() {
     loadDataTable();
 
+
 $.get("/lead/get_product_list", function(products) {
     products.forEach(product => {
         $("#productFilter").append(
@@ -471,6 +330,11 @@ $.get("/lead/get_product_list", function(products) {
         );
     });
 });
+
+$('#name_agency,#country, #project,#category').select2({
+    dropdownParent: $('#modal-dialog')
+});
+
 
     // เมื่อเลือกหมวดหมู่
 $('#category').change(function () {
@@ -513,10 +377,17 @@ $('#category').change(function () {
     
 });
 
+$.fn.dataTable.ext.type.order['timestamp-millis-pre'] = function(d) {
+    return typeof d === 'string' ? parseInt(d, 10) : d;
+};
 function loadDataTable() {
+    
+    
+    // เช็คและลบ DataTable เดิมก่อนถ้ามี
     if ($.fn.DataTable.isDataTable('#data-table-responsive')) {
-        $('#data-table-responsive').DataTable().destroy(); // ลบ DataTable เดิมก่อน
+        $('#data-table-responsive').DataTable().destroy();
     }
+    
 
     const table = $('#data-table-responsive').DataTable({
         responsive: true,
@@ -533,6 +404,7 @@ function loadDataTable() {
             dataType: "json"
         },
         columns: [
+       
             { data: "id", className: "text-center" },
             {
                 data: null,
@@ -542,36 +414,17 @@ function loadDataTable() {
             },
             { data: "email" },
             { data: "tel" },
-            
-            //{
-            //    data: null,
-            //    render: function(data, type, row) {
-            //        return `${row.category}`;
-            //    }
-            //},
-            //{
-            //    data: null,
-            //    render: function(data, type, row) {
-            //        return `${row.country}`;
-            //    }
-            //},
-            {
-                data: null,
-                render: function(data, type, row) {
-                    return `${row.product_name}`;
-                }
-            },
-            {
-                data: null,
-                render: function(data, type, row) {
-                    return `${row.agency}`;
-                }
-            },
+            {data: "product_name"},
+            {data: "agency"},
             {
                 data: "created_at",
-                render: function (data) {
-                    const d = new Date(data);
-                    return d.toLocaleDateString("th-TH"); // แสดงวันที่แบบไทย
+                type: 'timestamp-millis',  // ใช้ custom sorter นี้
+                render: function(data, type, row) {
+                    console.log("render:", type, data, typeof data); 
+                    if(type === 'display' || type === 'filter') {
+                        return new Date(Number(data)).toLocaleDateString("th-TH");
+                    }
+                    return Number(data);
                 }
             },
             {
@@ -624,14 +477,14 @@ function loadDataTable() {
                 }
             }
         ],
-        order: [[0, "asc"]],  // เรียงลำดับจาก ID
+          order: [[6, "asc"]],  // เรียงลำดับจาก ID
         lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
         pageLength: 10
     });
 
-    setInterval(function () {
-        table.ajax.reload(null, false); // false = ไม่ reset pagination
-    }, 10000);
+    //setInterval(function () {
+    //    table.ajax.reload(null, false); // false = ไม่ reset pagination
+    //}, 10000);
 }
 
 function func_modal(data) {

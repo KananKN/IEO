@@ -191,12 +191,12 @@
                   
                                                     <div class="row mb-3">
                                                       <label class="form-label col-form-label">เลือก Agency<span class="text-danger form-label">*</span></label>
-                                                      <select id="agency"  class="multiple-select2 form-control" required name="agency">
+                                                      <select id="agency"  class="default-select2 form-control" required name="agency">
                                                         <!-- หากไม่ได้เลือก agency อื่น ๆ ให้แสดง IEO เป็นค่าเริ่มต้น -->
                                                         <option value="" {% if not selected_agency %}selected{% endif %}>เลือก Agency</option>
         
                                                         {% for agency in agencys %}
-                                                            <option value="{{ agency.id }}" >{{ agency.agency_code }}</option>
+                                                            <option value="{{ agency.id }}" >{{ agency.first_name }} {{ agency.last_name }}</option>
                                                         {% endfor %}
                                                       </select>
                                                     </div>
@@ -418,8 +418,7 @@
 function func_save(){
     const form = document.getElementById("myForm"); // ✅ ใช้ ID ของ form
     const formData = new FormData(form);
-    console.log("save")
-    fetch("/register_api", {
+    fetch("/lead/create_register_lead", {
           method: "post",
           body: formData
       })

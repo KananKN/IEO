@@ -144,8 +144,15 @@ def lead_list():
         {"id": 9, "name": "Pinterest"},
         {"id": 10, "name": "อื่น ๆ"},
     ]
+    # agencies_with_IEO = [agency.__dict__.copy() for agency in agencies]
+    # agencies_with_IEO.append({'id': None, 'agency_code': 'IEO'})
     agencies_with_IEO = [agency.__dict__.copy() for agency in agencies]
-    agencies_with_IEO.append({'id': None, 'agency_code': 'IEO'})
+    agencies_with_IEO.append({
+        'id': None,
+        'agency_code': 'IEO',
+        'first_name': 'IEO',
+        'last_name': '',
+    })
 
     # print(datas)
     return render_template('lead/lead_list.html', segment='lead' ,datas=datas,categorys=category,countrys=country,products=product,agencys=agencies_with_IEO,social_channels=social_channels )
@@ -180,8 +187,8 @@ def get_userRequest():
         3: leadModel.tel,
         4: ProductForSalesModel.name,
         5: AgencyModel.first_name,
-        6: leadModel.created_at,
-        7: leadModel.status
+        6: LeadProgram.created_at,
+        7: leadModel.status,
     }
 
     query = db.session.query(LeadProgram) \
@@ -446,7 +453,15 @@ def create_lead():
     country = CountryModel.query.all()
     
     product = ProductForSalesModel.query.all()
-    agencies = AgencyModel.query.all()
+    # agencies = AgencyModel.query.filter_by(org_type='agency').order_by(AgencyModel.first_name.asc()).all()
+    agencies = AgencyModel.query.filter_by(org_type='agency').order_by(AgencyModel.first_name.asc()).all()
+    agencies_with_IEO = [agency.__dict__.copy() for agency in agencies]
+    agencies_with_IEO.append({
+        'id': None,
+        'agency_code': 'IEO',
+        'first_name': 'IEO',
+        'last_name': '',
+    })
 
     social_channels = [
         {"id": 1, "name": "Facebook"},
@@ -463,7 +478,12 @@ def create_lead():
 
     # เพิ่มข้อความ "IEO" ให้กับข้อมูลที่ส่งไปยังหน้าเว็บ
     agencies_with_IEO = [agency.__dict__.copy() for agency in agencies]
-    agencies_with_IEO.append({'id': None, 'agency_code': 'IEO'})
+    agencies_with_IEO.append({
+        'id': None,
+        'agency_code': 'IEO',
+        'first_name': 'IEO',
+        'last_name': '',
+    })
     return render_template('lead/lead_create.html', segment='create_lead' ,datas=datas,categorys=category,countrys=country, agencys=agencies_with_IEO,product=product,social_channels=social_channels )
 
 @blueprint.route("/follow_lead")
@@ -721,5 +741,149 @@ def delete_follow_list():
         flash('No LeadProgram found for that lead_id.', 'warning')
 
     return redirect(url_for('lead_blueprint.follow_lead'))
+
+@blueprint.route('/create_register_lead', methods=['POST'])
+def create_register_lead():
+
+    
+    data = request.form
+    print("data:",data)
+    # username = data.get('username')
+    # password = data.get('password')
+    # confirm_password = data.get('confirm_password')
+
+    # if not password or not confirm_password:
+    #     print("⚠️ กรุณากรอกรหัสผ่านและยืนยันรหัสผ่าน")
+    #     return jsonify({'status': 'error', 'message': 'กรุณากรอกรหัสผ่านและยืนยันรหัสผ่าน'}), 400
+
+    # if password != confirm_password:
+    #     print("⚠️ รหัสผ่านไม่ตรงกัน")
+    #     return jsonify({'status': 'error', 'message': 'รหัสผ่านไม่ตรงกัน'}), 400
+
+    # if UserModel.query.filter_by(username=username).first():
+    #     print("⚠️ Username นี้ถูกใช้งานแล้ว:", username)
+    #     return jsonify({'status': 'error', 'message': 'Username นี้ถูกใช้งานแล้ว', "data": username }), 400
+
+    # แฮชรหัสผ่าน
+    # hashed_password = hash_pass(password)
+
+    # role = RoleModel.query.filter(RoleModel.name == 'agency').first()
+    # if not role:
+    #     try:
+    #         role = RoleModel(name='agency', description='Agency role')
+    #         db.session.add(role)
+    #         db.session.commit()
+    #     except Exception as e:
+    #         db.session.rollback()
+    #         return jsonify({'success': False, 'message': 'Cannot create role', 'error': str(e)}), 400
+    
+    # # สร้าง User
+    # user = UserModel(username=username, password=password, role_id=role.id)
+    # db.session.add(user)
+    # db.session.commit()
+    birth_date_raw = data.get('birth_date')
+
+    if birth_date_raw:
+        try:
+            birth_date_str = birth_date_raw.replace('/', '-')
+            birth_date = datetime.strptime(birth_date_str, "%d-%m-%Y")
+        except ValueError:
+            birth_date = None
+    else:
+        birth_date = None
+
+    # เตรียมข้อมูล
+    agency_id = data.get('agency')
+    agency_id = int(agency_id) if agency_id not in [None, '', 'None'] else None
+
+    print("Raw agency_id:", data.get('agency_id'))
+    print("Final agency_id:", agency_id)
+
+    email = data.get('email')
+    tel = data.get('phone')
+    product_id = data.get('project')
+    product = ProductForSalesModel.query.filter_by(id=product_id).first()
+
+    first_name = data.get('fullname')
+    last_name = data.get('lastname')
+    gender = data.get('gender')
+    line_id = data.get('line_id')
+    nick_name = data.get('nickname')
+    category_id = data.get('category')
+    country_id = data.get('country')
+    social = data.get('social')
+    remask = data.get('remask')
+
+    # เช็คว่า lead มีอยู่หรือยัง
+    lead = leadModel.query.filter(
+        or_(
+            leadModel.email == email,
+            leadModel.tel == tel
+        )
+    ).first()
+
+    if not lead:
+        lead = leadModel(
+            first_name=first_name,
+            last_name=last_name,
+            tel=tel,
+            email=email,
+            status='new',
+            gender=gender,
+            line_id=line_id,
+            birth_date=birth_date,
+            nick_name=nick_name,
+            category_id=category_id,
+            country_id=country_id,
+            agency_id=agency_id,
+            product_id=product_id,
+            social=social,
+            remask=remask
+        )
+        db.session.add(lead)
+        db.session.flush()  # ให้ DB สร้าง lead.id ก่อน
+    else:
+        # อัปเดตข้อมูล lead เดิม
+        lead.first_name = first_name
+        lead.last_name = last_name
+        lead.nick_name = nick_name
+        lead.tel = tel
+        lead.email = email
+        lead.gender = gender
+        lead.line_id = line_id
+        lead.birth_date = birth_date
+        lead.agency_id = agency_id
+        lead.category_id = category_id
+        lead.country_id = country_id
+        lead.product_id = product_id
+        lead.social = social
+        lead.remask = remask
+
+    db.session.commit()
+
+    # # สร้างหรืออัปเดต LeadProgram
+    # lead_program = LeadProgram.query.filter_by(lead_id=lead.id).first()
+    # if lead_program:
+    #     lead_program.product_id = product.id
+    #     lead_program.agency_id = agency_id
+    #     lead_program.status = 'pending'
+    #     lead_program.remask = remask
+    # else:
+    lead_program = LeadProgram(
+            lead_id=lead.id,
+            product_id=product.id,
+            agency_id=agency_id,
+            status='new',
+            remask=remask
+        )
+    db.session.add(lead_program)
+
+    db.session.commit()
+
+    # เก็บ session
+    session['waiting_user_id'] = lead.id
+    session['waiting_user_type'] = 'user'
+
+    return jsonify({'status': 'success', 'message': 'ลงทะเบียนสำเร็จ รอการอนุมัติจากแอดมิน'}), 201
 
 
