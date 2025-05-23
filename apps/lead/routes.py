@@ -716,11 +716,11 @@ def delete_lead_list():
         # ใช้ bulk delete
         db.session.query(LeadProgram).filter(LeadProgram.id == id_del).delete(synchronize_session=False)
         db.session.commit()
-        flash('Deleted LeadProgram!', 'success')
+        flash('Deleted Program!', 'success')
     else:
-        flash('No LeadProgram found for that lead_id.', 'warning')
+        flash('No Program found for that lead', 'warning')
 
-    return redirect(url_for('lead_blueprint.lead'))
+    return redirect(url_for('lead_blueprint.lead_list'))
 
 @blueprint.route('/delete_follow_list', methods=['POST'])
 @login_required
@@ -881,8 +881,8 @@ def create_register_lead():
     db.session.commit()
 
     # เก็บ session
-    session['waiting_user_id'] = lead.id
-    session['waiting_user_type'] = 'user'
+    # session['waiting_user_id'] = lead.id
+    # session['waiting_user_type'] = 'user'
 
     return jsonify({'status': 'success', 'message': 'ลงทะเบียนสำเร็จ รอการอนุมัติจากแอดมิน'}), 201
 
