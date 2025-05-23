@@ -177,14 +177,25 @@
                                       </select>
                                   </div>
 
-                                  <div class="row mb-3">
-                                    <label class="form-label col-form-label">เลือก Agency<span class="text-danger form-label">*</span></label>
-                                    <select id="agency"  class="multiple-select2 form-control" name="agency" required>
-                                      <option value="">-- เลือก Agency --</option>
-                                        {% for agency in agencys %}
-                                            <option value="{{agency.id}}">{{agency.agency_code}}</option>
-                                        {% endfor %}
-                                    </select>
+                                  <div class="mb-3">
+                                    {% if ref %}
+                                    <label for="agency" class="form-label mt-2 mb-2">Agency</label>
+                                    <input type="text" class="form-control" hidden name="agency_id" value="{% for agency in agencys %}{% if agency.agency_code == ref %}{{ agency.id }}{% endif %}{% endfor %}"  style=" padding: 8px 12px;">
+                                    <input type="text" class="form-control" name="agency" readonly  value="{% for agency in agencys %}{% if agency.agency_code == ref %}{{ agency.first_name }} {{ agency.last_name }}{% endif %}{% endfor %}"  style=" padding: 8px 12px;">
+   
+                                      
+                                    {% else %}
+                                      <label class="form-label col-form-label">เลือก Agency<span class="text-danger form-label">*</span></label>
+                                      <select id="agency"  class="multiple-select2 form-control" name="agency_id" required>
+                                        <option value="">-- เลือก Agency --</option>
+                                          {% for agency in agencys %}
+                                          <option value="{{ agency.id }}" >
+                                            {{ agency.first_name }} {{ agency.last_name }}
+                                          </option>                                        
+                                          {% endfor %}
+                                      </select>
+                                      {% endif %}
+                                    
                                   </div>
                                     
                               </div>
@@ -305,6 +316,21 @@ function validateForm() {
 </script>
 <script>
 $(document).ready(function () {
+  const ref = '{{ ref }}'; // ต้องให้ค่า ref ส่งมาจาก backend
+  $('#agency option').each(function () {
+      const optionText = $(this).text();
+      const agencyCode = $(this).val();
+      if ($(this).text().includes(ref)) {
+          $(this).prop('disabled', true);
+      }
+  });
+
+  // รีเฟรช select2 เพื่อให้แสดง disabled ถูกต้อง
+  $('#agency').select2();
+
+
+
+
   $('#country').select2({
     placeholder: "-- เลือกประเทศ --",
     allowClear: true

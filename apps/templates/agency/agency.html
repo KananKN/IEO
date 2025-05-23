@@ -50,12 +50,12 @@
                     <table id="data-table-responsive" width="100%" class="table table-striped table-bordered align-middle text-nowrap">
                         <thead>
                             <tr>
-                                <th width="1%">No</th>
-                                <th class="text-nowrap">Full Name</th>
-                                <th class="text-nowrap">E-mail</th>
-                                <th class="text-nowrap">Phone</th>
+                                <th width="1%">ลำดับ</th>
+                                <th class="text-nowrap w-250px">ชื่อ - นามสกุล</th>
+                                <th class="text-nowrap w-2000px" >อีเมล</th>
+                                <th class="text-nowrap">เบอร์โทร</th>
                                 <th class="text-nowrap ">รหัส Agency</th>
-                                <th class="text-nowrap" >คนแนะนำ</th>
+                                <!-- <th class="text-nowrap" >คนแนะนำ</th> -->
                                 <th class="text-nowrap ">ลิงก์</th>
                                 
                                 <th class="text-nowrap">Action</th>
@@ -230,12 +230,13 @@ function loadDataTable() {
             { data: "data_user.email" },
             { data: "data_user.tel" },
             { data: "agency_code" },
-             { data: "referred" },
+             //{ data: "referred" },
              {
                 data: null,
                 className: 'text-center',
                 render: function(data, type, row) {
-                    const baseUrl = window.location.origin + '/register/agency';
+                    //const baseUrl = window.location.origin + '/register/agency';
+                    const baseUrl = window.location.origin + '/register';
                     const fullUrl = `${baseUrl}?ref=${row.agency_code}`;
                     return `<button class="btn btn-sm btn-primary" onclick="copyLink('${fullUrl}')">Copy Link</button>`;
                 }
