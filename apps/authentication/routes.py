@@ -1,4 +1,4 @@
-
+﻿
 from flask import render_template, redirect, request, url_for, flash
 from flask_login import (
     current_user,
@@ -15,7 +15,7 @@ from flask_dance.contrib.google import make_google_blueprint, google
 
 from apps import db, login_manager
 from apps.authentication import blueprint
-from apps.authentication.forms import LoginForm, CreateAccountForm, CreateAgencyForm
+from apps.authentication.forms import LoginForm, CreateAccountForm
 from apps.authentication.models import *
 from apps.product.models import *
 from apps.lead.models import *
