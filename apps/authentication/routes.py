@@ -130,14 +130,19 @@ def login():
     
 @blueprint.route('/register', methods=['GET', 'POST'])
 def register_interest():
-    
+    ref = request.args.get('ref') 
     category = ProductCategoryModel.query.all()
     country = CountryModel.query.all()
-    agencies = AgencyModel.query.all()
-    agencies_with_IEO=[]
+    agencies = AgencyModel.query.filter_by(org_type='agency').order_by(AgencyModel.first_name.asc()).all()
     agencies_with_IEO = [agency.__dict__.copy() for agency in agencies]
-    agencies_with_IEO.append({'id': None, 'agency_code': 'IEO'})
+    agencies_with_IEO.append({
+        'id': None,
+        'agency_code': 'IEO',
+        'first_name': 'IEO',
+        'last_name': '',
+    })
     product = ProductForSalesModel.query.all()
+
 
     social_channels = [
         {"id": 1, "name": "Facebook"},
@@ -147,10 +152,13 @@ def register_interest():
         {"id": 5, "name": "Line"},
         {"id": 6, "name": "อื่น ๆ"},
     ]
+
+    
+
     # agency = AgencyModel.query.filter(AgencyModel.status == 'active').first()
     # if session.get('waiting_user_id') and session.get('waiting_user_type') == 'user':
     #     return redirect(url_for('authentication_blueprint.waiting_approval'))
-    return render_template('accounts/register_interest.html',categorys=category,countrys=country, agencys=agencies_with_IEO,product=product,social_channels=social_channels)
+    return render_template('accounts/register_interest.html',categorys=category,countrys=country, agencys=agencies_with_IEO,product=product,social_channels=social_channels,ref=ref)
 
 @blueprint.route('/api/get_countries_by_category/<int:category_id>')
 def get_countries_by_category(category_id):
@@ -362,8 +370,24 @@ def register_university_api():
     print('success')
     return jsonify({'status': 'success', 'message': 'ลงทะเบียนสำเร็จ รอการอนุมัติจากแอดมิน'}), 201
 
+
 @blueprint.route('/register_api', methods=['POST'])
 def register_api():
+    ref_code = request.args.get('ref') or request.form.get('referral_code')
+    print(f"➡️ ได้ ref_code: {ref_code}")
+    ref_agency = None
+
+    if ref_code:
+        ref_agency = AgencyModel.query.filter_by(agency_code=ref_code).first()
+
+
+    if not ref_agency:
+        # ถ้าไม่เจอรหัสที่ส่งมา หรือ ref_code ไม่มี → default เป็นของ IEO
+        ref_agency = AgencyModel.query.filter_by(agency_code='IEO').first()
+        
+    referred_by_id = ref_agency.user_id if ref_agency else None
+    print(f"➡️ referred_by_id: {referred_by_id}")
+    
     data = request.form
     print("data:",data)
     # username = data.get('username')
@@ -411,7 +435,7 @@ def register_api():
         birth_date = None
 
     # เตรียมข้อมูล
-    agency_id = data.get('agency')
+    agency_id = data.get('agency_id')
     agency_id = int(agency_id) if agency_id not in [None, '', 'None'] else None
 
     print("Raw agency_id:", data.get('agency_id'))
@@ -453,7 +477,7 @@ def register_api():
             nick_name=nick_name,
             category_id=category_id,
             country_id=country_id,
-            agency_id=agency_id,
+            agency_id=referred_by_id,
             product_id=product_id,
             social=social,
             remask=remask
