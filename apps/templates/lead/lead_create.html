@@ -193,10 +193,10 @@
                                                       <label class="form-label col-form-label">เลือก Agency<span class="text-danger form-label">*</span></label>
                                                       <select id="agency"  class="default-select2 form-control" required name="agency">
                                                         <!-- หากไม่ได้เลือก agency อื่น ๆ ให้แสดง IEO เป็นค่าเริ่มต้น -->
-                                                        <option value="" {% if not selected_agency %}selected{% endif %}>เลือก Agency</option>
+                                                        <!-- <option value="" >เลือก Agency</option> -->
         
                                                         {% for agency in agencys %}
-                                                            <option value="{{ agency.id }}" >{{ agency.first_name }} {{ agency.last_name }}</option>
+                                                            <option value="{{ agency.id }}" {% if agency.agency_code == 'AGY00001' %}selected{% endif %} >{{ agency.first_name }} {{ agency.last_name }}</option>
                                                         {% endfor %}
                                                       </select>
                                                     </div>
@@ -365,6 +365,7 @@
     </script>
     <script>
     $(document).ready(function () {
+      
       $('#country').select2({
         placeholder: "-- เลือกประเทศ --",
         allowClear: true

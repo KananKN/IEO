@@ -476,12 +476,12 @@ def create_lead():
 
     # เพิ่มข้อความ "IEO" ให้กับข้อมูลที่ส่งไปยังหน้าเว็บ
     agencies_with_IEO = [agency.__dict__.copy() for agency in agencies]
-    agencies_with_IEO.append({
-        'id': None,
-        'agency_code': 'IEO',
-        'first_name': 'IEO',
-        'last_name': '',
-    })
+    # agencies_with_IEO.append({
+    #     'id': None,
+    #     'agency_code': 'IEO',
+    #     'first_name': 'IEO',
+    #     'last_name': '',
+    # })
     return render_template('lead/lead_create.html', segment='create_lead' ,datas=datas,categorys=category,countrys=country, agencys=agencies_with_IEO,product=product,social_channels=social_channels )
 
 @blueprint.route("/follow_lead")

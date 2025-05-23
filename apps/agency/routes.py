@@ -69,7 +69,7 @@ def user_request():
 def create_agency_api():
     
     ref_code = request.args.get('ref') or request.form.get('referral_code')
-    print(f"➡️ ได้ ref_code: {ref_code}")
+    # print(f"➡️ ได้ ref_code: {ref_code}")
     ref_agency = None
 
     if ref_code:
@@ -81,7 +81,7 @@ def create_agency_api():
         ref_agency = AgencyModel.query.filter_by(agency_code='IEO').first()
         
     referred_by_id = ref_agency.user_id if ref_agency else None
-    print(f"➡️ referred_by_id: {referred_by_id}")
+    # print(f"➡️ referred_by_id: {referred_by_id}")
         
     data = request.form
     print("data:",data)
