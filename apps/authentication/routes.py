@@ -135,12 +135,12 @@ def register_interest():
     country = CountryModel.query.all()
     agencies = AgencyModel.query.filter_by(org_type='agency').order_by(AgencyModel.first_name.asc()).all()
     agencies_with_IEO = [agency.__dict__.copy() for agency in agencies]
-    agencies_with_IEO.append({
-        'id': None,
-        'agency_code': 'IEO',
-        'first_name': 'IEO',
-        'last_name': '',
-    })
+    # agencies_with_IEO.append({
+    #     'id': None,
+    #     'agency_code': 'IEO',
+    #     'first_name': 'IEO',
+    #     'last_name': '',
+    # })
     product = ProductForSalesModel.query.all()
 
 
