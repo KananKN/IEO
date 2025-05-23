@@ -307,9 +307,7 @@ def check_statusLead():
     else:
         birth_date = None
 
-    print("ß")
-    print(birth_date)
-
+  
     lead = leadModel.query.filter(
             or_(
                 leadModel.email == email,
@@ -363,7 +361,7 @@ def check_statusLead():
 
         # 3. Commit การเปลี่ยนแปลง
         db.session.commit()
-        flash("success!", "success")
+        # flash("success!", "success")
 
         if status == 'converted':
             try:
@@ -437,7 +435,7 @@ def check_statusLead():
         
         return jsonify({
                 'status': 'Success',
-                # 'message': f'Data has been saved. Email sent: {email_sent}',
+                'message': 'บันทึกข้อมูลเรียบร้อยแล้ว',
                 'data': {
                     'id': thisItem.id,
                     'status': thisItem.status,
