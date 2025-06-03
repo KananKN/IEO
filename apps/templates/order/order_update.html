@@ -250,7 +250,7 @@
             
                                                 <div class="col-md-12 col-sm-12 col-xs-12 mb-5px mt-2">
                                                     <a href="{{ url_for('order_blueprint.downloadPayment', filename=file_data.filename)}}" style="text-decoration: none; color: black;"><i class="fas fa-lg fa-fw ms-5px  fa-file"></i> <span>{{ file_data.filename }}</span></a> 
-                                                    <a href="#" onclick="sweetAlertDelfile({{file_data.id}},{{datas.lead_id}})">
+                                                    <a href="#" onclick="sweetAlertDelfile({{file_data.id}},{{datas.id}})">
                                                         <i class="fas fa-lg fa-fw mx-5px fa-trash-can text-danger c_trash"></i>			
                                                     </a> 
                                                 </div>
@@ -744,7 +744,7 @@ function formatNumberInter(input) {
 </script>
 <script>
     
-function sweetAlertDelfile(id_file,id_lead) {
+function sweetAlertDelfile(id_file,id_order) {
     swal({
         title: "Are you sure?",
         text: "Delete?",
@@ -769,7 +769,7 @@ function sweetAlertDelfile(id_file,id_lead) {
         if (result.dismiss !== "cancel") {
             post("/order/delete_file", {
                 id_file: id_file,
-                id_lead: id_lead,
+                id_order: id_order,
                 // path: $("#path").val(),
             });
         }

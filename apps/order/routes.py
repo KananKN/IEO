@@ -438,14 +438,14 @@ def downloadPayment(filename):
 @login_required
 def delete_file():
     id_file = request.form["id_file"]
-    id_lead = request.form["id_lead"]
+    id_order = request.form["id_order"]
 
-    print(id_lead)
+    print(id_order)
     thisFile = FilePaymentModel.query.filter_by(id=id_file).first()
 
     if not thisFile:  # เช็กว่าเจอรูปหรือไม่
         print(f"ไม่พบรูปภาพที่มี ID: {id_file}")
-        return redirect(url_for('order_blueprint.order_update', id=id_lead))
+        return redirect(url_for('order_blueprint.order_update', id=id_order))
 
     try:
         path = os.path.join("apps", "static", "assets", "files", "payment", thisFile.filename)
@@ -460,4 +460,4 @@ def delete_file():
     db.session.delete(thisFile)
     db.session.commit()
 
-    return redirect(url_for('order_blueprint.order_update', id=id_lead))
+    return redirect(url_for('order_blueprint.order_update', id=id_order))
