@@ -22,14 +22,14 @@ class OrderModel(db.Model):
     order_number: str
     payment_method: str
     status: str
-    total_price: float
+    price: float
 
     id = db.Column(db.Integer, primary_key=True)
     note = db.Column(db.String(), nullable=False)
     order_number = db.Column(db.String(), nullable=True)
     payment_method = db.Column(db.String(), nullable=False)
     status = db.Column(db.String(250), default='pending', comment='pending, partially_paid, paid')
-    total_price = db.Column(db.Float, nullable=False)
+    price = db.Column(db.Float, nullable=False)
 
     lead_id = db.Column(db.Integer, db.ForeignKey("lead.id", ondelete="CASCADE"))
     lead = db.relationship("leadModel", back_populates="orders", lazy="select")
@@ -42,6 +42,10 @@ class OrderModel(db.Model):
 
     order_items = db.relationship("OrderItemModel", back_populates="order", cascade="all, delete")
     payments = db.relationship("PaymentModel", back_populates="order", cascade="all, delete", lazy=True)
+
+    # total_price = db.Column(db.Numeric(precision=10, scale=2), nullable=True)  # ราคารวมก่อนส่วนลด
+    # discount = db.Column(db.Numeric(precision=10, scale=2), default=0.00)  # ส่วนลดทั้งหมด
+    # net_price = db.Column(db.Numeric(precision=10, scale=2), nullable=True)
 
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
@@ -65,6 +69,8 @@ class OrderItemModel(db.Model):
     order = db.relationship("OrderModel", back_populates="order_items")
     product = db.relationship("ProductForSalesModel", back_populates="order_items")
 
+    
+
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
 
@@ -86,6 +92,10 @@ class MemberModel(db.Model):
     approved_by = db.Column(db.String(100))
     approved_at = db.Column(db.DateTime)
     birth_date = db.Column(db.DateTime,  default=None)
+
+    first_nameEN = db.Column(db.String(100))
+    last_nameEN = db.Column(db.String(100))
+    year = db.Column(db.String(), nullable=True,server_default='2025')
 
     orders = db.relationship("OrderModel", back_populates="member", cascade="all, delete")
 
@@ -138,6 +148,18 @@ class FilePaymentModel(db.Model):
     created_at = db.Column(db.DateTime,  default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime,  default=db.func.current_timestamp(),
                            onupdate=db.func.current_timestamp())
+    
+
+class OrderTermModel(db.Model):
+    __tablename__ = 'order_terms'
+    id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey('order.id'), nullable=False)
+    term_detail = db.Column(db.String(255))
+    amount = db.Column(db.Numeric(precision=12, scale=2), nullable=False)
+    sequence = db.Column(db.Integer)  # งวดที่เท่าไหร่ เช่น 1, 2, 3
+    discount = db.Column(db.Numeric(precision=12, scale=2), nullable=False, server_default="0.00")
+    net_price = db.Column(db.Numeric(precision=10, scale=2), nullable=True)
+    created_at = db.Column(db.DateTime,  default=db.func.current_timestamp())
 
 
 
