@@ -23,6 +23,11 @@ import os
 from datetime import datetime
 import uuid
 from sqlalchemy import and_, func, case, asc
+from collections import defaultdict
+
+from decimal import Decimal
+
+
 
 
 read_permission = Permission(RoleNeed("read_permission"))
@@ -364,9 +369,11 @@ def createProductSales():
     
     agency = AgencyModel.query.filter(AgencyModel.org_type == 'agency').all()
     university = AgencyModel.query.filter(AgencyModel.org_type == 'university').all()
+    current_year=datetime.now().year
     
 
-    return render_template('/productForSales/createProductSales.html', segment='productSales' ,productCars=productCar, countrys=country, periods=period,termOfPaymentModels=termOfPaymentModel,organizations=organization,employees=employee,agencys=agency,universitys=university)
+    return render_template('/productForSales/createProductSales.html', segment='productSales' ,productCars=productCar, countrys=country, periods=period,termOfPaymentModels=termOfPaymentModel,organizations=organization,employees=employee,agencys=agency,universitys=university,
+                           current_year=current_year,groupedPayments=[])
 
 @blueprint.route('/EditProductSales/<id>')
 @login_required
@@ -395,8 +402,13 @@ def EditProductSales(id):
     productAgency = ProductAgencyAssociation.query.filter_by(product_id=id).all()
     selected_agency = [e.agency_id for e in productAgency]
     
+    grouped_payments = defaultdict(list)
+    for p in payment:
+        grouped_payments[p.year].append(p)
+    print(grouped_payments)
 
-    return render_template('/productForSales/EditProductSales.html', segment='productSales' , datas=datas, productCars=productCar, countrys=country, periods=period,termOfPaymentModels=termOfPaymentModel, file_data=file_data,payments=payment,organizations=organization,employees=employee,selected_organizations=selected_organizations,selected_employee=selected_employee,selected_agencys=selected_agency,agencys=agency,universitys=university)
+    return render_template('/productForSales/EditProductSales.html', segment='productSales' , datas=datas, productCars=productCar, countrys=country, periods=period,termOfPaymentModels=termOfPaymentModel, file_data=file_data,payments=payment,organizations=organization,employees=employee,selected_organizations=selected_organizations,selected_employee=selected_employee,selected_agencys=selected_agency,agencys=agency,universitys=university,
+                           grouped_payments=grouped_payments)
 
 @blueprint.route('/addProductSale', methods=['GET', 'POST'])
 @login_required
@@ -406,13 +418,14 @@ def addProductSale():
     # รับค่าจาก request.form
     # ✅ ตรวจสอบค่าจาก request.form
     name = request.form.get('name_product') or None
-    year = request.form.get('year') or ''
+    year = request.form.get('selectedYear') or ''
     price = request.form.get('price') or None
     product_category_id = request.form.get('productCategory') or None
     country_id = request.form.get('country') or None
     period_id = request.form.get('period') or None
     term_of_payment_id = request.form.get('term') or None
     detail = request.form.get('detail') or None
+    inputYear = request.form.get('inputYear') or None
     start = datetime.strptime(request.form.get("start"), "%d-%m-%Y") if request.form["start"] else None 
     end = datetime.strptime(request.form.get("end"), "%d-%m-%Y") if request.form["end"] else None 
     # ✅ ตรวจสอบว่า country_id และ period_id ได้ค่าที่ถูกต้อง (ต้องเป็นตัวเลข ไม่ใช่ function)
@@ -420,10 +433,9 @@ def addProductSale():
     employee_ids = request.form.getlist('employee') or None
     university_ids = request.form.getlist('university') or None
     agency_ids = request.form.getlist('agency') or None
-    if price:
-        price = float(price.replace(',', ''))  # 
-    else:
-        price = None 
+    
+    price_str = request.form.get(f'price_{year}', '0').replace(',', '')
+    price = Decimal(price_str or '0')
         
     # term_of_payment_id = request.form.get('term') or None
 
@@ -453,7 +465,7 @@ def addProductSale():
     
     new_item = ProductForSalesModel(
         name=name,
-        year=year,
+        year=inputYear,
         price=price,
         product_category_id=product_category_id,
         country_id=country_id,  # ✅ แก้ไขให้ country_id เป็น int หรือ None
@@ -520,54 +532,93 @@ def addProductSale():
                 db.session.add(newfile)
                 db.session.commit()    
                 
+    term_years = request.form.getlist('term_year[]')
+    print(term_years)
+    print(f"price_2025: {request.form.get('price_2025')}")
     
-    
-    installments_list = request.form.getlist('installments')  
-    term_detail_list = request.form.getlist('term_detail') 
-    term_id_list = request.form.getlist('term_id')
-    
-    db.session.query(installmentsPaymentModel).filter(installmentsPaymentModel.product_for_sales_id == new_item.id).delete()
+
+
+    for year in term_years:
+        ids = request.form.getlist(f'term_id_{year}[]')
+        amounts = request.form.getlist(f'installments_{year}[]')
+        details = request.form.getlist(f'term_detail_{year}[]')
+        price_str = request.form.get(f'price_{year}', '0').replace(',', '')
+        price = Decimal(price_str or '0')
+
+        print(f"ปี {year} | งวด {len(amounts)} | รายละเอียด {len(details)}")
+
+
+        for i in range(len(amounts)):
+            amount = Decimal(amounts[i].replace(',', ''))
+            detail = details[i].strip()
+            term_id = ids[i].strip() if i < len(ids) else None
+
+            if term_id:
+                existing = installmentsPaymentModel.query.filter_by(id=term_id).first()
+                if existing:
+                    existing.term_detail = detail
+                    existing.amount = amount
+                    existing.year = year
+                    existing.price = price
+                    continue
+
+        
+            db.session.add(installmentsPaymentModel(
+                term_detail=detail,
+                amount=amount,
+                year=year,
+                price=price,
+                product_for_sales_id=new_item.id
+            ))
+
     db.session.commit()
+    
+    # installments_list = request.form.getlist('installments')  
+    # term_detail_list = request.form.getlist('term_detail') 
+    # term_id_list = request.form.getlist('term_id')
+    
+    # db.session.query(installmentsPaymentModel).filter(installmentsPaymentModel.product_for_sales_id == new_item.id).delete()
+    # db.session.commit()
 
    
     
-    # ตรวจสอบว่าลิสต์ไม่ว่าง และมีขนาดเท่ากัน
-    if term_detail_list and installments_list and len(term_detail_list) == len(installments_list):
-        for i, (term, amount) in enumerate(zip(term_detail_list, installments_list)):
-            term = term.strip()  # ลบช่องว่าง
-            amount = str(amount).strip()  # ลบช่องว่าง
-            amount = amount.replace(',', '')
+    # # ตรวจสอบว่าลิสต์ไม่ว่าง และมีขนาดเท่ากัน
+    # if term_detail_list and installments_list and len(term_detail_list) == len(installments_list):
+    #     for i, (term, amount) in enumerate(zip(term_detail_list, installments_list)):
+    #         term = term.strip()  # ลบช่องว่าง
+    #         amount = str(amount).strip()  # ลบช่องว่าง
+    #         amount = amount.replace(',', '')
             
-            if term_id_list and i < len(term_id_list) and term_id_list[i].strip():  # เช็คว่ามี term_id หรือไม่
-                term_id = term_id_list[i].strip()
-                existing_item = installmentsPaymentModel.query.filter_by(id=term_id).first()
+    #         if term_id_list and i < len(term_id_list) and term_id_list[i].strip():  # เช็คว่ามี term_id หรือไม่
+    #             term_id = term_id_list[i].strip()
+    #             existing_item = installmentsPaymentModel.query.filter_by(id=term_id).first()
 
-                if existing_item:  
-                    print(f"Updating: term_id={term_id}, term_detail={term}, amount={amount}")
-                    existing_item.term_detail = term
-                    existing_item.amount = amount
-                else:  # 
-                    print(f"Adding new (term_id not found): term_detail={term}, amount={amount}")
-                    new_payment= installmentsPaymentModel(
-                        term_detail=term,
-                        amount=amount,
-                        product_for_sales_id=new_item.id,
-                    )
-                    db.session.add(new_payment)
+    #             if existing_item:  
+    #                 print(f"Updating: term_id={term_id}, term_detail={term}, amount={amount}")
+    #                 existing_item.term_detail = term
+    #                 existing_item.amount = amount
+    #             else:  # 
+    #                 print(f"Adding new (term_id not found): term_detail={term}, amount={amount}")
+    #                 new_payment= installmentsPaymentModel(
+    #                     term_detail=term,
+    #                     amount=amount,
+    #                     product_for_sales_id=new_item.id,
+    #                 )
+    #                 db.session.add(new_payment)
 
-            else: 
-                print(f"Adding new: term_detail={term}, amount={amount}")
-                new_payment = installmentsPaymentModel(
-                    term_detail=term,
-                    amount=amount,
-                    product_for_sales_id=new_item.id,
-                )
-                db.session.add(new_payment)
+    #         else: 
+    #             print(f"Adding new: term_detail={term}, amount={amount}")
+    #             new_payment = installmentsPaymentModel(
+    #                 term_detail=term,
+    #                 amount=amount,
+    #                 product_for_sales_id=new_item.id,
+    #             )
+    #             db.session.add(new_payment)
 
-        db.session.commit()
-        print("All data saved successfully!")  # แจ้งเตือนว่าเซฟสำเร็จ
-    else:
-        print("Error: term_detail_list and installments_list do not match in length.")    
+    #     db.session.commit()
+    #     print("All data saved successfully!")  # แจ้งเตือนว่าเซฟสำเร็จ
+    # else:
+    #     print("Error: term_detail_list and installments_list do not match in length.")    
         
     if organization_ids:
         for organization_id in organization_ids:
@@ -631,8 +682,8 @@ def updateProductSale():
     # รับค่าจาก request.form
     id = request.form.get('id') or None
     name = request.form.get('name_product') or None
-    year = request.form.get('year') or ''
-    price = request.form.get('price') or None
+    year = request.form.get('selectedYear') or ''
+    # price = request.form.get('price') or None
     product_category_id = request.form.get('productCategory') or None
     country_id = request.form.get('country') or None
     period_id = request.form.get('period') or None
@@ -646,10 +697,10 @@ def updateProductSale():
     start = datetime.strptime(request.form.get("start"), "%d-%m-%Y") if request.form["start"] else None 
     end = datetime.strptime(request.form.get("end"), "%d-%m-%Y") if request.form["end"] else None
     
-    if price:
-        price = float(price.replace(',', ''))  # 
-    else:
-        price = None 
+    # if price:
+    #     price = float(price.replace(',', ''))  # 
+    # else:
+    #     price = None 
         
     try:
         country_id = int(country_id) if country_id and country_id.isdigit() else None
@@ -661,6 +712,8 @@ def updateProductSale():
 
     # 
     
+    price_str = request.form.get(f'price_{year}', '0').replace(',', '')
+    price = Decimal(price_str or '0')
 
     thisItem = ProductForSalesModel.query.filter_by(id=id).first()
     if thisItem:
@@ -678,53 +731,108 @@ def updateProductSale():
     db.session.commit()
     
     
-
-    installments_list = request.form.getlist('installments')  
-    term_detail_list = request.form.getlist('term_detail') 
-    term_id_list = request.form.getlist('term_id')
+    term_years = request.form.getlist('term_year[]')
+    print(term_years)
+    print(f"price_2025: {request.form.get('price_2025')}")
     
-    db.session.query(installmentsPaymentModel).filter(installmentsPaymentModel.product_for_sales_id == thisItem.id).delete()
-    db.session.commit()
 
    
+
     
-    # ตรวจสอบว่าลิสต์ไม่ว่าง และมีขนาดเท่ากัน
-    if term_detail_list and installments_list and len(term_detail_list) == len(installments_list):
-        for i, (term, amount) in enumerate(zip(term_detail_list, installments_list)):
-            term = term.strip()  # ลบช่องว่าง
-            amount = amount.strip()  # ลบช่องว่าง
-            amount = amount.replace(',', '')
-            
-            if term_id_list and i < len(term_id_list) and term_id_list[i].strip():  # เช็คว่ามี term_id หรือไม่
-                term_id = term_id_list[i].strip()
-                existing_item = installmentsPaymentModel.query.filter_by(id=term_id).first()
+    for year in term_years:
+        ids = request.form.getlist(f'term_id_{year}[]')
+        amounts = request.form.getlist(f'installments_{year}[]')
+        details = request.form.getlist(f'term_detail_{year}[]')
+        price_str = request.form.get(f'price_{year}', '0').replace(',', '')
+        price = Decimal(price_str or '0')
 
-                if existing_item:  # ถ้ามีข้อมูลเดิมอยู่ ให้ทำการอัปเดต
-                    print(f"Updating: term_id={term_id}, term_detail={term}, amount={amount}")
-                    existing_item.term_detail = term
-                    existing_item.amount = amount
-                else:  # ถ้า term_id ไม่พบในฐานข้อมูล ให้เพิ่มใหม่
-                    print(f"Adding new (term_id not found): term_detail={term}, amount={amount}")
-                    new_item = installmentsPaymentModel(
-                        term_detail=term,
-                        amount=amount,
-                        product_for_sales_id=thisItem.id,
-                    )
-                    db.session.add(new_item)
+        print(f"ปี {year} | งวด {len(amounts)} | รายละเอียด {len(details)}")
 
-            else:  # ถ้าไม่มี term_id หรือจำนวนไม่ตรง ให้เพิ่มข้อมูลใหม่
-                print(f"Adding new: term_detail={term}, amount={amount}")
-                new_item = installmentsPaymentModel(
-                    term_detail=term,
-                    amount=amount,
-                    product_for_sales_id=thisItem.id,
-                )
-                db.session.add(new_item)
+        # 🟥 ดึง id ที่มีอยู่ใน DB สำหรับปีนี้
+        existing_ids_in_db = [
+            str(x.id) for x in installmentsPaymentModel.query.filter_by(
+                year=year,
+                product_for_sales_id=thisItem.id
+            ).all()
+        ]
 
-        db.session.commit()
-        print("All data saved successfully!")  # แจ้งเตือนว่าเซฟสำเร็จ
-    else:
-        print("Error: term_detail_list and installments_list do not match in length.")
+        # 🟩 หา id ที่หายไป
+        ids_from_form = [id.strip() for id in ids if id.strip()]
+        ids_to_delete = set(existing_ids_in_db) - set(ids_from_form)
+
+        # 🔥 ลบรายการที่ไม่มีในฟอร์มแล้ว
+        if ids_to_delete:
+            installmentsPaymentModel.query.filter(
+                installmentsPaymentModel.id.in_(ids_to_delete)
+            ).delete(synchronize_session=False)
+
+        for i in range(len(amounts)):
+            amount = Decimal(amounts[i].replace(',', ''))
+            detail = details[i].strip()
+            term_id = ids[i].strip() if i < len(ids) else None
+
+            if term_id:
+                existing = installmentsPaymentModel.query.filter_by(id=term_id).first()
+                if existing:
+                    existing.term_detail = detail
+                    existing.amount = amount
+                    existing.year = year
+                    existing.price = price
+                    continue
+
+        
+            db.session.add(installmentsPaymentModel(
+                term_detail=detail,
+                amount=amount,
+                year=year,
+                price=price,
+                product_for_sales_id=thisItem.id
+            ))
+
+    db.session.commit()
+    # installments_list = request.form.getlist('installments')  
+    # term_detail_list = request.form.getlist('term_detail') 
+    # term_id_list = request.form.getlist('term_id')
+    # term_year_list = request.form.getlist('term_year')  # 🟩 ดึงปีมาด้วย
+
+
+    # db.session.query(installmentsPaymentModel).filter(
+    # installmentsPaymentModel.product_for_sales_id == thisItem.id).delete()
+    # db.session.commit()
+
+    # # ตรวจสอบและบันทึก
+    # if term_detail_list and installments_list and len(term_detail_list) == len(installments_list):
+    #     for i in range(len(installments_list)):
+    #         term = term_detail_list[i].strip()
+    #         amount = installments_list[i].strip().replace(',', '')
+    #         year = term_year_list[i].strip() if i < len(term_year_list) else None
+
+    #         if term_id_list and i < len(term_id_list) and term_id_list[i].strip():
+    #             term_id = term_id_list[i].strip()
+    #             existing_item = installmentsPaymentModel.query.filter_by(id=term_id).first()
+    #             if existing_item:
+    #                 existing_item.term_detail = term
+    #                 existing_item.amount = amount
+    #                 existing_item.year = year
+    #             else:
+    #                 db.session.add(installmentsPaymentModel(
+    #                     term_detail=term,
+    #                     amount=amount,
+    #                     year=year,
+    #                     product_for_sales_id=thisItem.id
+    #                 ))
+    #         else:
+    #             db.session.add(installmentsPaymentModel(
+    #                 term_detail=term,
+    #                 amount=amount,
+    #                 year=year,
+    #                 product_for_sales_id=thisItem.id
+    #             ))
+
+    #     db.session.commit()
+    #     print("All data saved successfully!")  # แจ้งเตือนว่าเซฟสำเร็จ
+    # else:
+    #     print("Error: term_detail_list and installments_list do not match in length.")
 
     
    
@@ -928,5 +1036,50 @@ def delete_img():
     db.session.commit()
 
     return redirect(url_for('product_blueprint.EditProductSales', id=product_id))
+
+
+@blueprint.route('/save_payment', methods=['POST'])
+def save_payment():
+    data = request.get_json()
+    year = data.get('year')
+    price = data.get('price')
+    term = data.get('term')
+    product_id = data.get('product_id')
+    terms = data.get('terms', [])
+
+    try:
+        # อัปเดตราคาขายของสินค้าหลัก
+        product = ProductForSalesModel.query.get(product_id)
+        if product:
+            product.price = price
+            product.term_of_payment_id = term
+
+        # ลูป terms แล้วอัปเดต/เพิ่ม
+        for t in terms:
+            term_id = t.get('id')
+            detail = t.get('detail')
+            amount = t.get('amount')
+
+            if term_id:  # ถ้ามี id ให้แก้ไข
+                inst = installmentsPaymentModel.query.get(term_id)
+                if inst:
+                    inst.term_detail = detail
+                    inst.amount = amount
+            else:  # ถ้ายังไม่มี ให้เพิ่มใหม่
+                new_payment = installmentsPaymentModel(
+                    product_for_sales_id=product_id,
+                    year=year,
+                    term_detail=detail,
+                    amount=amount
+                )
+                db.session.add(new_payment)
+
+        db.session.commit()
+        return jsonify({"status": "success"})
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"status": "error", "message": str(e)})
+
 
 

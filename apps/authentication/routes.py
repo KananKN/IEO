@@ -6,7 +6,7 @@ from flask_login import (
     logout_user
 )
 
-from flask import Flask, current_app, request, session
+from flask import Flask, current_app, request, session, jsonify
 
 from flask_dance.contrib.github import github
 
@@ -167,6 +167,7 @@ def get_countries_by_category(category_id):
         .distinct().all()
     return jsonify([{'id': c.id, 'name': c.name} for c in countries])
 
+
 @blueprint.route('/api/get_projects/<int:category_id>/<int:country_id>')
 def get_projects(category_id, country_id):
     products = ProductForSalesModel.query.filter_by(
@@ -174,6 +175,21 @@ def get_projects(category_id, country_id):
         country_id=country_id
     ).all()
     return jsonify([{'id': p.id, 'name': p.name} for p in products])
+
+
+@blueprint.route('/api/get_projects_bulk', methods=['POST'])
+def get_projects_bulk():
+    data = request.get_json()
+    category_id = data.get('category_id')
+    country_ids = data.get('country_ids', [])
+
+    # สมมุติใช้ SQLAlchemy
+    projects = db.session.query(ProductForSalesModel).filter(
+        ProductForSalesModel.product_category_id == category_id,
+        ProductForSalesModel.country_id.in_(country_ids)
+    ).all()
+
+    return jsonify([{'id': p.id, 'name': p.name} for p in projects])
 
 @blueprint.route('/logout')
 def logout():
@@ -423,36 +439,42 @@ def register_api():
     # user = UserModel(username=username, password=password, role_id=role.id)
     # db.session.add(user)
     # db.session.commit()
-    birth_date_raw = data.get('birth_date')
+    # birth_date_raw = data.get('birth_date')
 
-    if birth_date_raw:
-        try:
-            birth_date_str = birth_date_raw.replace('/', '-')
-            birth_date = datetime.strptime(birth_date_str, "%d-%m-%Y")
-        except ValueError:
-            birth_date = None
-    else:
-        birth_date = None
+    # if birth_date_raw:
+    #     try:
+    #         birth_date_str = birth_date_raw.replace('/', '-')
+    #         birth_date = datetime.strptime(birth_date_str, "%d-%m-%Y")
+    #     except ValueError:
+    #         birth_date = None
+    # else:
+    #     birth_date = None
 
     # เตรียมข้อมูล
     agency_id = data.get('agency_id')
     agency_id = int(agency_id) if agency_id not in [None, '', 'None'] else None
 
-    print("Raw agency_id:", data.get('agency_id'))
-    print("Final agency_id:", agency_id)
+    # print("Raw agency_id:", data.get('agency_id'))
+    # print("Final agency_id:", agency_id)
 
     email = data.get('email')
     tel = data.get('phone')
-    product_id = data.get('project')
-    product = ProductForSalesModel.query.filter_by(id=product_id).first()
-
+    product_ids = data.getlist('project[]') or []
+    if not product_ids:
+        product_ids = []
+    elif isinstance(product_ids, str):
+        product_ids = [product_ids]
+        
     first_name = data.get('fullname')
     last_name = data.get('lastname')
+    first_nameEN = data.get('first_nameEN')
+    last_nameEN = data.get('lastnameEN')
+    year = data.get('inputYear')
     gender = data.get('gender')
     line_id = data.get('line_id')
     nick_name = data.get('nickname')
     category_id = data.get('category')
-    country_id = data.get('country')
+    country_id = data.getlist('country[]') or []
     social = data.get('social')
     remask = data.get('remask')
 
@@ -468,17 +490,19 @@ def register_api():
         lead = leadModel(
             first_name=first_name,
             last_name=last_name,
+            first_nameEN=first_nameEN,
+            last_nameEN=last_nameEN,
+            year=year,
             tel=tel,
             email=email,
             status='new',
             gender=gender,
             line_id=line_id,
-            birth_date=birth_date,
             nick_name=nick_name,
             category_id=category_id,
-            country_id=country_id,
+            # country_id=country_id,
             agency_id=referred_by_id,
-            product_id=product_id,
+            # product_id=product_id,
             social=social,
             remask=remask
         )
@@ -489,15 +513,17 @@ def register_api():
         lead.first_name = first_name
         lead.last_name = last_name
         lead.nick_name = nick_name
+        lead.first_nameEN=first_nameEN,
+        lead.last_nameEN=last_nameEN,
+        lead.year=year,
         lead.tel = tel
         lead.email = email
         lead.gender = gender
         lead.line_id = line_id
-        lead.birth_date = birth_date
         lead.agency_id = agency_id
         lead.category_id = category_id
-        lead.country_id = country_id
-        lead.product_id = product_id
+        # lead.country_id = country_id
+        # lead.product_id = product_id
         lead.social = social
         lead.remask = remask
 
@@ -511,14 +537,28 @@ def register_api():
     #     lead_program.status = 'pending'
     #     lead_program.remask = remask
     # else:
-    lead_program = LeadProgram(
-            lead_id=lead.id,
-            product_id=product.id,
-            agency_id=agency_id,
-            status='new',
-            remask=remask
-        )
-    db.session.add(lead_program)
+    for pid in product_ids:
+        try:
+            pid = int(pid)
+            product = ProductForSalesModel.query.filter_by(id=pid).first()
+            if not product:
+                print(f"[Warning] ไม่พบ product_id: {pid}")
+                continue
+
+            lead_program = LeadProgram(
+                lead_id=lead.id,
+                product_id=product.id,
+                year=year,
+                agency_id=agency_id,
+                status='new',
+                remask=remask
+            )
+            db.session.add(lead_program)
+
+        except ValueError:
+            print(f"[Error] product_id ไม่ถูกต้อง: {pid}")
+            continue
+
 
     db.session.commit()
 

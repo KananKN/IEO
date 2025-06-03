@@ -128,12 +128,15 @@
                                 </div>
                             </div>
                     </div>
-                    <div class="row mb-3"  hidden>
-                        <label class="form-label col-form-label col-md-4">Year</label>
-                        <div class="col-md-8">
-                            <input  class="form-control"  name="year" id="i_year"  value="{{datas.year}}"  display data-parsley-required="true"/>
+                    
+
+                    <div class="form-group row">
+                        <label class="form-label col-form-label col-lg-4">รายละเอียดโครงการ</label>
+                        <div class="col-lg-8">
+                            <textarea class="form-control" id="detail" rows="4" cols="50"  name="detail" placeholder="" >{{datas.detail}}</textarea>
                         </div>
                     </div> 
+
                    
 
                 </div>  
@@ -168,27 +171,73 @@
                                 {% endif %}
                             </div>
 
-
-                            
-
                         </div>
                     </div>
-                   <div class="row mb-15px">
-                        <label class="form-label col-form-label col-md-4">ราคาขาย</label>
+                    <div class="row mt-15px">
+                        <label class="form-label col-form-label col-md-4">ไฟล์โครงการ</label>
 
                         <div class="col-md-8">
-                            <input  class="form-control price-input"  name="price" id="i_price" value="{{datas.price}}" oninput="formatNumberWithCommas(this)" 
-           onblur="formatNumberWithCommas(this)"  data-parsley-required="true"/>
-                            
+                            <input class="form-control" type="file" id="formFile_file" name="formFile_file" multiple accept=".pdf,"  onchange="validateFile(this)"/>
                         </div>
+                        {% for file_data in file_data %}
+                            {% if file_data.file_type == 1 %}
+                                <div class="row mt-2">
+                                    <div class="col-md-4">
+                                        
+                                    </div>
+                                    <div class="col-md-8 col-sm-12 col-xs-12 mt-10px text-ellipsis">
+                                        <a href="{{ url_for('product_blueprint.downloadFile', filename=file_data.filename)}}" style="text-decoration: none; color: black;"><i class="fas fa-lg fa-fw ms-5px  fa-file"></i> <span>{{ file_data.filename }}</span></a> <a onclick="sweetAlertDelSign({{file_data.id}},{{datas.id}})"><i class="fas fa-lg fa-fw mx-5px fa-trash-can text-danger c_trash"></i></a>  </div>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
                     </div>
+                   
                    <div class="row mb-15px" hidden>
                         <label class="form-label col-form-label col-md-4">ราคาทุน</label>
                         <div class="col-md-8">
                             <input  class="form-control"  name="cost" id="i_cost"  value=""  display data-parsley-required="true"/>
                         </div>
                     </div>
-                   <div class="row mb-15px">
+                   
+                </div>
+                                
+            </div>
+            <input type="" id="defaultProductYear" hidden value="{{ datas.year }}">
+
+
+            <hr class="my-3">
+            <h5>Price List</h5>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="row mb-3" >
+                        <label class="form-label col-form-label col-md-4">Year</label>
+                        <input type="hidden" id="paymentData" value='{{ grouped_payments | tojson }}'>
+
+                        <div class="col-md-4">
+                            {% set default_year = datas.year %}
+                            <select name="inputYear" id="inputYear" class="default-select2 form-control">
+                                {% for year in range(2020, 2031) %}
+                                    <option value="{{ year }}" {% if year == (default_year | int) %}selected{% endif %}>{{ year }}</option>
+                                {% endfor %}
+                            </select>
+                            
+                            
+                        </div>
+                        <div class="col-md-4 text-end" >
+
+                            <!-- <button type="button"  class="btn btn-blue"  onclick="func_add_payment()">Save</button> -->
+                            <button type="button"  class="btn btn-blue"  id="btnAddToTable">เพิ่มข้อมูลในตาราง</button>
+                        </div>
+                    </div> 
+                    <div class="row mb-15px" >
+                        <label class="form-label col-form-label col-md-4">ราคาขาย</label>
+                        
+                        <div class="col-md-4">
+                            <!-- <input  class="form-control price-input"  name="price" id="i_prices" value="{{ '{:,.2f}'.format(datas.price|float) }}" oninput="formatNumberWithCommas(this)"  data-parsley-required="true"/> -->
+                            <input  class="form-control price-input"  name="price" id="i_prices" value=""  oninput="formatNumberWithCommas(this)"  data-parsley-required="true"/>
+                        </div>
+                    </div>
+                    <div class="row mb-15px">
                         <label class="form-label col-form-label col-md-4">Term Of Payment</label>
                         <div class="col-md-8">
                            <select class="default-select2 form-control"  name="term" id="i_term" >
@@ -208,9 +257,70 @@
 
                     </div>
                 </div>
-                                
-            </div>
+                <div class="col-sm-6">
+                    <table class="table" id="priceTable">
+                        <thead>
+                            <tr>
+                                <th>Select</th>
+                                <th>Year</th>
+                                <th>Price</th>
+                                <th>Term 1</th>
+                                <th>Term 2</th>
+                                <th class="w-100px">Term 3</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            {% for year, items in grouped_payments.items() %}
+                                <tr data-year="{{ year }}">
+                                    <td class="text-center align-middle">
+                                        <input type="radio"  name="selectedYear" value="{{ year }}" {% if year == datas.year %}checked{% endif %}>
+                                    </td>
+                                    <td><input class="form-control w-75px" name="term_year[]" value="{{ year }}">
+                                        <div class="invalid-feedback">ปีนี้ซ้ำกับรายการอื่น</div>
 
+                                    </td>
+
+                                    {# รวมราคารวม #}
+                                    <td>
+                                        <input class="form-control " name="price_{{year}}" value="{{ '{:,.2f}'.format((items[0].price if items|length > 0 and items[0].price|float != 0 else datas.price)|float) }}"
+                                        oninput="formatNumberWithCommas(this)">
+                                    </td>
+
+                                    {% set sorted_items = items|sort(attribute='id') %}
+                                    {% for i in range(sorted_items|length) %}
+                                        {% if i < 3 %}
+                                            <td>
+                                                <input class="form-control" name="term_id_{{year}}[]" hidden value="{{ sorted_items[i].id }}" oninput="formatNumberWithCommas(this)">
+                                                <input class="form-control" name="installments_{{year}}[]" value="{{ '{:,.2f}'.format(sorted_items[i].amount|float) }}" oninput="formatNumberWithCommas(this)">
+                                                <input class="form-control" name="term_detail_{{year}}[]" hidden value="{{ sorted_items[i].term_detail }}">
+                                            </td>
+                                        {% else %}
+                                            <td class="d-none">
+                                                <input class="form-control" name="term_id_{{year}}[]" hidden value="{{ sorted_items[i].id }}" oninput="formatNumberWithCommas(this)">
+                                                <input class="form-control" name="installments_{{year}}[]" value="{{ '{:,.2f}'.format(sorted_items[i].amount|float) }}" oninput="formatNumberWithCommas(this)">
+                                                <input class="form-control" name="term_detail_{{year}}[]" hidden value="{{ sorted_items[i].term_detail }}">
+                                            </td>
+                                        {% endif %}
+                                    {% endfor %}
+
+                                    {# Term 1, 2, 3 ตามลำดับ #}
+                                    <!-- {% for i in range(3) %}
+                                        <td>
+                                            {% if items[i] %}
+                                                <input class="form-control" name="term{{ i+1 }}" value="{{ '{:,.2f}'.format(items[i].amount|float) }}">
+                                            {% else %}
+                                                <input class="form-control" name="term{{ i+1 }}" value="">
+                                            {% endif %}
+                                        </td>
+                                    {% endfor %} -->
+                                </tr>
+                            {% endfor %}
+
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
             <hr class="my-3">
             <div class="row" >
                 <div class="col-sm-6" >
@@ -249,6 +359,9 @@
                             
                         </div>
                     </div>
+                    
+                </div>
+                <div class="col-sm-6">
                     <div class="row mb-15px" >
                         <label class="form-label col-form-label col-md-4">University</label>
                         <div class="col-md-8">
@@ -271,32 +384,7 @@
                             </select>
                         </div>
                     </div>
-                </div>
-                <div class="col-sm-6">
-                    <div class="form-group row">
-                        <label class="form-label col-form-label col-lg-4">รายละเอียดโครงการ</label>
-                        <div class="col-lg-8">
-                            <textarea class="form-control" id="detail" rows="4" cols="50"  name="detail" placeholder="" >{{datas.detail}}</textarea>
-                        </div>
-                    </div> 
-                    <div class="row mt-15px">
-                    <label class="form-label col-form-label col-md-4">ไฟล์โครงการ</label>
-
-                    <div class="col-md-8">
-                        <input class="form-control" type="file" id="formFile_file" name="formFile_file" multiple accept=".pdf,"  onchange="validateFile(this)"/>
-                    </div>
-                    {% for file_data in file_data %}
-                        {% if file_data.file_type == 1 %}
-                            <div class="row mt-2">
-                                <div class="col-md-4">
-                                    
-                                </div>
-                                <div class="col-md-8 col-sm-12 col-xs-12 mt-10px text-ellipsis">
-                                    <a href="{{ url_for('product_blueprint.downloadFile', filename=file_data.filename)}}" style="text-decoration: none; color: black;"><i class="fas fa-lg fa-fw ms-5px  fa-file"></i> <span>{{ file_data.filename }}</span></a> <a onclick="sweetAlertDelSign({{file_data.id}},{{datas.id}})"><i class="fas fa-lg fa-fw mx-5px fa-trash-can text-danger c_trash"></i></a>  </div>
-                            </div>
-                        {% endif %}
-                    {% endfor %}
-                </div>
+                    
                 </div>
                 
             </div>
@@ -306,7 +394,7 @@
           
         </div>
         <div class="hljs-wrapper">
-            <pre><code class="html hljs language-xml" data-url="../assets/data/ui-widget-boxes/code-11.json" data-highlighted="yes"></code></pre>
+            <!-- <pre><code class="html hljs language-xml" data-url="../assets/data/ui-widget-boxes/code-11.json" data-highlighted="yes"></code></pre> -->
         </div>
     </div>
         	
@@ -346,25 +434,75 @@
 <script src="{{ config.ASSETS_ROOT }}/js/demo/render.highlight.js"></script>
 <script src="{{ config.ASSETS_ROOT }}/js/productForSales/mainUpdateProduct.js?v=1.01"></script>
 <script>
+    const datas = {
+        price: "{{ datas.price|default('0.00') }}",
+    };
 
+    const yearPriceMap = {
+        {% for year, items in grouped_payments.items() %}
+            "{{ year }}": "{{ (items[0].price if items and items[0].price|float != 0 else datas.price) }}",
+        {% endfor %}
+    };
+    //console.log("ปีและราคาใน yearPriceMap:", yearPriceMap);
+    const selectedYear = {{ datas.year|tojson }};
 $(document).ready(function () {
+    sortTableByYear(true);  
+
+   
+    //-----------------------------
+    function formatNumberWithCommas(x) {
+        return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+    function updatePriceByYear(selectedYear) {
+        let priceStr = yearPriceMap[selectedYear]
+        || yearDataStore[selectedYear]?.price
+        || datas.price
+        || '0.00';
+        let price = parseFloat(priceStr);
+        //if (isNaN(price)) price = 0;
+        //console.log("ปีที่เลือก:", selectedYear, "ราคา:", price); 
+
+        $('#i_prices').val(formatNumberWithCommas(price.toFixed(2)));
+    }
+
+    // ✅ 1. ตั้งค่าตอนโหลดหน้า
+    const initialYear = $('#inputYear').val();
+    updatePriceByYear(initialYear);
+
+    // ✅ 2. เมื่อ user เปลี่ยนปีใน dropdown
+    $('#inputYear').on('change', function () {
+        const selectedYear = $(this).val();
+        updatePriceByYear(selectedYear);
+    });
+
+
+
+
+    //-----------------------------
+    /*
     function generateInputs(termValue, payments = []) {
-        let termNumber = parseInt(termValue, 10); 
-        let extraInputsContainer = $("#extra-inputs");
+        //let termNumber = parseInt(termValue, 10);
 
-        extraInputsContainer.empty(); 
+        if (isNaN(termNumber) && payments.length) {
+            termNumber = payments.length;
+        }
 
-        if (!isNaN(termNumber) && termNumber > 0) { 
+        let extraInputsContainer = $('#extra-inputs');
+        extraInputsContainer.empty();
+
+        if (!isNaN(termNumber) && termNumber > 0) {
+            payments.sort((a, b) => a.id - b.id);
             for (let i = 0; i < termNumber; i++) {
-                let defaultID = payments[i] ? payments[i].id : "";
-                let defaultDetail = payments[i] ? payments[i].term_detail : "";
-                let defaultAmount = payments[i] ? payments[i].amount : "";
+                let defaultID = payments[i] ? payments[i].id || '' : '';
+                let defaultDetail = payments[i] ? payments[i].term_detail || '' : '';
+                let defaultAmount = payments[i] ? payments[i].amount || '' : '';
 
                 let newRow = `
                     <div class="row mb-15px">
                         <label class="form-label col-form-label col-md-4">จำนวนงวด ${i + 1}</label>
                         <div class="col-md-4">
-                            <input type="text" class="form-control" hidden name="term_id" value="${defaultID}" placeholder="รายละเอียด">
+                            <input type="text" class="form-control" hidden name="term_id[]" value="${defaultID}">
                             <input type="text" class="form-control" name="term_detail" value="${defaultDetail}" placeholder="รายละเอียด">
                         </div>
                         <div class="col-md-4">
@@ -376,17 +514,28 @@ $(document).ready(function () {
             }
         }
     }
-
+    */               
     let payments = JSON.parse($("#paymentData").val() || "[]");
 
     let initialTermValue = $("#i_term").val();
     if (initialTermValue) {
         generateInputs(initialTermValue, payments);
     }
-
+    
     $("#i_term").change(function () {
         let termValue = $(this).val().trim();
-        generateInputs(termValue, payments);
+        let currentYear = $('#inputYear').val();
+
+        // 🔁 ดึงข้อมูลปีปัจจุบัน (ถ้ามี)
+        let currentData = yearDataStore[currentYear];
+
+        // 👇 ถ้ามีข้อมูลเดิมของปีนี้ ใช้ payments เดิม (ไม่ให้ข้อมูลหาย)
+        if (currentData && Array.isArray(currentData.payments)) {
+            generateInputs(termValue, currentData.payments);
+        } else {
+            // ถ้าไม่มีข้อมูลเดิม ใช้ termValue เพื่อสร้างเปล่าๆ
+            generateInputs(termValue, []);
+        }
     });
 
    $(".price-input").each(function () {
@@ -394,13 +543,361 @@ $(document).ready(function () {
         if (!isNaN(value) && $.trim(value) !== '') {
             $(this).val(parseFloat(value).toLocaleString('en-US')); // ใส่ comma อัตโนมัติ
         }
+    }); 
+
+//-----------------------------------------------------//
+    let yearDataStore = {};
+    
+    // ฟังก์ชันสร้าง input งวดตาม term และข้อมูล payments
+    function generateInputs(termValue, payments = []) {
+        
+        let termNumber = parseInt(termValue, 10);
+        let extraInputsContainer = $('#extra-inputs');
+        extraInputsContainer.empty();
+
+        if (!Array.isArray(payments)) {
+            payments = [];
+        }
+    
+        if (isNaN(termNumber) && payments.length > 0) {
+            termNumber = payments.length;
+        }
+
+        if (!isNaN(termNumber) && termNumber > 0) {
+            payments.sort((a, b) => a.id - b.id);    
+
+            for (let i = 0; i < termNumber; i++) {
+                let defaultID = payments[i] ? payments[i].id : '';
+                let defaultDetail = payments[i] ? payments[i].term_detail : '';
+                let defaultAmount = payments[i] ? payments[i].amount : '';
+                // 🔧 ล้าง comma ก่อน parse และ format
+                let formattedAmount = defaultAmount
+                ? parseFloat(defaultAmount.toString().replace(/,/g, '')).toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                })
+                : '';
+
+                //console.log(defaultID)
+                //console.log(`index ${i} — id: ${defaultID}, detail: ${defaultDetail}, amount: ${defaultAmount}`);
+
+                let newRow = `
+                    <div class="row mb-15px">
+                        <label class="form-label col-form-label col-md-4">จำนวนงวด ${i + 1}</label>
+                        <div class="col-md-4">
+                            <input type="text" class="form-control" name="term_id[]" hidden  value="${defaultID}" placeholder="รหัส">
+                            <input type="text" class="form-control" name="term_detail" value="${defaultDetail}" placeholder="รายละเอียด">
+                        </div>
+                        <div class="col-md-4">
+                            <input type="text" class="form-control price-input" name="installments" value="${formattedAmount}" oninput="formatNumberWithCommas(this)" placeholder="จำนวนงวด ${i + 1}">
+                        </div>
+                    </div>
+                `;
+                extraInputsContainer.append(newRow);
+            }
+        }
+    }
+
+    // ฟังก์ชันรวบรวมข้อมูลฟอร์มปัจจุบันไว้ใน object
+    function gatherFormData() {
+        let year = $('#inputYear').val();
+
+        let payments = [];
+        $('#extra-inputs .row').each(function () {
+            let amount = $(this).find('input[name="installments"]').val().replace(/,/g, '');
+            let term_detail = $(this).find('input[name="term_detail"]').val() || '';
+            let term_id = $(this).find('input[name="term_id[]"]').val() || '';
+
+            payments.push({
+                amount: amount,
+                term_detail: term_detail,
+                id: term_id  // เก็บ id ลงใน array ด้วย
+            });
+        });
+
+        return {
+            year: year,
+            payments: payments,
+            price: parseFloat($('#i_prices').val().replace(/,/g, '') || 0),
+            term: payments.length.toString()
+        };
+    }
+
+    // ดึงข้อมูล payments จาก inputs
+    function getPaymentsData() {
+        let payments = [];
+        $('#extra-inputs .row').each(function () {
+            let id = $(this).find('input[name="term_id"]').val();
+            let detail = $(this).find('input[name="term_detail"]').val();
+            let amount = $(this).find('input[name="installments"]').val();
+            payments.push({ id: id, term_detail: detail, amount: amount });
+
+            //console.log(payments)
+        });
+        return payments;
+    }
+
+    // ฟังก์ชันแสดงข้อมูลลงฟอร์ม
+    function populateForm(data) {
+        $('#i_price').val(data.price || '');
+        $('#i_term').val(data.term || '').trigger('change'); // สร้าง input งวดใหม่
+        $('#paymentData').val(JSON.stringify(data.payments || []));
+
+        let payments = Array.isArray(data.payments) ? data.payments : [];
+        // แสดง inputs งวดจากข้อมูล payments
+        generateInputs(data.term, data.payments);
+    }
+
+
+    // ฟังก์ชันล้างฟอร์มทั้งหมด
+    function clearForm() {
+        $('#i_prices').val(0);
+        $('#i_term').val('').trigger('change');
+        $('#paymentData').val('');
+        $('#extra-inputs').empty();
+    }
+    let groupedPayments = {{ grouped_payments|tojson|safe }};
+    //console.log('Original groupedPayments:', groupedPayments);
+
+    // แปลงโครงสร้างข้อมูลให้ตรงกับที่ต้องการ
+    for (let year in groupedPayments) {
+        const paymentsArray = groupedPayments[year];
+        console.log("Before map:", paymentsArray);
+    
+        if (Array.isArray(paymentsArray) && paymentsArray.length > 0) {
+            yearDataStore[year] = {
+                year: year,
+                payments: paymentsArray.map(function(payment) {
+                    console.log('Inside map:', payment);  // 🟨 Debug ตรงนี้ด้วย
+                    return {
+                        amount: payment.amount,
+                        term_detail: payment.term_detail,
+                        id: payment.id
+                    };
+                }),
+                price: paymentsArray[0].price,
+                term: paymentsArray.length.toString()
+            };
+        }
+    }
+
+    console.log("Updated yearDataStore:", yearDataStore);
+
+    //------------------ เปลี่ยนปี --------------------------------
+    // โหลดข้อมูลปีเริ่มต้น
+    let currentYear = $('#inputYear').val();
+    sessionStorage.setItem('selectedYear', currentYear);
+
+    // ถ้ามีข้อมูลใน paymentData ให้โหลดเป็น JSON (สำหรับ fallback)
+    let initialPayments = JSON.parse($('#paymentData').val() || "[]");
+    let initialTerm = $('#i_term').val();
+    let initialTermDetail = $('#i_termDetail').val();
+
+    // ถ้ามีข้อมูลในปีปัจจุบัน ให้ใช้ข้อมูลนั้น ไม่งั้นใช้ข้อมูลเริ่มต้น
+    if (yearDataStore[currentYear]) {
+        populateForm(yearDataStore[currentYear]);
+        // อัพเดท i_term ด้วย
+        $('#i_term').val(yearDataStore[currentYear].term);
+        generateInputs(yearDataStore[currentYear].term, yearDataStore[currentYear].payments);
+    } else if (initialTerm) {
+        generateInputs(initialTerm, initialPayments);
+    }
+
+    // 🔁 เมื่อเปลี่ยนปี inputYear ให้โหลดข้อมูลกลับหรือเคลียร์ฟอร์ม
+    $('#inputYear').change(function () {
+        /*let selectedYear = $(this).val();
+        sessionStorage.setItem('selectedYear', selectedYear);
+
+        if (yearDataStore[selectedYear]) {
+            populateForm(yearDataStore[selectedYear]);
+        } else {
+            clearForm();
+        }*/
+        let selectedYear = $(this).val();
+        let data = yearDataStore[selectedYear];
+
+        if (data) {
+            populateForm(data); // แสดงฟอร์มปีนั้น
+            updatePriceByYear(selectedYear); 
+        } else {
+            clearForm(); // ปีที่ยังไม่มีข้อมูล
+        }
     });
+
+    
+
+    //-------------------------  ปุ่มกดเพิ่มม --------------------------------//
+    $('#btnAddToTable').click(function () {
+        let year = $('#inputYear').val();
+        let price = $('#i_prices').val();
+        let term = $('#i_term').val();
+        let term_detail = $('#i_termDetail').val();
+
+        // เก็บค่าจากฟิลด์ term_detail และ installments
+        let termAmounts = [];
+        let termDetails = [];
+        let termIDs = [];
+        $('#extra-inputs .row').each(function () {
+            let amount = $(this).find('input[name="installments"]').val().replace(/,/g, '');
+            let detail = $(this).find('input[name="term_detail"]').val() || '';
+            let id = $(this).find('input[name="term_id[]"]').val() || '';
+            
+            //termAmounts.push(amount || '');
+            //termDetails.push(detail);
+            //termIDs.push(id);
+            if (amount && parseFloat(amount) !== 0) {
+                termAmounts.push(amount);
+                termDetails.push(detail);
+                termIDs.push(id);
+            }
+
+        });
+
+        // รองรับ term1 ถึง term3
+        //while (termAmounts.length < 3) {
+        //    termAmounts.push('');
+        //    termDetails.push('');
+        //   termIDs.push('');
+        //}
+
+        // 🔸 ตรวจสอบว่ามีแถวปีนี้อยู่แล้วหรือยัง
+        let $existingRow = $(`#tableBody tr[data-year="${year}"]`);
+        if ($existingRow.length) {
+            $existingRow.remove();
+        }
+
+
+        let newRow = `
+            <tr data-year="${year}">
+                <td class="text-center align-middle">
+                    <input type="radio" name="selectedYear" value="${year}" ${year === selectedYear ? 'checked' : ''}>
+                </td>
+                <td><input class="form-control w-75px" name="term_year[]" value="${year}"></td>
+                <td><input class="form-control" name="price_${year}" value="${parseFloat(price.replace(/,/g, '') || 0).toLocaleString('en-US', {minimumFractionDigits: 2})}" oninput="formatNumberWithCommas(this)"></td>
+        `;  
+
+        for (let i = 0; i < termAmounts.length; i++) {
+            const amount = parseFloat(termAmounts[i] || 0).toLocaleString('en-US', { minimumFractionDigits: 2 });
+            const detail = termDetails[i] || '';
+            const term_id = termIDs[i] || '';
+            //const hiddenAttr = i >= visibleTerms ? ' hidden' : '';
+            const hiddenAttr = i >= 3 ? 'hidden' : '';
+            newRow += `
+                <td${hiddenAttr}>
+                    <input class="form-control" name="term_id_${year}[]" hidden value="${term_id}">
+                    <input class="form-control" name="installments_${year}[]" value="${amount}" oninput="formatNumberWithCommas(this)">
+                    <input class="form-control" name="term_detail_${year}[]" hidden value="${detail}">
+                </td>
+            `;
+        }
+
+        newRow += `</tr>`;
+
+
+        $('#tableBody').append(newRow);
+        sortTableByYear(true);
+        
+        /// 🟩 บันทึกข้อมูลปีปัจจุบัน
+        yearDataStore[year] = gatherFormData();
+
+        // 🟩 กลับไปยังปี 2025 และโหลดข้อมูลของมัน
+        let defaultYear = $('#defaultProductYear').val();
+        $('#inputYear').val(defaultYear).trigger('change');
+
+        // 🟩 โหลดข้อมูลที่บันทึกไว้
+        if (yearDataStore[defaultYear]) {
+            populateForm(yearDataStore[defaultYear]);
+        } else {
+            clearForm();
+        }
+
+        
+    });
+
+    $(document).on('input', 'input[name="term_year[]"]', function () {
+        let values = [];
+        let duplicates = false;
+    
+        $('input[name="term_year[]"]').each(function () {
+            let val = $(this).val();
+            if (val) {
+                if (values.includes(val)) {
+                    duplicates = true;
+                    return false; // เจอซ้ำให้หยุด loop
+                }
+                values.push(val);
+            }
+        });
+    
+        if (duplicates) {
+            alert('พบปีที่ซ้ำกัน กรุณาแก้ไขให้ไม่ซ้ำ');
+            $(this).addClass('is-invalid');
+        } else {
+            $('input[name="term_year[]"]').removeClass('is-invalid');
+        }
+    });
+
+    $(document).on('input', 'input[name="term_year[]"]', function () {
+        let values = [];
+        let duplicates = false;
+
+        $('input[name="term_year[]"]').each(function () {
+            let val = $(this).val();
+            if (val) {
+                if (values.includes(val)) {
+                    duplicates = true;
+                    return false;
+                }
+                values.push(val);
+            }
+        });
+
+        if (duplicates) {
+            alert('พบปีที่ซ้ำกัน กรุณาแก้ไขให้ไม่ซ้ำ');
+            $(this).addClass('is-invalid');
+            return;
+        } else {
+            $('input[name="term_year[]"]').removeClass('is-invalid');
+        }
+
+        // ✅ อัปเดตค่า data-year ของแถวที่มีการเปลี่ยน
+        let $row = $(this).closest('tr');
+        let oldYear = $row.attr('data-year');
+        let newYear = $(this).val();
+
+        if (oldYear !== newYear) {
+            // เปลี่ยน attribute
+            $row.attr('data-year', newYear);
+
+            // ✅ ย้ายข้อมูลใน yearDataStore
+            if (yearDataStore[oldYear]) {
+                yearDataStore[newYear] = { ...yearDataStore[oldYear], year: newYear };
+                delete yearDataStore[oldYear];
+            }
+
+            // ✅ อัปเดตชื่อ field input ภายในแถวนี้ให้สอดคล้องกับปีใหม่
+            $row.find('input[name^="price_"]').attr('name', `price_${newYear}`);
+            $row.find('input[name^="installments_"]').each(function (i) {
+                $(this).attr('name', `installments_${newYear}[]`);
+            });
+            $row.find('input[name^="term_detail_"]').each(function (i) {
+                $(this).attr('name', `term_detail_${newYear}[]`);
+            });
+            $row.find('input[name^="term_id_"]').each(function (i) {
+                $(this).attr('name', `term_id_${newYear}[]`);
+            });
+        }
+    });
+     
 });
+
 
 
 </script>
 <script>
-console.log({{datas|tojson|safe}})
+//console.log({{datas|tojson|safe}})
+//console.log("grouped_payments")
+//console.log({{grouped_payments|tojson|safe}})
 
 function sweetAlertDelSign(id_file,id_product) {
     swal({
@@ -434,7 +931,14 @@ function sweetAlertDelSign(id_file,id_product) {
     });
 }
 
+function formatWithCommasKeepDecimal(value) {
+    let parts = value.toString().split(".");
+    parts[0] = parseFloat(parts[0].replace(/,/g, '') || 0).toLocaleString('en-US');
+    return parts.join(".");
+}
+
 function formatNumberWithCommas(input) {
+    /*
     let value = input.value;
 
     // ลบ comma ที่มีอยู่ทั้งหมด
@@ -446,7 +950,29 @@ function formatNumberWithCommas(input) {
     }
 
     // อัปเดตค่ากลับเข้า input
-    input.value = value;
+    input.value = value; 
+    */
+    if (!input || typeof input.value !== 'string') {
+        return;
+    }
+    // ลบ comma ออกจากค่าที่ป้อน
+    let value = input.value.replace(/,/g, '');
+
+    let regex = /^\d+(\.\d{0,2})?$/;
+    if (!regex.test(value)) {
+        input.value = input.value.slice(0, -1); // ลบตัวอักษรสุดท้ายที่เกินออก
+        return;
+    }
+
+    // แปลงค่าเป็นตัวเลข
+    let number = parseFloat(value);
+
+    // แยกส่วนหน้าและส่วนทศนิยม
+    let parts = value.split('.');
+    parts[0] = parseInt(parts[0], 10).toLocaleString(); // เพิ่ม comma ให้เฉพาะส่วนหน้า
+
+    // รวมค่ากลับ
+    input.value = parts.length > 1 ? parts.join('.') : parts[0];
 }
 
 function formatNumberInter(input) {
@@ -475,6 +1001,83 @@ function formatNumberInter(input) {
     input.value = number.toLocaleString();
 }
 </script>
+<script>
+function func_add_payment() {
+    const year = $('#inputYear').val();
+    const price = parseFloat($('#i_price').val().replace(/,/g, '')) || 0;
+    const term = $('#i_term').val();
+    const product_id = $('#id-update').val();  // สมมติว่าคุณมี input ซ่อนไว้แบบนี้
+
+    const term_ids = [];
+    const term_details = [];
+    const term_amounts = [];
+
+    $('input[name="term_id"]').each(function () {
+        term_ids.push($(this).val());
+    });
+
+    $('input[name="term_detail"]').each(function () {
+        term_details.push($(this).val());
+    });
+
+    $('input[name="installments"]').each(function () {
+        let amount = parseFloat($(this).val().replace(/,/g, '')) || 0;
+        term_amounts.push(amount);
+    });
+
+    const terms = [];
+    for (let i = 0; i < term_details.length; i++) {
+        terms.push({
+            id: term_ids[i] || null,
+            detail: term_details[i],
+            amount: term_amounts[i]
+        });
+    }
+
+    const dataToSend = {
+        year: year,
+        price: price,
+        term: term,
+        product_id: product_id,
+        terms: terms
+    };
+    console.log("dataToSend")
+    console.log(dataToSend)
+    return
+    $.ajax({
+        url: "/save_payment",
+        method: "POST",
+        contentType: "application/json",
+        data: JSON.stringify(dataToSend),
+        success: function (response) {
+            if (response.status === "success") {
+                location.reload();
+            } else {
+                alert("เกิดข้อผิดพลาด: " + response.message);
+            }
+        }
+    });
+}
+
+</script>
+<script>
+    function sortTableByYear(ascending = true) {
+        let $rows = $('#tableBody tr').get();
+
+        $rows.sort(function(a, b) {
+            let yearA = parseInt($(a).data('year'), 10);
+            let yearB = parseInt($(b).data('year'), 10);
+            return ascending ? yearA - yearB : yearB - yearA;
+        });
+
+        $('#tableBody').empty(); // 🔧 ล้างก่อน
+        $.each($rows, function(index, row) {
+            $('#tableBody').append(row); // ✅ เพิ่มแถวใหม่ที่เรียงแล้ว
+        });
+    }
+</script>
+
+
 
 
 

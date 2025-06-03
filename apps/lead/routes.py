@@ -186,9 +186,10 @@ def get_userRequest():
         2: leadModel.email,
         3: leadModel.tel,
         4: ProductForSalesModel.name,
-        5: AgencyModel.first_name,
-        6: LeadProgram.created_at,
-        7: leadModel.status,
+        5: LeadProgram.year,
+        6: AgencyModel.first_name,
+        7: LeadProgram.created_at,
+        8: leadModel.status,
     }
 
     query = db.session.query(LeadProgram) \
@@ -275,14 +276,17 @@ def get_userRequest():
 @read_permission.require(http_exception=403)
 def check_statusLead():
     json_data = request.get_json()
-
-    programe_id =json_data["id"]
+    print(json_data)
+    id_lead =json_data["id"]
 
     status =json_data["status"]
     remask =json_data["remask"]
     product_id_value =json_data["product_id"]
     first_name =json_data["first_name"]
     last_name =json_data["last_name"]
+    first_nameEN =json_data["first_nameEN"]
+    last_nameEN =json_data["last_nameEN"]
+    year =json_data["year"]
     nickname =json_data["nickname"]
     email =json_data["email"]
     tel =json_data["tel"]
@@ -296,17 +300,18 @@ def check_statusLead():
     if agency_id == 'None' or agency_id == '':
         agency_id = None
         
-    birth_date_raw = json_data.get('birth_date')
-    if birth_date_raw:
-        try:
-            # ลองแปลงก่อนทั้งแบบมี '/' และ '-'
-            birth_date_str = birth_date_raw.replace('/', '-')
-            birth_date = datetime.strptime(birth_date_str, "%d-%m-%Y")
-        except ValueError:
-            birth_date = None  # หาก format ผิด
-    else:
-        birth_date = None
+    # birth_date_raw = json_data.get('birth_date')
+    # if birth_date_raw:
+    #     try:
+    #         # ลองแปลงก่อนทั้งแบบมี '/' และ '-'
+    #         birth_date_str = birth_date_raw.replace('/', '-')
+    #         birth_date = datetime.strptime(birth_date_str, "%d-%m-%Y")
+    #     except ValueError:
+    #         birth_date = None  # หาก format ผิด
+    # else:
+    #     birth_date = None
 
+   
   
     lead = leadModel.query.filter(
             or_(
@@ -315,6 +320,7 @@ def check_statusLead():
             )).first()
     product = ProductForSalesModel.query.filter_by(id=product_id_value).first()
     
+
     # return
     if not lead:
         print("⚠️ ไม่พบข้อมูล:", lead)  # ✅ ตรวจสอบว่าค่าเข้ามาแล้วจริง
@@ -325,6 +331,9 @@ def check_statusLead():
         
         thisItem.first_name=first_name
         thisItem.last_name=last_name
+        thisItem.first_nameEN=first_nameEN
+        thisItem.last_nameEN=last_nameEN
+        thisItem.year=year
         thisItem.nickname=nickname
         thisItem.email=email
         thisItem.tel=tel
@@ -335,36 +344,65 @@ def check_statusLead():
         thisItem.product_id=product.id
         thisItem.gender=gender
         thisItem.line_id=line_id
-        thisItem.birth_date=birth_date
 
+        
+        thisProgram = LeadProgram.query.filter(
+                        and_(
+                            LeadProgram.lead_id == id_lead,
+                            LeadProgram.product_id == product_id_value,
+                        )).first()
+        print("thisProgram",thisProgram)
+        # ตรวจสอบว่ามีออร์เดอร์ปีเดียวกันที่ยังไม่จบหรือไม่ (เฉพาะเมื่อ status = 'converted')
+        existing_order = None
+        current_year = datetime.utcnow().year
+        if status == 'converted':
+            existing_order = db.session.query(OrderModel).join(ProductForSalesModel).filter(
+                            OrderModel.lead_id == id_lead,
+                            OrderModel.status.notin_(['completed', 'cancelled']),
+                            db.extract('year', OrderModel.created_at) == current_year
+                        ).first()
 
-        # 2. ตรวจสอบว่า LeadProgram มีอยู่หรือยัง
-        thisProgram = LeadProgram.query.filter_by(lead_id=lead.id).first()
-
+        # === จัดการ LeadProgram ===
         if thisProgram:
-            # ถ้ามีอยู่แล้วให้แก้ไข
+            # แก้ไขข้อมูลเดิม
             thisProgram.product_id = product.id
             thisProgram.agency_id = agency_id
-            thisProgram.status = status
             thisProgram.remask = remask
+            thisProgram.year = year
             thisProgram.updated_at = datetime.utcnow()
+
+            # เปลี่ยนสถานะเฉพาะเมื่อไม่มีออร์เดอร์ที่ยังไม่จบ
+            if not existing_order:
+                thisProgram.status = status
+            else:
+                print("⚠️ มีออร์เดอร์ปีเดียวกันที่ยังไม่จบ -> ไม่เปลี่ยนสถานะ LeadProgram")
         else:
-            # ถ้าไม่มี ให้เพิ่มใหม่
+            # สร้างใหม่
             new_program = LeadProgram(
                 lead_id=lead.id,
                 product_id=product.id,
                 agency_id=agency_id,
-                status=status,
-                remask=remask
+                status=status if not existing_order else 'new',
+                remask=remask,
+                year=year
             )
             db.session.add(new_program)
 
-        # 3. Commit การเปลี่ยนแปลง
+        # Commit การเปลี่ยนแปลงของ LeadProgram
         db.session.commit()
-        # flash("success!", "success")
 
+        # ถ้ามีออร์เดอร์ค้างปีเดียวกัน และสถานะเป็น 'converted' => ห้ามสร้างใหม่
+        if existing_order:
+            print("⚠️ พบออร์เดอร์ปีเดียวกันที่ยังไม่จบ ไม่สามารถสร้างใหม่ได้")
+            return jsonify({
+                "status": "error",
+                "message": "ไม่สามารถสร้างออร์เดอร์ได้ เนื่องจากมีออร์เดอร์ที่ยังไม่จบในปีเดียวกัน"
+            }), 500
+
+        # === ถ้า status เป็น 'converted' ให้สร้าง Order ใหม่ ===
         if status == 'converted':
             try:
+                # ตรวจสอบว่า Member เคยมีหรือไม่
                 existing_member = MemberModel.query.filter(
                     (MemberModel.phone == lead.tel) | (MemberModel.email == lead.email)
                 ).first()
@@ -374,30 +412,35 @@ def check_statusLead():
                     print(f"🔁 พบ Member เดิม: {existing_member.id}")
                 else:
                     new_member = MemberModel(
-                            first_name=lead.first_name,
-                            last_name=lead.last_name,
-                            nick_name=lead.nickname,
-                            phone=lead.tel,
-                            email=lead.email,
-                            gender=lead.gender,
-                            line_id=lead.line_id,
-                            status='installment_1',  # หรือกำหนดสถานะเบื้องต้นที่เหมาะสม
-                            approved_by=None,
-                            approved_at=None,
-                            birth_date=lead.birth_date,
-                            member_code=generate_member_code()
-                        )
-                    db.session.add(new_member)                    
+                        first_name=lead.first_name,
+                        last_name=lead.last_name,
+                        first_nameEN=lead.first_nameEN,
+                        last_nameEN=lead.last_nameEN,
+                        nick_name=lead.nickname,
+                        phone=lead.tel,
+                        email=lead.email,
+                        gender=lead.gender,
+                        line_id=lead.line_id,
+                        status='installment_1',
+                        approved_by=None,
+                        approved_at=None,
+                        member_code=generate_member_code()
+                    )
+                    db.session.add(new_member)
 
+                # สร้างคำสั่งซื้อใหม่
                 new_order = OrderModel(
                     note="",
                     order_number=None,
                     payment_method="cash",
                     status="installment_1",
-                    total_price=product.price,
+                    price=product.price,
                     lead_id=lead.id,
                     product_id=product.id,
-                    member_id=new_member.id
+                    member_id=new_member.id,
+                    total_price=0.00,
+                    discount=0.00,
+                    net_price=0.00,
                 )
                 db.session.add(new_order)
                 db.session.commit()
@@ -407,6 +450,7 @@ def check_statusLead():
                 new_order.order_number = order_number
                 db.session.commit()
 
+                # เพิ่มสินค้าในคำสั่งซื้อ
                 new_item = OrderItemModel(
                     product_id=product.id,
                     product_name=product.name,
@@ -415,32 +459,61 @@ def check_statusLead():
                     unit_price=product.price
                 )
                 db.session.add(new_item)
-
-                
-
                 db.session.commit()
                 print("✅ สร้าง Order สำเร็จ")
+
+                # ✅ ดึงงวดการผ่อนจาก installmentsPaymentModel
+                payment_plans = installmentsPaymentModel.query.filter(
+                    installmentsPaymentModel.product_for_sales_id == product.id,
+                    installmentsPaymentModel.year == str(product.year)
+                ).order_by(installmentsPaymentModel.id).all()
+
+                print(payment_plans)
+                # ✅ วนลูปสร้าง OrderTermModel ตามงวด
+                for i, plan in enumerate(payment_plans, start=1):
+                    term = OrderTermModel(
+                        order_id=new_order.id,
+                        term_detail=plan.term_detail,
+                        amount=Decimal(plan.amount),
+                        sequence=i,  # ลำดับงวดที่ 1, 2, 3,...
+                        discount=0.00,
+                        net_price=0.00,
+                        created_at=datetime.utcnow()
+                    )
+                    db.session.add(term)
+                db.session.commit()
+                print("✅ สร้าง payment_plans สำเร็จ")
+                return jsonify({
+                    'status': 'Success',
+                    'message': 'บันทึกข้อมูลและสร้างคำสั่งซื้อเรียบร้อยแล้ว',
+                    'data': {
+                        'order_id': new_order.id,
+                        'order_number': new_order.order_number,
+                        'member_id': new_member.id
+                    }
+                }), 200
+
             except Exception as e:
                 db.session.rollback()
                 print("❌ สร้าง Order ไม่สำเร็จ:", e)
                 return jsonify({"status": "error", "message": "ไม่สามารถสร้างคำสั่งซื้อได้"}), 500
+
         else:
-            # อัปเดตสถานะ order เดิม
+            # ถ้าไม่ใช่ converted => อัปเดตสถานะของ Order ที่มีให้เป็น cancelled
             thisOrder = OrderModel.query.filter_by(lead_id=lead.id, product_id=product.id).first()
             if thisOrder:
                 thisOrder.status = 'cancelled'
                 db.session.commit()
 
-
-        
-        return jsonify({
+            return jsonify({
                 'status': 'Success',
-                'message': 'บันทึกข้อมูลเรียบร้อยแล้ว',
+                'message': 'บันทึกข้อมูลเรียบร้อยแล้ว (ไม่มีการสร้าง Order)',
                 'data': {
-                    'id': thisItem.id,
-                    'status': thisItem.status,
+                    'lead_id': lead.id,
+                    'status': status
                 }
             }), 200
+
 
 @blueprint.route("/create_lead")
 @login_required
@@ -540,6 +613,8 @@ def get_followStatus():
         .outerjoin(leadModel, LeadProgram.lead_id == leadModel.id) \
         .join(ProductForSalesModel, LeadProgram.product_id == ProductForSalesModel.id) \
         .outerjoin(AgencyModel, LeadProgram.agency_id == AgencyModel.id) 
+    
+    print("testttt")
     # query = db.session.query(leadModel) \
     # .join(ProductForSalesModel, leadModel.product_id == ProductForSalesModel.id) \
     # .outerjoin(AgencyModel, leadModel.agency_id == AgencyModel.id)
@@ -779,36 +854,42 @@ def create_register_lead():
     # user = UserModel(username=username, password=password, role_id=role.id)
     # db.session.add(user)
     # db.session.commit()
-    birth_date_raw = data.get('birth_date')
+    # birth_date_raw = data.get('birth_date')
 
-    if birth_date_raw:
-        try:
-            birth_date_str = birth_date_raw.replace('/', '-')
-            birth_date = datetime.strptime(birth_date_str, "%d-%m-%Y")
-        except ValueError:
-            birth_date = None
-    else:
-        birth_date = None
+    # if birth_date_raw:
+    #     try:
+    #         birth_date_str = birth_date_raw.replace('/', '-')
+    #         birth_date = datetime.strptime(birth_date_str, "%d-%m-%Y")
+    #     except ValueError:
+    #         birth_date = None
+    # else:
+    #     birth_date = None
 
     # เตรียมข้อมูล
     agency_id = data.get('agency')
     agency_id = int(agency_id) if agency_id not in [None, '', 'None'] else None
 
-    print("Raw agency_id:", data.get('agency_id'))
-    print("Final agency_id:", agency_id)
+   
 
     email = data.get('email')
     tel = data.get('phone')
-    product_id = data.get('project')
-    product = ProductForSalesModel.query.filter_by(id=product_id).first()
+    product_ids = data.getlist('project[]') or []
+    if not product_ids:
+        product_ids = []
+    elif isinstance(product_ids, str):
+        product_ids = [product_ids]
+    # product = ProductForSalesModel.query.filter_by(id=product_ids).first()
 
     first_name = data.get('fullname')
     last_name = data.get('lastname')
+    first_nameEN = data.get('firstnameEN')
+    last_nameEN = data.get('lastnameEN')
+    year = data.get('inputYear')
     gender = data.get('gender')
     line_id = data.get('line_id')
     nick_name = data.get('nickname')
     category_id = data.get('category')
-    country_id = data.get('country')
+    country_id = data.getlist('country[]') or []
     social = data.get('social')
     remask = data.get('remask')
 
@@ -824,17 +905,19 @@ def create_register_lead():
         lead = leadModel(
             first_name=first_name,
             last_name=last_name,
+            first_nameEN=first_nameEN,
+            last_nameEN=last_nameEN,
+            year=year,
             tel=tel,
             email=email,
             status='new',
             gender=gender,
             line_id=line_id,
-            birth_date=birth_date,
             nick_name=nick_name,
             category_id=category_id,
-            country_id=country_id,
+            # country_id=country_id,
             agency_id=agency_id,
-            product_id=product_id,
+            # product_id=product_id,
             social=social,
             remask=remask
         )
@@ -844,37 +927,51 @@ def create_register_lead():
         # อัปเดตข้อมูล lead เดิม
         lead.first_name = first_name
         lead.last_name = last_name
+        lead.first_nameEN=first_nameEN
+        lead.last_nameEN=last_nameEN
+        lead.year = year    
+        lead.first_name = first_name
+        lead.last_name = last_name
         lead.nick_name = nick_name
         lead.tel = tel
         lead.email = email
         lead.gender = gender
         lead.line_id = line_id
-        lead.birth_date = birth_date
         lead.agency_id = agency_id
         lead.category_id = category_id
-        lead.country_id = country_id
-        lead.product_id = product_id
+        # lead.country_id = country_id
+        # lead.product_id = product_id
         lead.social = social
         lead.remask = remask
 
     db.session.commit()
 
-    # # สร้างหรืออัปเดต LeadProgram
-    # lead_program = LeadProgram.query.filter_by(lead_id=lead.id).first()
-    # if lead_program:
-    #     lead_program.product_id = product.id
-    #     lead_program.agency_id = agency_id
-    #     lead_program.status = 'pending'
-    #     lead_program.remask = remask
-    # else:
-    lead_program = LeadProgram(
-            lead_id=lead.id,
-            product_id=product.id,
-            agency_id=agency_id,
-            status='new',
-            remask=remask
-        )
-    db.session.add(lead_program)
+   
+    # LeadProgram.query.filter_by(lead_id=lead.id).delete()
+    # print("product_ids")
+    # print(product_ids)
+    # สร้าง LeadProgram ใหม่สำหรับทุกโปรเจคที่เลือก
+    for pid in product_ids:
+        try:
+            pid = int(pid)
+            product = ProductForSalesModel.query.filter_by(id=pid).first()
+            if not product:
+                print(f"[Warning] ไม่พบ product_id: {pid}")
+                continue
+
+            lead_program = LeadProgram(
+                lead_id=lead.id,
+                product_id=product.id,
+                year=year,
+                agency_id=agency_id,
+                status='new',
+                remask=remask
+            )
+            db.session.add(lead_program)
+
+        except ValueError:
+            print(f"[Error] product_id ไม่ถูกต้อง: {pid}")
+            continue
 
     db.session.commit()
 

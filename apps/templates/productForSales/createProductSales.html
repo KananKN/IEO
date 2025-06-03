@@ -117,6 +117,7 @@
                             </select>
                         </div>
                     </div>
+                    
                     <div class="form-group row mb-3" hidden>
                         <label class="form-label col-form-label col-lg-4">ระยะเวลาโครงการ</label>
                             <div class="col-lg-8">
@@ -127,12 +128,13 @@
                                 </div>
                             </div>
                     </div>
-                    <div class="row mb-3"  hidden>
-                        <label class="form-label col-form-label col-md-4">Year</label>
-                        <div class="col-md-8">
-                            <input  class="form-control"  name="year" id="i_year"  value=""  display data-parsley-required="true"/>
+                    <div class="form-group row" >
+                        <label class="form-label col-form-label col-lg-4">รายละเอียดโครงการ</label>
+                        <div class="col-lg-8">
+                            <textarea class="form-control" id="detail" rows="4" cols="50"  name="detail" placeholder="" ></textarea>
                         </div>
-                    </div> 
+                    </div>      
+                    
                    
 
                 </div>  
@@ -145,14 +147,28 @@
                             
                         </div>
                     </div>
-                   <div class="row mb-15px">
-                        <label class="form-label col-form-label col-md-4">ราคาขาย</label>
+                    <div class="row mt-15px">
+                        <label class="form-label col-form-label col-md-4">ไฟล์โครงการ</label>
 
                         <div class="col-md-8">
-                            <input  class="form-control"  name="price" id="i_price"  value="0"  oninput="formatNumber(this)" display data-parsley-required="true"/>
-                            
+                        <input class="form-control" type="file" id="formFile_file" name="formFile_file" multiple accept=".pdf,"  onchange="validateFile(this)"/>
+                        
                         </div>
+                        {% for file_data in file_data %}
+                            {% if file_data.file_type == 1 %}
+                                
+                                <div class="row mt-2">
+                                    <div class="col-md-4">
+                                        
+                                    </div>
+                                    <div class="col-md-8 col-sm-12 col-xs-12 mt-10px text-ellipsis">
+                                    <a href="{{ url_for('order_blueprint.downloadFile', filename=file_data.filename)}}" style="text-decoration: none; color: black;"><i class="fas fa-lg fa-fw ms-5px  fa-file"></i> <span>{{ file_data.filename }}</span></a> <a onclick="sweetAlertDelSign({{file_data.id}},{{orders.id}})"><i class="fas fa-lg fa-fw mx-5px fa-trash-can text-danger c_trash"></i></a>  </div>
+                                </div>
+                            
+                            {% endif %}
+                        {% endfor %}
                     </div>
+                   
                    <div class="row mb-15px" hidden>
                         <label class="form-label col-form-label col-md-4">ราคาทุน</label>
                         <div class="col-md-8">
@@ -160,7 +176,48 @@
                             
                         </div>
                     </div>
-                   <div class="row mb-15px">
+                   
+                               
+                </div>
+            </div>
+
+            
+
+            <hr class="my-3">
+            <div class="row">
+                <h5>Price List</h5>
+                <div class="col-sm-6">
+                    <div class="row mb-3" >
+                        <label class="form-label col-form-label col-md-4">Year</label>
+                        <div class="col-md-4">
+                            <input  class="form-control"  hidden name="yearsss" id="i_yearsss"  value=""  display data-parsley-required="true"/>
+
+                            <select name="inputYear" id="inputYear" class="default-select2 form-control">
+                                {% set this_year = this_year or 2025 %}
+                                {% for year in range(this_year - 5, this_year + 6) %}
+                                    <option value="{{ year }}" {% if year == this_year %}selected{% endif %}>{{ year }}</option>
+                                {% endfor %}
+                            </select>
+                            
+                            
+                            
+                        </div>
+                        <div class="col-md-4 text-end"  >
+                            <button type="button"  class="btn btn-blue"  id="btnAddToTable">เพิ่มข้อมูลในตาราง</button>
+
+                            <!-- <button type="button"  class="btn btn-blue"  onclick="func_save()">Save</button> -->
+                        </div>
+                    </div> 
+                    <div class="row mb-15px" >
+                        <label class="form-label col-form-label col-md-4">ราคาขาย</label>
+
+                        <div class="col-md-4">
+                            <input  class="form-control"  name="price" id="i_prices"  value="0"  oninput="formatNumber(this)" display data-parsley-required="true"/>
+                            
+                        </div>
+                    </div>
+
+                    <div class="row mb-15px">
                         <label class="form-label col-form-label col-md-4">Term Of Payment</label>
                         <div class="col-md-8">
                            <select class="default-select2 form-control"  name="term" id="i_term"  >
@@ -173,13 +230,29 @@
                         </div>
                     </div>
                     <div class="row mb-15px">
+
                         <div id="extra-inputs"></div>
 
                     </div>
                 </div>
-                                
+                <div class="col-sm-6">
+                    <table class="table" id="priceTable">
+                        <thead>
+                            <tr>
+                                <th>Select</th>
+                                <th>Year</th>
+                                <th>Price</th>
+                                <th>Term 1</th>
+                                <th>Term 2</th>
+                                <th>Term 3</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <!-- แถวข้อมูลจะถูกเพิ่มที่นี่ -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
-
             <hr class="my-3">
             <div class="row" >
                 <div class="col-sm-6">
@@ -205,6 +278,8 @@
                             
                         </div>
                     </div>
+                </div>
+                <div class="col-sm-6">
                     <div class="row mb-15px" >
                         <label class="form-label col-form-label col-md-4">University</label>
                         <div class="col-md-8">
@@ -227,35 +302,8 @@
                             
                         </div>
                     </div>
-                </div>
-                <div class="col-sm-6">
-                    <div class="form-group row" >
-                        <label class="form-label col-form-label col-lg-4">รายละเอียดโครงการ</label>
-                        <div class="col-lg-8">
-                            <textarea class="form-control" id="detail" rows="4" cols="50"  name="detail" placeholder="" ></textarea>
-                        </div>
-                    </div> 
-                    <div class="row mt-15px">
-                    <label class="form-label col-form-label col-md-4">ไฟล์โครงการ</label>
-
-                    <div class="col-md-8">
-                        <input class="form-control" type="file" id="formFile_file" name="formFile_file" multiple accept=".pdf,"  onchange="validateFile(this)"/>
-                        
-                    </div>
-                     {% for file_data in file_data %}
-                        {% if file_data.file_type == 1 %}
-                            
-                            <div class="row mt-2">
-                                <div class="col-md-4">
-                                    
-                                </div>
-                                <div class="col-md-8 col-sm-12 col-xs-12 mt-10px text-ellipsis">
-                                <a href="{{ url_for('order_blueprint.downloadFile', filename=file_data.filename)}}" style="text-decoration: none; color: black;"><i class="fas fa-lg fa-fw ms-5px  fa-file"></i> <span>{{ file_data.filename }}</span></a> <a onclick="sweetAlertDelSign({{file_data.id}},{{orders.id}})"><i class="fas fa-lg fa-fw mx-5px fa-trash-can text-danger c_trash"></i></a>  </div>
-                            </div>
-                        
-                        {% endif %}
-                    {% endfor %}
-                </div>
+                    
+                    
                 </div>
                 
             </div>
@@ -265,7 +313,6 @@
           
         </div>
         <div class="hljs-wrapper">
-            <pre><code class="html hljs language-xml" data-url="../assets/data/ui-widget-boxes/code-11.json" data-highlighted="yes"></code></pre>
         </div>
     </div>
         	
@@ -307,29 +354,324 @@
 
 <script>
 $(document).ready(function () {
-    $("#i_term").change(function () {
-        let termValue = $(this).val(); // ดึงค่าที่เลือก
-        let termNumber = parseInt(termValue, 10); // แปลงเป็นตัวเลขฐาน 10
-        let extraInputsContainer = $("#extra-inputs");
+    sortTableByYear(true);  
+    //-----------------------------
+    
 
-        extraInputsContainer.empty(); // ล้างข้อมูลเดิมก่อนเพิ่มใหม่
 
-        if (!isNaN(termNumber) && termNumber > 0) { // ตรวจสอบว่าเป็นตัวเลขและมากกว่า 0
-            for (let i = 0; i < termNumber; i++) { // วน loop ตามจำนวนที่เลือก
+    //-----------------------------
+    function generateInputs(termValue, payments = []) {
+        //let termNumber = parseInt(termValue, 10);
+
+        if (isNaN(termNumber) && payments.length) {
+            termNumber = payments.length;
+        }
+
+        let extraInputsContainer = $('#extra-inputs');
+        extraInputsContainer.empty();
+
+        if (!isNaN(termNumber) && termNumber > 0) {
+            for (let i = 0; i < termNumber; i++) {
+                let defaultID = payments[i] ? payments[i].id || '' : '';
+                let defaultDetail = payments[i] ? payments[i].term_detail || '' : '';
+                let defaultAmount = payments[i] ? payments[i].amount || '' : '';
+
                 let newRow = `
                     <div class="row mb-15px">
                         <label class="form-label col-form-label col-md-4">จำนวนงวด ${i + 1}</label>
                         <div class="col-md-4">
-                            <input type="text" class="form-control" hidden name="term_id" value="" placeholder="รายละเอียด">
-                            <input type="text" class="form-control" name="term_detail"  placeholder="รายละเอียด">
+                            <input type="text" class="form-control" hidden name="term_id[]" value="${defaultID}">
+                            <input type="text" class="form-control" name="term_detail" value="${defaultDetail}" placeholder="รายละเอียด">
                         </div>
                         <div class="col-md-4">
-                            <input type="text" class="form-control" name="installments"  value="0"  oninput="formatNumber(this)" placeholder="จำนวนงวด ${i + 1}">
+                            <input type="text" class="form-control price-input" name="installments" value="${defaultAmount}" oninput="formatNumberWithCommas(this)" placeholder="จำนวนงวด ${i + 1}">
                         </div>
                     </div>
                 `;
                 extraInputsContainer.append(newRow);
             }
+        }
+    }
+
+    let payments = JSON.parse($("#paymentData").val() || "[]");
+
+    let initialTermValue = $("#i_term").val();
+    if (initialTermValue) {
+        generateInputs(initialTermValue, payments);
+    }
+
+    $("#i_term").change(function () {
+        let termValue = $(this).val().trim();
+        generateInputs(termValue, payments);
+    });
+
+   $(".price-input").each(function () {
+        let value = $(this).val().replace(/,/g, ''); // ลบ comma เดิม
+        if (!isNaN(value) && $.trim(value) !== '') {
+            $(this).val(parseFloat(value).toLocaleString('en-US')); // ใส่ comma อัตโนมัติ
+        }
+    });
+
+//-----------------------------------------------------//
+    let yearDataStore = {};
+    $('#tableBody').empty(); 
+
+    // ฟังก์ชันสร้าง input งวดตาม term และข้อมูล payments
+    function generateInputs(termValue, payments = []) {
+        let termNumber = parseInt(termValue, 10);
+        let extraInputsContainer = $('#extra-inputs');
+        extraInputsContainer.empty();
+
+        if (!isNaN(termNumber) && termNumber > 0) {
+            for (let i = 0; i < termNumber; i++) {
+                let defaultID = payments[i] ? payments[i].id : '';
+                let defaultDetail = payments[i] ? payments[i].term_detail : '';
+                let defaultAmount = payments[i] ? payments[i].amount : '';
+                // 🔧 ล้าง comma ก่อน parse และ format
+                let formattedAmount = defaultAmount
+                ? parseFloat(defaultAmount.toString().replace(/,/g, '')).toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                })
+                : '';
+
+                //console.log(defaultID)
+                //console.log(`index ${i} — id: ${defaultID}, detail: ${defaultDetail}, amount: ${defaultAmount}`);
+
+                let newRow = `
+                    <div class="row mb-15px">
+                        <label class="form-label col-form-label col-md-4">จำนวนงวด ${i + 1}</label>
+                        <div class="col-md-4">
+                            <input type="text" class="form-control" name="term_id[]" hidden value="${defaultID}" placeholder="รหัส">
+                            <input type="text" class="form-control" name="term_detail" value="${defaultDetail}" placeholder="รายละเอียด">
+                        </div>
+                        <div class="col-md-4">
+                            <input type="text" class="form-control price-input" name="installments" value="${formattedAmount}" oninput="formatNumberWithCommas(this)" placeholder="จำนวนงวด ${i + 1}">
+                        </div>
+                    </div>
+                `;
+                extraInputsContainer.append(newRow);
+            }
+        }
+    }
+
+    // ฟังก์ชันรวบรวมข้อมูลฟอร์มปัจจุบันไว้ใน object
+    function gatherFormData() {
+        let year = $('#inputYear').val();
+
+        let payments = [];
+        $('#extra-inputs .row').each(function () {
+            let amount = $(this).find('input[name="installments"]').val().replace(/,/g, '');
+            let term_detail = $(this).find('input[name="term_detail"]').val() || '';
+            let term_id = $(this).find('input[name="term_id[]"]').val() || '';
+
+            payments.push({
+                amount: amount,
+                term_detail: term_detail,
+                id: term_id  // เก็บ id ลงใน array ด้วย
+            });
+        });
+
+        return {
+            year: year,
+            payments: payments,
+            price: parseFloat($('#i_prices').val().replace(/,/g, '') || 0),
+            term: payments.length.toString()
+        };
+    }
+
+    // ดึงข้อมูล payments จาก inputs
+    function getPaymentsData() {
+        let payments = [];
+        $('#extra-inputs .row').each(function () {
+            let id = $(this).find('input[name="term_id"]').val();
+            let detail = $(this).find('input[name="term_detail"]').val();
+            let amount = $(this).find('input[name="installments"]').val();
+            payments.push({ id: id, term_detail: detail, amount: amount });
+
+            //console.log(payments)
+        });
+        return payments;
+    }
+
+    // ฟังก์ชันแสดงข้อมูลลงฟอร์ม
+    function populateForm(data) {
+        $('#i_price').val(data.price || '');
+        $('#i_term').val(data.term || '').trigger('change'); // สร้าง input งวดใหม่
+        $('#paymentData').val(JSON.stringify(data.payments || []));
+
+        // แสดง inputs งวดจากข้อมูล payments
+        generateInputs(data.term, data.payments);
+    }
+
+
+    // ฟังก์ชันล้างฟอร์มทั้งหมด
+    function clearForm() {
+        $('#i_prices').val(0);
+        $('#i_term').val('').trigger('change');
+        $('#paymentData').val('');
+        $('#extra-inputs').empty();
+    }
+    let groupedPayments = []
+    //console.log('Original groupedPayments:', groupedPayments);
+
+    // แปลงโครงสร้างข้อมูลให้ตรงกับที่ต้องการ
+    for (let year in groupedPayments) {
+        const paymentsArray = groupedPayments[year];
+        console.log("Before map:", paymentsArray);
+    
+        if (Array.isArray(paymentsArray) && paymentsArray.length > 0) {
+            yearDataStore[year] = {
+                year: year,
+                payments: paymentsArray.map(function(payment) {
+                    console.log('Inside map:', payment);  // 🟨 Debug ตรงนี้ด้วย
+                    return {
+                        amount: payment.amount,
+                        term_detail: payment.term_detail,
+                        id: payment.id
+                    };
+                }),
+                price: paymentsArray[0].price,
+                term: paymentsArray.length.toString()
+            };
+        }
+    }
+
+    console.log("Updated yearDataStore:", yearDataStore);
+
+    //------------------ เปลี่ยนปี --------------------------------
+    // โหลดข้อมูลปีเริ่มต้น
+    let currentYear = $('#inputYear').val();
+    sessionStorage.setItem('selectedYear', currentYear);
+
+    // ถ้ามีข้อมูลใน paymentData ให้โหลดเป็น JSON (สำหรับ fallback)
+    let initialPayments = JSON.parse($('#paymentData').val() || "[]");
+    let initialTerm = $('#i_term').val();
+    let initialTermDetail = $('#i_termDetail').val();
+
+    // ถ้ามีข้อมูลในปีปัจจุบัน ให้ใช้ข้อมูลนั้น ไม่งั้นใช้ข้อมูลเริ่มต้น
+    if (yearDataStore[currentYear]) {
+        populateForm(yearDataStore[currentYear]);
+        // อัพเดท i_term ด้วย
+        $('#i_term').val(yearDataStore[currentYear].term);
+        generateInputs(yearDataStore[currentYear].term, yearDataStore[currentYear].payments);
+    } else if (initialTerm) {
+        generateInputs(initialTerm, initialPayments);
+    }
+
+    // 🔁 เมื่อเปลี่ยนปี inputYear ให้โหลดข้อมูลกลับหรือเคลียร์ฟอร์ม
+    $('#inputYear').change(function () {
+        let selectedYear = $(this).val();
+        sessionStorage.setItem('selectedYear', selectedYear);
+
+        if (yearDataStore[selectedYear]) {
+            populateForm(yearDataStore[selectedYear]);
+        } else {
+            clearForm();
+        }
+    });
+
+    
+
+    //-------------------------  ปุ่มกดเพิ่มม --------------------------------//
+    $('#btnAddToTable').click(function () {
+        let year = $('#inputYear').val();
+        let price = $('#i_prices').val();
+        let term = $('#i_term').val();
+        let term_detail = $('#i_termDetail').val();
+
+        // เก็บค่าจากฟิลด์ term_detail และ installments
+        let termAmounts = [];
+        let termDetails = [];
+        let termIDs = [];
+        $('#extra-inputs .row').each(function () {
+            let amount = $(this).find('input[name="installments"]').val().replace(/,/g, '');
+            let detail = $(this).find('input[name="term_detail"]').val() || '';
+            let id = $(this).find('input[name="term_id[]"]').val() || '';
+            
+            
+            if (amount && parseFloat(amount) !== 0) {
+                termAmounts.push(amount);
+                termDetails.push(detail);
+                termIDs.push(id);
+            }
+
+        });
+
+       
+
+        // 🔸 ตรวจสอบว่ามีแถวปีนี้อยู่แล้วหรือยัง
+        let $existingRow = $(`#tableBody tr[data-year="${year}"]`);
+        if ($existingRow.length) {
+            $existingRow.remove();
+        }
+
+        // 🔸 สร้างแถวใหม่
+        //let maxTerms = termAmounts.length;
+
+
+        //let visibleTerms = 3;
+        //let maxAllowedTerms = 5;
+
+        let newRow = `
+            <tr data-year="${year}">
+                <td class="text-center align-middle">
+                    <input type="radio" name="selectedYear" value="${year}" ${parseInt(year) === new Date().getFullYear() ? 'checked' : ''}>
+                </td>
+                <td><input class="form-control" name="term_year[]" value="${year}"></td>
+                <td><input class="form-control" name="price_${year}" value="${parseFloat(price.replace(/,/g, '') || 0).toLocaleString('en-US', {minimumFractionDigits: 2})}" oninput="formatNumberWithCommas(this)" ></td>
+        `;  
+
+        for (let i = 0; i < termAmounts.length; i++) {
+            const amount = parseFloat(termAmounts[i] || 0).toLocaleString('en-US', { minimumFractionDigits: 2 });
+            const detail = termDetails[i] || '';
+            const term_id = termIDs[i] || '';
+            //const hiddenAttr = i >= visibleTerms ? ' hidden' : '';
+            const hiddenAttr = i >= 3 ? 'hidden ' : '';
+            newRow += `
+                <td${hiddenAttr}>
+                    <input class="form-control" name="term_id${year}[]" hidden value="${term_id}">
+                    <input class="form-control" name="installments_${year}[]" oninput="formatNumberWithCommas(this)" value="${amount}">
+                    <input class="form-control" name="term_detail_${year}[]" value="${detail}">
+                </td>
+            `;
+        }
+
+        newRow += `</tr>`;
+
+
+        $('#tableBody').append(newRow);
+        sortTableByYear(true);
+        
+        /// 🟩 บันทึกข้อมูลปีปัจจุบัน
+        yearDataStore[year] = gatherFormData();
+
+        // 🟩 กลับไปยังปี 2025 และโหลดข้อมูลของมัน
+        //let defaultYear = $('#defaultProductYear').val();
+        let defaultYear = new Date().getFullYear();
+        $('#inputYear').val(defaultYear).trigger('change');
+
+        // 🟩 โหลดข้อมูลที่บันทึกไว้
+        if (yearDataStore[defaultYear]) {
+            populateForm(yearDataStore[defaultYear]);
+        } else {
+            clearForm();
+        }
+
+
+        // 🔍 ตรวจสอบว่ามีปีนี้ในตารางแล้วหรือยัง
+        let isDuplicate = false;
+        $('#tableBody input[name="term_year[]"]').each(function () {
+            console.log('มีใน DOM:', $(this).val());
+            if ($(this).val() === year) {
+                isDuplicate = true;
+                return false; // break loop
+            }
+        });
+
+        if (isDuplicate) {
+            //alert('ปีนี้ถูกเพิ่มแล้ว กรุณาเลือกปีอื่น');
+            return;
         }
     });
 });
@@ -359,7 +701,107 @@ function formatNumber(input) {
     input.value = parts.length > 1 ? parts.join('.') : parts[0];
 }
 
+
 </script>
+<script>
+    function saveData() {
+        const year = $('#inputYear').val();
+        const term1 = parseFloat($('#term1').val()) || 0;
+        const term2 = parseFloat($('#term2').val()) || 0;
+        const term3 = parseFloat($('#term3').val()) || 0;
+        const total = term1 + term2 + term3;
+    
+        const $table = $('#tableBody');
+        const $existingRow = $table.find(`tr[data-year="${year}"]`);
+    
+        if ($existingRow.length > 0) {
+            const $cells = $existingRow.find('td');
+            $cells.eq(1).text(year);
+            $cells.eq(2).text(total.toLocaleString());
+            $cells.eq(3).text(term1.toLocaleString());
+            $cells.eq(4).text(term2.toLocaleString());
+            $cells.eq(5).text(term3.toLocaleString());
+        } else {
+            const newRow = `
+                <tr data-year="${year}">
+                    <td><input type="radio" name="selectedYear" value="${year}"></td>
+                    <td>${year}</td>
+                    <td>${total.toLocaleString()}</td>
+                    <td>${term1.toLocaleString()}</td>
+                    <td>${term2.toLocaleString()}</td>
+                    <td>${term3.toLocaleString()}</td>
+                </tr>
+            `;
+            $table.append(newRow);
+        }
+    
+        // เลือก radio ของปีล่าสุดอัตโนมัติ และเพิ่มไฮไลต์
+        $(`input[name="selectedYear"][value="${year}"]`).prop('checked', true).trigger('change');
+    }
+    
+    // ไฮไลต์แถวที่เลือก
+    $(document).on('change', 'input[name="selectedYear"]', function () {
+        $('#tableBody tr').removeClass('table-primary');
+        $(this).closest('tr').addClass('table-primary');
+    });
+    
+</script>
+<script>
+    function sortTableByYear(ascending = true) {
+        let $rows = $('#tableBody tr').get();
+
+        $rows.sort(function(a, b) {
+            let yearA = parseInt($(a).data('year'), 10);
+            let yearB = parseInt($(b).data('year'), 10);
+            return ascending ? yearA - yearB : yearB - yearA;
+        });
+
+        $('#tableBody').empty(); // 🔧 ล้างก่อน
+        $.each($rows, function(index, row) {
+            $('#tableBody').append(row); // ✅ เพิ่มแถวใหม่ที่เรียงแล้ว
+        });
+    }
+
+    
+    function formatNumberWithCommas(input) {
+        /*
+        let value = input.value;
+    
+        // ลบ comma ที่มีอยู่ทั้งหมด
+        value = value.replace(/,/g, '');
+    
+        // ตรวจสอบว่าค่าเป็นตัวเลขหรือไม่
+        if (!isNaN(value) && value !== '') {
+            value = parseFloat(value).toLocaleString('en-US'); 
+        }
+    
+        // อัปเดตค่ากลับเข้า input
+        input.value = value;
+        */
+        if (!input || typeof input.value !== 'string') {
+            return;
+        }
+        // ลบ comma ออกจากค่าที่ป้อน
+        let value = input.value.replace(/,/g, '');
+    
+        let regex = /^\d+(\.\d{0,2})?$/;
+        if (!regex.test(value)) {
+            input.value = input.value.slice(0, -1); // ลบตัวอักษรสุดท้ายที่เกินออก
+            return;
+        }
+    
+        // แปลงค่าเป็นตัวเลข
+        let number = parseFloat(value);
+    
+        // แยกส่วนหน้าและส่วนทศนิยม
+        let parts = value.split('.');
+        parts[0] = parseInt(parts[0], 10).toLocaleString(); // เพิ่ม comma ให้เฉพาะส่วนหน้า
+    
+        // รวมค่ากลับ
+        input.value = parts.length > 1 ? parts.join('.') : parts[0];
+    }
+</script>
+<script></script>
 
 
 
