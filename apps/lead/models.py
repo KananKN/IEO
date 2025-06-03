@@ -35,6 +35,9 @@ class leadModel(db.Model):
     # user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), unique=True)
     first_name = db.Column(db.String(100))
     last_name = db.Column(db.String(100))
+    first_nameEN = db.Column(db.String(100))
+    last_nameEN = db.Column(db.String(100))
+    year = db.Column(db.String(), nullable=True,server_default='2025')
     nick_name = db.Column(db.String(100))
     tel = db.Column(db.String(30))
     email = db.Column(db.String(100))
@@ -77,6 +80,7 @@ class LeadProgram(db.Model):
                            onupdate=db.func.current_timestamp())
     status = db.Column(db.String(20))  # New, Contacted, Converted, Dropped
     remask = db.Column(db.String(250))
+    year = db.Column(db.String(), nullable=True)
 
     agency_id = db.Column(db.Integer, db.ForeignKey('agency.id', ondelete='CASCADE'), nullable=True)
     agency = db.relationship("AgencyModel", back_populates="lead_programs", overlaps="products,agency")

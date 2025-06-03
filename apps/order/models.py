@@ -43,9 +43,9 @@ class OrderModel(db.Model):
     order_items = db.relationship("OrderItemModel", back_populates="order", cascade="all, delete")
     payments = db.relationship("PaymentModel", back_populates="order", cascade="all, delete", lazy=True)
 
-    # total_price = db.Column(db.Numeric(precision=10, scale=2), nullable=True)  # ราคารวมก่อนส่วนลด
-    # discount = db.Column(db.Numeric(precision=10, scale=2), default=0.00)  # ส่วนลดทั้งหมด
-    # net_price = db.Column(db.Numeric(precision=10, scale=2), nullable=True)
+    total_price = db.Column(db.Numeric(precision=10, scale=2), nullable=True)  # ราคารวมก่อนส่วนลด
+    discount = db.Column(db.Numeric(precision=10, scale=2), default=0.00)  # ส่วนลดทั้งหมด
+    net_price = db.Column(db.Numeric(precision=10, scale=2), nullable=True)
 
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())

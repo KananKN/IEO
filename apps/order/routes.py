@@ -77,6 +77,9 @@ def convert_status_text(status):
         return "ยกเลิก"
     else:
         return "สถานะไม่ทราบแน่ชัด"
+
+def parse_decimal(val):
+    return Decimal(val.replace(',', '')) if val else Decimal('0.00')
     
 @blueprint.app_template_filter("comma")
 def comma_filter(value):
@@ -180,7 +183,7 @@ def get_order():
             "product_name": order.product.name if order.product else '',
             "term": order.product.term_of_payment.name if order.product and order.product.term_of_payment else '',
             "email": order.lead.email if order.lead else '',
-            "price": order.product.price if order.product else '',
+            "price": order.price ,
             "created_at": int(order.created_at.timestamp() * 1000),
             "data_user": safe_model_to_dict(order),
             "lead": safe_model_to_dict(order.lead),
@@ -217,14 +220,24 @@ def order_update(id):
     orderItem = OrderItemModel.query.filter_by(product_id=data.product_id).first()
     product = ProductForSalesModel.query.filter_by(id=data.product_id).first()
     member = MemberModel.query.filter_by(id=data.member_id).first()
-    payment = installmentsPaymentModel.query.filter_by(product_for_sales_id=product.id).all()
+    # payment = installmentsPaymentModel.query.filter_by(product_for_sales_id=product.id).all()
+    payment = installmentsPaymentModel.query.filter(
+                    installmentsPaymentModel.product_for_sales_id == product.id,
+                    installmentsPaymentModel.year == str(product.year)
+                ).all()
+    
+    orderTerm = OrderTermModel.query.filter(
+                    OrderTermModel.order_id == data.id,
+                ).order_by(OrderTermModel.sequence).all()
+    
+    print("payment",payment)
     payment11 = PaymentModel.query.filter_by(order_id=data.id).all()
 
     file_data = FilePaymentModel.query.filter_by(order_id  = data.id).all()
     print("data",data)
     print("lead",lead)
     print("orderItem",orderItem )
-    return render_template('order/order_update.html', segment='order' ,lead=lead, orderItem=orderItem, datas=data, payments=payment,product=product,members=member,file_datas=file_data)
+    return render_template('order/order_update.html', segment='order' ,lead=lead, orderItem=orderItem, datas=data, payments=payment,product=product,members=member,file_datas=file_data,orderTerms=orderTerm)
 
 @blueprint.route("/check_statusLead", methods=["POST"])
 @login_required
@@ -280,10 +293,9 @@ def check_statusLead():
 @login_required
 @read_permission.require(http_exception=403)
 def save_payment():
-    print(request.form)
+    print("save_payment",request.form)
 
-    
-    print(request.form.get('id'))
+    # print(request.form.get('id'))
     try:
         id_order = request.form.get('id')
         id_member = request.form.get('id_member')
@@ -293,11 +305,21 @@ def save_payment():
         amount =request.form.get('amount')
         payment_date =request.form.get('payment_date')
         note =request.form.get('note')
-        formFile_payment =request.form.get('formFile_payment')
+        formFile_payment = request.form.get('formFile_payment')
         
         raw_amount = request.form.get("amount", "0").replace(",", "")
         amount = float(raw_amount) 
 
+        raw_sum_discount = request.form.get("sum_discount", "0").replace(",", "")
+        sum_discount = float(raw_sum_discount) 
+
+        raw_sum_installments = request.form.get("sum_installments", "0").replace(",", "")
+        sum_installments = float(raw_sum_installments) 
+
+        term_ids = request.form.getlist('term_id')
+        installments = request.form.getlist('installments')
+        discounts = request.form.getlist('discount')
+        counts = request.form.getlist('count')
         
         
         item_order= OrderModel.query.filter_by(id=id_order).first()
@@ -310,9 +332,26 @@ def save_payment():
         #     flash("ไม่สามารถบันทึกข้อมูลได้", "danger")
         else :
             item_order.status = payment_no
+            item_order.discount = sum_discount
+            item_order.net_price = sum_installments
             item_member.status = payment_no
             db.session.commit()
 
+            for i in range(len(term_ids)):
+                
+                term_id = int(term_ids[i])
+                discount = parse_decimal(discounts[i])
+                net_price = parse_decimal(counts[i])
+                print(discount)
+                print(net_price)
+                # ค้นหา term ที่จะอัปเดต
+                term = OrderTermModel.query.get(term_id)
+                if term:
+                    term.discount = discount
+                    term.net_price = net_price
+                else:
+                    print(f"❌ ไม่พบ OrderTermModel id: {term_id}")
+            db.session.commit()
             amount_raw = request.form.get("amount", "").replace(",", "").strip()
 
             # ตรวจสอบว่ามีค่า และไม่ใช่ 0

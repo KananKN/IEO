@@ -79,7 +79,7 @@
                                             </div>
                                         </div>                        
                                         <div class="form-group row mb-3" >
-                                            <label class="form-label col-form-label col-lg-4">E-mail<span class="text-danger">*</span></label>
+                                            <label class="form-label col-form-label col-lg-4">E-mail</label>
 
                                             <div class="col-lg-8">
                                                 <input type="email" class="form-control-plaintext" name="email" value="{{members.email}}" placeholder="อีเมล">
@@ -94,7 +94,7 @@
                                             </div>
                                         </div>
 
-                                        <div class="row mb-3">
+                                        <div class="row mb-3" hidden>
                                             <label class="form-label col-form-label col-md-4">วันเกิด</label>
                                             <div class="col-lg-8">
                                                 <input type="text" class="form-control-plaintext" id="masked-input-date" name="birth_date" value="{{ members.birth_date.strftime('%d/%m/%Y') if members.birth_date else '' }}" placeholder="dd/mm/yyyy">
@@ -122,37 +122,62 @@
                                     <div class="col-sm-6 border-right pe-0">
                                         <h4>รหัส Order {{ datas.order_number }}</h4>
                                         <div class="row mb-3"  >
-                                            <label class="form-label col-form-label col-md-4">ชื่อโครงการ</label>
+                                            <label class="form-label col-form-label col-md-3">ชื่อโครงการ</label>
                                             <div class="col-md-8">
                                                 <input type="text" class="form-control-plaintext" name="name_project" value="{{orderItem.product.name}}" placeholder="">
                                             </div>
                                         </div> 
                                         <div class="row mb-3"  >
-                                            <label class="form-label col-form-label col-md-4">ราคา</label>
+                                            <label class="form-label col-form-label col-md-3">ราคา</label>
                                             <div class="col-md-8">
-                                                <input type="text" class="form-control-plaintext" name="price" value="{{ orderItem.product.price | comma }}" placeholder="" onchange="formatNumberWithCommas(this)" >                                                
+                                                <input type="text" class="form-control-plaintext" name="price" value="{{ datas.price | comma }}" placeholder="" onchange="formatInputNumberWithCommas(this)" >                                                
                                             </div>
                                         </div> 
 
                                         <div class="row mb-3"  >
-                                            <label class="form-label col-form-label col-md-4">จำนวนงวด</label>
+                                            <label class="form-label col-form-label col-md-3">จำนวนงวด</label>
                                             <div class="col-md-8">
-                                                <input type="text" class="form-control-plaintext" name="termOFpayment" value="{{product.term_of_payment.name}}" placeholder="" onchange="formatNumberWithCommas(this)" >                                                
+                                                <input type="text" class="form-control-plaintext" name="termOFpayment" value="{{ orderTerms|length }}" placeholder="" onchange="formatInputNumberWithCommas(this)" >                                                
                                             </div>
                                         </div> 
                                         
-                                        {% for payment in payments %}
-                                            <div class="row mb-15px">
-                                                <label class="form-label col-form-label col-md-4">จำนวนงวด {{ loop.index }}</label>
-                                                <div class="col-md-4">
-                                                    <input type="text" class="form-control" hidden name="term_id" value="{{payment.id}}" placeholder="รายละเอียด">
-                                                    <input type="text" class="form-control" name="term_detail" value="{{payment.term_detail}}" placeholder="รายละเอียด">
+                                        {% for payment in orderTerms %}
+                                            <div class="row mb-3 align-items-center">
+                                                <label class="col-md-3 col-form-label fw-bold">{{ payment.term_detail }}</label>
+
+                                                <div class="col-md-3">
+                                                    <input type="hidden" name="term_id" value="{{ payment.id }}">
+                                                    <input type="text" class="form-control text-end" name="installments"
+                                                        value="{{ payment.amount | comma }}" readonly placeholder="จำนวนเงิน">
                                                 </div>
-                                                <div class="col-md-4">
-                                                    <input type="text" class="form-control price-input" name="installments" value="{{ payment.amount | comma }}" oninput="formatNumberWithCommas(this)" placeholder="จำนวนงวด ${i + 1}">
+
+                                                <div class="col-md-3">
+                                                    <input type="text" class="form-control text-end price-input" name="discount"
+                                                    oninput="formatInputNumberWithCommasDiscount(this)" onfocus="clearZeroWhenTyping(this)"
+                                                    value="{{ '{:,.2f}'.format(payment.discount)}}" placeholder="ส่วนลด">
+                                                </div>
+
+                                                <div class="col-md-3">
+                                                    <input type="text" class="form-control text-end price-input" name="count"
+                                                        value="0" oninput="formatInputNumberWithCommas(this)" readonly placeholder="รวมราคา">
                                                 </div>
                                             </div>
-                                        {% endfor %}
+                                            {% endfor %}
+
+                                            <div class="row mb-3"  >
+                                                <label class="form-label col-form-label col-md-3">ยอดรวม</label>
+                                                <div class="col-md-3">
+                                                    <input type="text" class="form-control-plaintext text-end" name="sum_installments" value="0" placeholder="" onchange="formatInputNumberWithCommas(this)" >                                                
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <input type="text" class="form-control-plaintext text-end" name="sum_discount" value="{{ '{:,.2f}'.format(datas.discount)}}" placeholder="" onchange="formatNumberWithCommas(this)" >                                                
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <input type="text" class="form-control-plaintext text-end" name="total_payment"
+                                                        value="" readonly placeholder="รวมทั้งหมด">
+                                                </div>
+                                            </div> 
+
     
                                     </div>
                                 </div>     
@@ -303,7 +328,7 @@ $(document).ready(function () {
                             <input type="text" class="form-control" name="term_detail" value="${defaultDetail}" placeholder="รายละเอียด">
                         </div>
                         <div class="col-md-4">
-                            <input type="text" class="form-control price-input" name="installments" value="${defaultAmount}" oninput="formatNumberWithCommas(this)" placeholder="จำนวนงวด ${i + 1}">
+                            <input type="text" class="form-control price-input" name="installments" value="${defaultAmount}" oninput="formatInputNumberWithCommas(this)" placeholder="จำนวนงวด ${i + 1}">
                         </div>
                     </div>
                 `;
@@ -363,9 +388,135 @@ $(document).ready(function () {
       
     });
 
+
+
+    //--------- คำนวณ -----------------
+    $('input[name="installments"], input[name="discount"]').on('input', function () {
+        let row = $(this).closest('.row'); // ใช้ closest('.row') แทน tr
+    
+        let installmentsInput = row.find('input[name="installments"]');
+        let discountInput = row.find('input[name="discount"]');
+        let totalInput = row.find('input[name="count"]'); // ช่องสำหรับผลลัพธ์รวม
+    
+        let installments = parseFloat(installmentsInput.val().replace(/,/g, '')) || 0;
+        let discount = parseFloat(discountInput.val().replace(/,/g, '')) || 0;
+    
+        let total = installments - discount;
+        total = parseFloat(total.toFixed(2));
+    
+        if (totalInput.length > 0) {
+            totalInput.val(total.toLocaleString('en-US', { minimumFractionDigits: 2 }));
+        }
+
+        calculateTotalcount();
+    });
+
+
+    $(`input[name="installments"]`).each(function () {
+        calculateTotalInstallments();
+        calculateTotalcount();
+    });
+    
+
+    $(document).on('input', 'input[name="discount"]', function () {
+        calculateTotalDiscount();
+    });
+
+    $('.row.mb-3.align-items-center').each(function () {
+        calculatdiscountPayment($(this));
+        //calculateTotalcount();
+    });
+
+   
+    
+
+    
+
       
 
 });
+
+//  
+// ฟังก์ชันคำนวณ count ในแต่ละแถว
+function calculatdiscountPayment(row) {
+    let installmentsInput = row.find('input[name="installments"]');
+    let discountInput = row.find('input[name="discount"]');
+    let totalInput = row.find('input[name="count"]');
+
+    let installments = parseFloat(installmentsInput.val()?.replace(/,/g, '')) || 0;
+    let discount = parseFloat(discountInput.val()?.replace(/,/g, '')) || 0;
+
+    let total = installments - discount;
+    total = parseFloat(total.toFixed(2));
+
+    console.log()
+
+    if (totalInput.length > 0) {
+        totalInput.val(total.toLocaleString('en-US', { minimumFractionDigits: 2 }));
+    }
+}
+//  ฟังก์ชั่นรวมเงินทั้งหมดของสินค้า
+function calculateTotalInstallments() {
+    let total_installments = 0;
+
+    $('input[name="installments"]').each(function () {
+        const rawValue = $(this).val();
+        if (typeof rawValue === 'string' && rawValue.trim() !== '') {
+            const value = Number(rawValue.replace(/,/g, '')) || 0;
+            total_installments += value;
+        }
+    });
+
+    const $sumInput = $('input[name="sum_installments"]');
+    if ($sumInput.length) {
+            let formatted = formatNumberWithCommas(total_installments.toFixed(2));
+            $sumInput.val(formatNumberWithCommas(total_installments.toFixed(2))).trigger('input');
+            //$sumInput.val(total_installments.toFixed(2)).trigger('input');
+    }
+}
+
+//  ฟังก์ชั่นรวมเงินทั้งหมดของส่วนลด
+function calculateTotalDiscount() {
+    let total_discount = 0;
+
+    $('input[name="discount"]').each(function () {
+        const rawValue = $(this).val();
+        if (typeof rawValue === 'string' && rawValue.trim() !== '') {
+            const value = Number(rawValue.replace(/,/g, '')) || 0;
+            total_discount += value;
+        }
+        console.log(total_discount)
+    });
+
+    const $sumInputdiscount = $('input[name="sum_discount"]');
+    if ($sumInputdiscount.length) {
+            let formatted = formatNumberWithCommas(total_discount.toFixed(2));
+            $sumInputdiscount.val(formatNumberWithCommas(total_discount.toFixed(2))).trigger('input');
+    }
+}
+
+//  ฟังก์ชั่นรวมเงินทั้งหมดของส่วนลด
+function calculateTotalcount() {
+    $('input[name="sum_installments"], input[name="sum_discount"]').on('input', function () {
+        let row = $(this).closest('.row'); // ใช้ closest('.row') แทน tr
+    
+        let installmentsInput = row.find('input[name="sum_installments"]');
+        let discountInput = row.find('input[name="sum_discount"]');
+        let totalInput = row.find('input[name="total_payment"]'); // ช่องสำหรับผลลัพธ์รวม
+    
+        let installments = parseFloat(installmentsInput.val().replace(/,/g, '')) || 0;
+        let discount = parseFloat(discountInput.val().replace(/,/g, '')) || 0;
+    
+        let total_payment = installments - discount;
+        total_payment = parseFloat(total_payment.toFixed(2));
+    
+        if (totalInput.length > 0) {
+            totalInput.val(total_payment.toLocaleString('en-US', { minimumFractionDigits: 2 }));
+        }
+
+    });
+    
+}
 
 function func_deleteItem(el) {
 
@@ -416,20 +567,73 @@ function createContactRow() {
 }
 
 
-function formatNumberWithCommas(input) {
+function clearZeroWhenTyping(input) {
+    if (input.value === "0.00") {
+        input.value = "";
+    }
+}
+
+function formatInputNumberWithCommasDiscount(input) {
     let value = input.value;
 
-    // ลบ comma ที่มีอยู่ทั้งหมด
+    // ลบ comma ออกจากค่าที่ป้อน
     value = value.replace(/,/g, '');
 
-    // ตรวจสอบว่าค่าเป็นตัวเลขหรือไม่
-    if (!isNaN(value) && value !== '') {
-        value = parseFloat(value).toLocaleString('en-US'); 
+    let regex = /^\d+(\.\d{0,2})?$/;
+    if (!regex.test(value)) {
+        input.value = input.value.slice(0, -1); // ลบตัวอักษรสุดท้ายที่เกินออก
+        return;
     }
 
-    // อัปเดตค่ากลับเข้า input
-    input.value = value;
+    // แปลงค่าเป็นตัวเลข
+    let number = parseFloat(value);
+
+    // แยกส่วนหน้าและส่วนทศนิยม
+    let parts = value.split('.');
+    parts[0] = parseInt(parts[0], 10).toLocaleString(); // เพิ่ม comma ให้เฉพาะส่วนหน้า
+
+    // รวมค่ากลับ
+    input.value = parts.length > 1 ? parts.join('.') : parts[0];
 }
+
+function formatInputNumberWithCommas(input) {
+    
+    if (!input || typeof input.value !== 'string') {
+        return;
+    }
+    // ลบ comma ออกจากค่าที่ป้อน
+    let value = input.value.replace(/,/g, '');
+
+    let regex = /^\d+(\.\d{0,2})?$/;
+    if (!regex.test(value)) {
+        input.value = input.value.slice(0, -1); // ลบตัวอักษรสุดท้ายที่เกินออก
+        return;
+    }
+
+    // แปลงค่าเป็นตัวเลข
+    let number = parseFloat(value);
+
+    // แยกส่วนหน้าและส่วนทศนิยม
+    let parts = value.split('.');
+    parts[0] = parseInt(parts[0], 10).toLocaleString(); // เพิ่ม comma ให้เฉพาะส่วนหน้า
+
+    // รวมค่ากลับ
+    input.value = parts.length > 1 ? parts.join('.') : parts[0];
+}
+
+function formatNumberWithCommas(value) {
+    if (value === null || value === undefined) return '';
+    value = value.toString().replace(/,/g, '');
+
+    if (isNaN(value)) return '';
+
+    const parts = value.split('.');
+    parts[0] = parseInt(parts[0], 10).toLocaleString();
+
+    return parts.length > 1 ? parts.join('.') : parts[0];
+}
+
+
 function validateFile(input) {
     const allowedExtensions = ['jpg', 'jpeg', 'png']; // นามสกุลไฟล์ที่อนุญาต
     const file = input.files[0];
@@ -571,6 +775,27 @@ function sweetAlertDelfile(id_file,id_lead) {
         }
     });
 }
+</script>
+<script>
+    $('input[id^="installments"],input[id^="discount"]' ).on('input', function () {
+        let row = $(this).closest('tr'); // ดึงแถวปัจจุบัน
+        let installmentsInput = row.find('input[id^="installments"]');
+        let discountInput = row.find('input[id^="discount"]');
+
+        let installments = parseFloat(installmentsInput.val().replace(/,/g, '')) || 0;
+        let discount = parseFloat(discountInput.val().replace(/,/g, '')) || 0;
+
+        // คำนวณ total_cost สำหรับ n_cost
+        
+        let total = installments - discount;
+        total = parseFloat(total.toFixed(2)); 
+
+        // console.log("totalCost")
+        // console.log(totalCost)
+            // row.find('input[id^="sum_cost"]').val(formatNumberWithCommas(totalCost));
+        row.find('input[id^="total"]').val(total);
+        
+    });
 </script>
 
 {% endblock javascripts %}

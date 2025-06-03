@@ -10,7 +10,9 @@ from flask import jsonify
 
 from dataclasses import dataclass
 
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, Numeric
+from decimal import Decimal
+
 
 @dataclass
 class ProductCategoryModel(db.Model):
@@ -192,12 +194,16 @@ class installmentsPaymentModel(db.Model):
     __tablename__ = "installments_payment"
     
     id: int
+    price: int
     term_detail: str
     amount: str
+    year:str
     
     id = db.Column(db.Integer, primary_key=True)
     term_detail = db.Column(db.String(), nullable=False)
     amount = db.Column(db.String(), nullable=False)
+    year = db.Column(db.String(), nullable=True,server_default='2025') 
+    price = db.Column(Numeric(precision=12, scale=2), nullable=False, server_default='0.00')
     product_for_sales_id = db.Column(db.Integer, db.ForeignKey("product_for_sales.id", ondelete="CASCADE"))
     product = db.relationship("ProductForSalesModel", back_populates="installments")
     created_at = db.Column(db.DateTime,  default=db.func.current_timestamp())

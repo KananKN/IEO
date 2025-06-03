@@ -86,6 +86,8 @@
                                                   <div class="col-md-6">
                                                     <label for="fullname" class="form-label">ชื่อ<span class="text-danger form-label">*</span></label>
                                                     <input name="fullname" required class="form-control  me-2"  placeholder="ชื่อ">
+
+                                                    
                                                   </div>
                                                   <div class="col-md-6">
                                                     <label for="fullname" class="form-label">นามสกุล<span class="text-danger form-label">*</span></label>
@@ -97,16 +99,32 @@
                                             <div class="mb-3">
                                                 <div class="row">
                                                   <div class="col-md-6">
+                                                    <label for="first_nameEN" class="form-label">ชื่อภาษาอังกฤษ<span class="text-danger form-label">*</span></label>
+                                                    <input name="firstnameEN" required class="form-control  me-2"  placeholder="ชื่อภาษาอังกฤษ">
+                                                    
+                                                  </div>
+                                                  <div class="col-md-6">
+                                                    <label for="lastnameEN" class="form-label">นามสกุลภาษาอังกฤษ<span class="text-danger form-label">*</span></label>
+                                                    <input name="lastnameEN" required class="form-control "  placeholder="นามสกุลภาษาอังกฤษ">
+                                                  </div>
+                                                </div>
+                                              
+                                            </div>
+                                            <div class="mb-3">
+                                                <div class="row">
+                                                  <div class="col-md-6">
                                                     <label for="nickname" class="form-label">ชื่อเล่น<span class="text-danger form-label">*</span></label>
                                                     <input name="nickname"  class="form-control  me-2"  placeholder="ชื่อเล่น">
                                                   </div>
                                                   <div class="col-md-6">
-                                                    <label for="birth_date" class="form-label">วันเกิด<span class="text-danger form-label">*</span></label>
-                                                    <!-- <input type="text" class="form-control" id="masked-input-date" name="birth_date" placeholder="dd/mm/yyyy"> -->
+                                                    <label for="email" class="form-label">Line ID<span class="text-danger form-label">*</span></label>
+                                                    <input type="text" class="form-control" name="line_id" placeholder="Line ID">
+                                                    <!-- <label for="birth_date" class="form-label">วันเกิด<span class="text-danger form-label">*</span></label>
+                                                    <input type="text" class="form-control" id="masked-input-date" name="birth_date" placeholder="dd/mm/yyyy">
                                                     <div class="input-group date" id="datepicker-disabled-past" data-date-format="dd-mm-yyyy" >
                                                       <input type="text" class="form-control" placeholder="Select Date" id="kt_daterangepicker_2" name="birth_date" required autocomplete="off"   />
                                                       <span class="input-group-text input-group-addon"><i class="fa fa-calendar"></i></span>
-                                                    </div> 
+                                                    </div>  -->
                                                   </div>
                                                 </div>
                                               
@@ -127,10 +145,7 @@
                   
                                             <div class="mb-3">
                                                 <div class="row">
-                                                  <div class="col-md-6">
-                                                    <label for="email" class="form-label">Line ID<span class="text-danger form-label">*</span></label>
-                                                    <input type="text" class="form-control" name="line_id" placeholder="Line ID">
-                                                  </div>
+                                                 
                                                   <div class="col-md-6">
                                                     <label for="email" class="form-label">เพศ<span class="text-danger form-label">*</span></label>
                                                     <div class="col-md-9 pt-2">
@@ -144,6 +159,15 @@
                                                       </div>
                                                       
                                                     </div>
+                                                  </div>
+                                                   <div class="col-md-6">
+                                                    <label for="email" class="form-label">ปีที่สนใจเข้าร่วมโครงการ<span class="text-danger form-label">*</span></label>
+                                                    <select name="inputYear" id="inputYear" class="default-select2 form-control">
+                                                      {% set this_year = this_year or 2025 %}
+                                                      {% for year in range(this_year - 5, this_year + 6) %}
+                                                          <option value="{{ year }}" {% if year == this_year %}selected{% endif %}>{{ year }}</option>
+                                                      {% endfor %}
+                                                  </select>
                                                   </div>
                                                 </div>
                                             </div>
@@ -164,8 +188,8 @@
                                                     </div>
                                                     <div class="mb-3">
                                                        <label class="form-label col-form-label">โปรเจค (Project)<span class="text-danger form-label">*</span></label>
-                                                          <select class="default-select2 form-control" id="project" required disabled name="project">
-                                                            <option value="">-- เลือกโปรเจค --</option>
+                                                          <select class="default-select2 form-control" id="project" required disabled name="project[]" multiple>
+                                                            <!-- <option value="">-- เลือกโปรเจค --</option> -->
                                                           </select>
                                                     </div>
 
@@ -184,13 +208,13 @@
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
                                                       <label class="form-label col-form-label">ประเทศ (Country)<span class="text-danger form-label">*</span></label>
-                                                        <select id="country"  class="default-select2 form-control" required disabled name="country">
+                                                        <select id="country"  class="default-select2 form-control" required disabled name="country[]" multiple>
                                                           <option value="">-- เลือกประเทศ --</option>
                                                         </select>
                                                     </div>
                   
                                                     <div class="row mb-3">
-                                                      <label class="form-label col-form-label">เลือก Agency<span class="text-danger form-label">*</span></label>
+                                                      <label class="form-label col-form-label">เลือก Agency<span class="text-danger form-label" >*</span></label>
                                                       <select id="agency"  class="default-select2 form-control" required name="agency">
                                                         <!-- หากไม่ได้เลือก agency อื่น ๆ ให้แสดง IEO เป็นค่าเริ่มต้น -->
                                                         <!-- <option value="" >เลือก Agency</option> -->
@@ -339,25 +363,41 @@
     }
 
     function validateForm() {
-        let isValid = true;
-    
-        // เช็คทุก input, textarea, select ที่ required
-        $('#myForm').find('input[required], textarea[required], select[required]').each(function () {
-            if (!$(this).val().trim()) {
-                $(this).addClass('border-red-500');
-                isValid = false;
-            } else {
-                $(this).removeClass('border-red-500');
-            }
-        });
-    
-        if (!isValid) {
-            swal({
-                icon: 'warning',
-                title: 'กรุณากรอกข้อมูลให้ครบถ้วน',
-            });
-            return;
-        }
+      let isValid = true;
+
+      var countryVal = $('#country').val(); // อาจเป็น array
+      if (!countryVal || countryVal.length === 0) {
+          alert('กรุณาเลือกประเทศ');
+          return false;
+      }
+  
+      $('#myForm').find('input[required], textarea[required], select[required]').each(function () {
+          var val = $(this).val();
+  
+          if (Array.isArray(val)) {
+              if (val.length === 0) {
+                  $(this).addClass('border-red-500');
+                  isValid = false;
+              } else {
+                  $(this).removeClass('border-red-500');
+              }
+          } else {
+              if (!val || val.trim() === '') {
+                  $(this).addClass('border-red-500');
+                  isValid = false;
+              } else {
+                  $(this).removeClass('border-red-500');
+              }
+          }
+      });
+  
+      if (!isValid) {
+          swal({
+              icon: 'warning',
+              title: 'กรุณากรอกข้อมูลให้ครบถ้วน',
+          });
+          return false;
+      }
     
         // ✅ ถ้าข้อมูลครบ เรียกฟังก์ชันบันทึก
         func_save();
@@ -368,18 +408,18 @@
       
       $('#country').select2({
         placeholder: "-- เลือกประเทศ --",
-        allowClear: true
+        //allowClear: true
       });
       $('#project').select2({
         placeholder: "-- เลือกโปรเจค --",
-        allowClear: true
+        //allowClear: true
       });
       // เมื่อเลือกหมวดหมู่
       $('#category').change(function () {
         var categoryId = $(this).val();
-        $('#country').prop('disabled', true).html('<option value="">-- เลือกประเทศ --</option>');
-        $('#project').prop('disabled', true).html('<option value="">-- เลือกโปรเจค --</option>');
-    
+        $('#country').prop('disabled', true).html('<option value="">-- เลือกประเทศ --</option>').trigger('change');
+        $('#project').prop('disabled', true).html('<option value="">-- เลือกโปรเจค --</option>').trigger('change');
+      
         if (categoryId) {
           $.getJSON('/api/get_countries_by_category/' + categoryId, function (data) {
             $.each(data, function (i, country) {
@@ -388,15 +428,42 @@
                 text: country.name
               }));
             });
-            $('#country').prop('disabled', false);
+            $('#country').prop('disabled', false).trigger('change');
+          });
+        }
+      });
+      
+      $('#country').change(function () {
+        var categoryId = $('#category').val();
+        var countryIds = $(this).val() || [];
+        $('#project').prop('disabled', true).html('<option value="">-- เลือกโปรเจค --</option>').trigger('change');
+      
+        if (categoryId && countryIds.length > 0) {
+          $.ajax({
+            url: '/api/get_projects_bulk',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+              category_id: categoryId,
+              country_ids: countryIds
+            }),
+            success: function (data) {
+              $.each(data, function (i, project) {
+                $('#project').append($('<option>', {
+                  value: project.id,
+                  text: project.name
+                }));
+              });
+              $('#project').prop('disabled', false).trigger('change');
+            }
           });
         }
       });
     
       // เมื่อเลือกประเทศ
-      $('#country').change(function () {
+      /* $('#country').change(function () {
         var categoryId = $('#category').val();
-        var countryId = $(this).val();
+        var countryIds = $(this).val();
         $('#project').prop('disabled', true).html('<option value="">-- เลือกโปรเจค --</option>');
     
         if (categoryId && countryId) {
@@ -410,7 +477,7 @@
             $('#project').prop('disabled', false);
           });
         }
-      });
+      }); */
     });
 </script>
 

@@ -137,9 +137,32 @@ function func_modal(mode, data) {
 function func_save(mode, x) {
     console.log("Saving...");
 
-    // ตั้ง action สำหรับการบันทึกจริง
-    $('#myForm').attr('action', '/product/addProductSale').attr('method', 'POST');
-    $('#myForm').submit();
+    let values = [];
+    let duplicates = false;
+
+    $('input[name="term_year[]"]').each(function () {
+        let val = $(this).val();
+        if (val) {
+            if (values.includes(val)) {
+                duplicates = true;
+                return false; // พบปีซ้ำ
+            }
+            values.push(val);
+        }
+    });
+
+    if (duplicates) {
+        alert('ไม่สามารถบันทึกได้ เพราะปีซ้ำกัน');
+        return; // ⛔ หยุดฟังก์ชัน ไม่ submit ฟอร์ม
+    }
+
+    // ✅ ถ้าไม่มีปีซ้ำ ให้ตั้งค่า action และส่งฟอร์ม
+    $('#myForm')
+        .attr('action', '/product/addProductSale')
+        .attr('method', 'POST')
+        .submit();
+
+   
 
 
 
