@@ -242,7 +242,7 @@ def get_userRequest():
         data_list = safe_model_to_dict(program)
 
         data.append({
-            "id": index + 1,
+            "id": start + index + 1, 
             "first_name": lead.first_name or '',
             "last_name": lead.last_name or '',
             "product_name": product.name if product else '',
@@ -281,6 +281,7 @@ def check_statusLead():
 
     status =json_data["status"]
     remask =json_data["remask"]
+    id_pd =json_data["id_pd"]
     product_id_value =json_data["product_id"]
     first_name =json_data["first_name"]
     last_name =json_data["last_name"]
@@ -345,21 +346,22 @@ def check_statusLead():
         thisItem.gender=gender
         thisItem.line_id=line_id
 
+
         
-        thisProgram = LeadProgram.query.filter(
-                        and_(
-                            LeadProgram.lead_id == id_lead,
-                            LeadProgram.product_id == product_id_value,
-                        )).first()
-        print("thisProgram",thisProgram)
-        # ตรวจสอบว่ามีออร์เดอร์ปีเดียวกันที่ยังไม่จบหรือไม่ (เฉพาะเมื่อ status = 'converted')
+        thisProgram = LeadProgram.query.filter_by(
+                        lead_id=int(id_lead),
+                        product_id=int(id_pd)
+                    ).first()
+        
+
         existing_order = None
         current_year = datetime.utcnow().year
+        # print("current_year", current_year)
         if status == 'converted':
-            existing_order = db.session.query(OrderModel).join(ProductForSalesModel).filter(
-                            OrderModel.lead_id == id_lead,
+            existing_order = db.session.query(OrderModel).filter(
+                            OrderModel.lead_id == int(id_lead),
                             OrderModel.status.notin_(['completed', 'cancelled']),
-                            db.extract('year', OrderModel.created_at) == current_year
+                            # db.extract('year', OrderModel.created_at) == current_year
                         ).first()
 
         # === จัดการ LeadProgram ===
@@ -686,7 +688,7 @@ def get_followStatus():
         data_list = safe_model_to_dict(program)
 
         data.append({
-            "id": index + 1,
+            "id": start + index + 1, 
             "first_name": lead.first_name or '',
             "last_name": lead.last_name or '',
             "product_name": product.name if product else '',
