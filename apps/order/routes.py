@@ -315,6 +315,9 @@ def save_payment():
 
         raw_sum_installments = request.form.get("sum_installments", "0").replace(",", "")
         sum_installments = float(raw_sum_installments) 
+        
+        raw_total_payment = request.form.get("total_payment", "0").replace(",", "")
+        total_payment = float(raw_total_payment) 
 
         term_ids = request.form.getlist('term_id')
         installments = request.form.getlist('installments')
@@ -333,7 +336,8 @@ def save_payment():
         else :
             item_order.status = payment_no
             item_order.discount = sum_discount
-            item_order.net_price = sum_installments
+            item_order.net_price = total_payment
+            item_order.total_price = sum_installments
             item_member.status = payment_no
             db.session.commit()
 
