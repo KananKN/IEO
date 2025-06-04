@@ -390,7 +390,7 @@ def update_agency_api():
 @login_required
 @read_permission.require(http_exception=403)
 def list_ProductAgency():
-    datas = AgencyModel.query.all()
+    datas = ProductAgencyAssociation.query.all()
     # for agency in datas:
     #     product_agency = ProductAgencyAssociation.query.filter_by(agency_id=datas.id).first()
     print(datas)
@@ -420,48 +420,46 @@ def get_list_ProductAgency():
         4: Product.name          # คอลัมน์ที่ 4 -> product
     }
     
-    # ค้นหาข้อมูล
-    query = db.session.query(Agency, Product.name).\
-    outerjoin(ProductAgencyAssociation, Agency.id == ProductAgencyAssociation.agency_id).\
-    outerjoin(Product, Product.id == ProductAgencyAssociation.product_id).\
-    outerjoin(CountryModel, CountryModel.id == Agency.country_id)
-    
-    
-
+    # Step 1: Base query หาเฉพาะ agency.id (distinct ก่อน)
+    base_query = db.session.query(Agency.id).\
+        outerjoin(CountryModel, CountryModel.id == Agency.country_id).\
+        outerjoin(ProductAgencyAssociation, Agency.id == ProductAgencyAssociation.agency_id).\
+        outerjoin(Product, Product.id == ProductAgencyAssociation.product_id)
 
     if search_value:
         search = f"%{search_value}%"
-        query = query.filter(
+        base_query = base_query.filter(
             or_(
                 Agency.first_name.ilike(search),
-                Agency.country.ilike(search),
+                Agency.last_name.ilike(search),
+                CountryModel.name.ilike(search),
                 Agency.tel.ilike(search),
                 Product.name.ilike(search)
             )
         )
 
-    # จัดเรียงลำดับข้อมูล
-    if order:
-        column_index = int(order[0]["column"])  # ดึง index ของคอลัมน์ที่ต้องการเรียง
-        column_order = column_map.get(column_index, Agency.id)  # คอลัมน์ที่ใช้เรียง
-        sort_direction = order[0]["dir"]  # asc / desc
+    base_query = base_query.distinct()
 
-        if sort_direction == "desc":
-            column_order = column_order.desc()
-        query = query.order_by(column_order)
-    else:
-        query = query.order_by(Agency.id)
+    total_records = db.session.query(Agency.id).distinct().count()
+    filtered_records = base_query.count()
 
-    # Pagination
-    total_records = db.session.query(Agency).join(ProductAgencyAssociation).join(Product).count()
+    # Step 2: pagination
+    agency_ids = base_query.offset(start).limit(length).all()
+    agency_ids = [a.id for a in agency_ids]
 
-    # ดึงข้อมูลที่จำกัดจำนวนตาม pagination
-    query = query.offset(start).limit(length)
+    # Step 3: ดึงข้อมูลจริง (Agency + Product)
+    query = db.session.query(Agency, Product.name).\
+        filter(Agency.id.in_(agency_ids)).\
+        outerjoin(ProductAgencyAssociation, Agency.id == ProductAgencyAssociation.agency_id).\
+        outerjoin(Product, Product.id == ProductAgencyAssociation.product_id).\
+        outerjoin(CountryModel, CountryModel.id == Agency.country_id).\
+        order_by(Agency.id)
+
     rows = query.all()
 
     # Group ข้อมูลตาม employee_id
     grouped = {}
-    display_index = 1  # 👈 เริ่มนับลำดับที่ 1
+    display_index = start + 1 # 👈 เริ่มนับลำดับที่ 1
 
 
     for index, (agency, product_name) in enumerate(rows,start=start):
