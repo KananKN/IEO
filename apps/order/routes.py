@@ -177,7 +177,7 @@ def get_order():
         installment_list = [safe_model_to_dict(i) for i in order.product.installments] if order.product and order.product.installments else []
 
         data.append({
-            "id": index + 1,
+            "id": start + index + 1, 
             "order_number": order.order_number or '',
             "customer_name": customer_name,
             "product_name": order.product.name if order.product else '',

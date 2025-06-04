@@ -925,33 +925,50 @@ def updateProductSale():
 
         db.session.commit()  # บันทึกข้อมูลลงฐานข้อมูล
         print("เพิ่ม Employee เข้าโครงการสำเร็จ")  
-   
-    if university_ids:
-        for university_id in university_ids:
-            # สร้างความสัมพันธ์ในตาราง ProgramSupplierAssociation
-            new_associationAgency = ProductAgencyAssociation(
-                product_id=thisItem.id,
-                agency_id=university_id,
-            )
+    # 🔴 ลบความสัมพันธ์เดิมทั้งหมดก่อน
+    ProductAgencyAssociation.query.filter_by(product_id=thisItem.id).delete()
 
-            db.session.add(new_associationAgency)
+    # 🟢 รวม id ทั้งสองกลุ่ม
+    all_agency_ids = set((university_ids or []) + (agency_ids or []))
 
-        db.session.commit()  # บันทึกข้อมูลลงฐานข้อมูล
-        print("เพิ่ม university  เข้าโครงการสำเร็จ")   
+    # 🟢 เพิ่มใหม่
+    for agency_id in all_agency_ids:
+        new_association = ProductAgencyAssociation(
+            product_id=thisItem.id,
+            agency_id=agency_id,
+        )
+        db.session.add(new_association)
+
+    db.session.commit()  # ✅ commit รอบเดียว
+    print("อัปเดต university และ agency เข้าโครงการสำเร็จ")
+    # ProductAgencyAssociation.query.filter_by(product_id=thisItem.id).delete()
+
+    # if university_ids:
+    #     for university_id in university_ids:
+    #         # สร้างความสัมพันธ์ในตาราง ProgramSupplierAssociation
+    #         new_associationAgency = ProductAgencyAssociation(
+    #             product_id=thisItem.id,
+    #             agency_id=university_id,
+    #         )
+
+    #         db.session.add(new_associationAgency)
+
+    #     db.session.commit()  # บันทึกข้อมูลลงฐานข้อมูล
+    #     print("เพิ่ม university  เข้าโครงการสำเร็จ")   
         
-    if agency_ids:
-        for agency_id in agency_ids:
-            # สร้างความสัมพันธ์ในตาราง ProgramSupplierAssociation
-            new_associationAgency = ProductAgencyAssociation(
-                product_id=thisItem.id,
-                agency_id=agency_id,
-            )
+    # if agency_ids:
+    #     for agency_id in agency_ids:
+    #         # สร้างความสัมพันธ์ในตาราง ProgramSupplierAssociation
+    #         new_associationAgency = ProductAgencyAssociation(
+    #             product_id=thisItem.id,
+    #             agency_id=agency_id,
+    #         )
 
-            db.session.add(new_associationAgency)
+    #         db.session.add(new_associationAgency)
 
-        db.session.commit()  # บันทึกข้อมูลลงฐานข้อมูล
-        print("เพิ่ม Agency เข้าโครงการสำเร็จ")   
-    # print(datas)
+    #     db.session.commit()  # บันทึกข้อมูลลงฐานข้อมูล
+    #     print("เพิ่ม Agency เข้าโครงการสำเร็จ")   
+    # # print(datas)
     return redirect(url_for('product_blueprint.EditProductSales',id=thisItem.id))
 
 @blueprint.route('/upload')
