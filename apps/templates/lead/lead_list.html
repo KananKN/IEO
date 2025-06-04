@@ -98,8 +98,8 @@
                      <div class="row mb-3" hidden>
                         <label class="form-label col-form-label col-md-4">id</label>
                         <div class="col-md-8">
-                            <input type="text"  class="form-control" name="id_update" hidden id="id-update" data-parsley-required="true"/>
-                            <input type="text"  class="form-control" name="id_product" hidden id="id_product" data-parsley-required="true"/>
+                            <input type="text"  class="form-control" name="id_update" id="id-update" data-parsley-required="true"/>
+                            <input type="text"  class="form-control" name="id_product"  id="id_product" data-parsley-required="true"/>
 
                         </div>
                     </div>    
@@ -264,8 +264,8 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-primary w-100px" onclick="func_save($(this))">บันทึก</button>
-                     <!-- <button type="button" class="btn btn-success w-100px" hidden onclick="func_createOrder($(this))">สร้าง Order</button>
-                   <button type="button" class="btn btn-danger" onclick="func_save('rejected',$(this))">Rejected</button>
+                    <button type="button" class="btn btn-success w-100px" hidden onclick="func_createOrder($(this))">สร้าง Order</button>
+                    <!-- <button type="button" class="btn btn-danger" onclick="func_save('rejected',$(this))">Rejected</button>
                     <button type="button" class="btn btn-success" onclick="func_save('active',$(this))">Appove</button> -->
                 </div>
             </form>
@@ -485,7 +485,7 @@ function loadDataTable() {
                 }
             }
         ],
-          order: [[6, "asc"]],  // เรียงลำดับจาก ID
+          order: [[7, "asc"]],  // เรียงลำดับจาก ID
         lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
         pageLength: 10
     });
@@ -676,6 +676,7 @@ function func_save(x){
             body: JSON.stringify({
 
                 id: $('[name="id_update"]').val(),
+                id_pd: $('[name="id_product"]').val(),
                 product_id: $('[name="name_project"]').val(),
                 status: $('[name="status_mode"]').val(),
                 remask: $('[name="remask"]').val(),
