@@ -368,7 +368,7 @@
                             <input  class="form-control" readonly  value="" hidden  display data-parsley-required="true"/>
                             <select class="multiple-select2 form-control" multiple name="university" id="i_university" >
                                 {% for university in universitys %}
-                                    <option value="{{university.id}}" {% if university.id in selected_agencys  %} selected {% endif %}>{{university.agency_code}}</option>
+                                    <option value="{{university.id}}" {% if university.id in selected_agencys  %} selected {% endif %}>{{university.first_name}} {{university.last_name}}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -379,7 +379,7 @@
                             <input  class="form-control" readonly  value="" hidden  display data-parsley-required="true"/>
                             <select class="multiple-select2 form-control" multiple name="agency" id="i_agency" >
                                 {% for agency in agencys %}
-                                    <option value="{{agency.id}}" {% if agency.id in selected_agencys  %} selected {% endif %}>{{agency.agency_code}}</option>
+                                    <option value="{{agency.id}}" {% if agency.id in selected_agencys  %} selected {% endif %}>{{agency.first_name}} {{agency.last_name}}</option>
                                 {% endfor %}
                             </select>
                         </div>

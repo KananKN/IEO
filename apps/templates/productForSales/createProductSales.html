@@ -285,7 +285,7 @@
                         <div class="col-md-8">
                             <select class="multiple-select2 form-control" multiple name="university" id="i_university">
                                 {% for university in universitys %}
-                                    <option value="{{university.id}}">{{university.agency_code}}</option>
+                                    <option value="{{university.id}}">{{university.first_name}}</option>
                                 {% endfor %}
                             </select>   
                             
@@ -296,7 +296,7 @@
                         <div class="col-md-8">
                             <select class="multiple-select2 form-control" multiple name="agency" id="i_agency">
                                 {% for agency in agencys %}
-                                    <option value="{{agency.id}}">{{agency.agency_code}}</option>
+                                    <option value="{{agency.id}}">{{agency.first_name}}</option>
                                 {% endfor %}
                             </select>   
                             
@@ -496,7 +496,9 @@ $(document).ready(function () {
 
     // ฟังก์ชันแสดงข้อมูลลงฟอร์ม
     function populateForm(data) {
-        $('#i_price').val(data.price || '');
+        $('#i_prices').val(data.price || '');
+        formatNumber(document.getElementById('i_prices')); // ✅ ใส่ comma และทศนิยมให้เรียบร้อย
+
         $('#i_term').val(data.term || '').trigger('change'); // สร้าง input งวดใหม่
         $('#paymentData').val(JSON.stringify(data.payments || []));
 
@@ -632,7 +634,7 @@ $(document).ready(function () {
                 <td${hiddenAttr}>
                     <input class="form-control" name="term_id${year}[]" hidden value="${term_id}">
                     <input class="form-control" name="installments_${year}[]" oninput="formatNumberWithCommas(this)" value="${amount}">
-                    <input class="form-control" name="term_detail_${year}[]" value="${detail}">
+                    <input class="form-control" name="term_detail_${year}[]" hidden value="${detail}">
                 </td>
             `;
         }
@@ -679,26 +681,30 @@ $(document).ready(function () {
 
 <script>
 function formatNumber(input) {
-    let value = input.value;
+    let value = input.value.replace(/,/g, '').trim();
 
-    // ลบ comma ออกจากค่าที่ป้อน
-    value = value.replace(/,/g, '');
-
-    let regex = /^\d+(\.\d{0,2})?$/;
-    if (!regex.test(value)) {
-        input.value = input.value.slice(0, -1); // ลบตัวอักษรสุดท้ายที่เกินออก
+    // ถ้าไม่ใช่ตัวเลขหรือไม่มีค่าอะไรเลย ให้คืนค่าว่าง
+    if (value === '' || isNaN(value)) {
+        input.value = '';
         return;
     }
 
-    // แปลงค่าเป็นตัวเลข
+    // ตัดทศนิยมเกิน 2 ตำแหน่ง (ถ้ามี)
+    let regex = /^(\d+)(\.\d{0,2})?/;
+    let match = value.match(regex);
+    value = match ? match[0] : '';
+
     let number = parseFloat(value);
+    if (isNaN(number)) {
+        input.value = '';
+        return;
+    }
 
-    // แยกส่วนหน้าและส่วนทศนิยม
-    let parts = value.split('.');
-    parts[0] = parseInt(parts[0], 10).toLocaleString(); // เพิ่ม comma ให้เฉพาะส่วนหน้า
-
-    // รวมค่ากลับ
-    input.value = parts.length > 1 ? parts.join('.') : parts[0];
+    // ใส่ comma และ fix จุดทศนิยม (สูงสุด 2 ตำแหน่ง)
+    input.value = number.toLocaleString('en-US', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2
+    });
 }
 
 
