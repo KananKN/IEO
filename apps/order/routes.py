@@ -106,7 +106,7 @@ def convert_thai_to_date(thai_date_str):
     # สร้างเป็นวันที่ในรูปแบบ datetime
     return datetime(year, int(month), int(day))
 
-@blueprint.route("/get_order", methods=["POST"])
+@blueprint.route("/get_order1", methods=["POST"])
 @login_required
 @read_permission.require(http_exception=403)
 def get_order():
@@ -465,3 +465,28 @@ def delete_file():
     db.session.commit()
 
     return redirect(url_for('order_blueprint.order_update', id=id_order))
+
+@blueprint.route('/delete_order_list', methods=['POST'])
+@login_required
+def delete_order_list():
+    id_del = int(request.form["id"])  # แปลงให้ชัวร์ว่าเป็น int
+
+    print(id_del)
+    # ตรวจสอบว่า query เจอ
+    target = db.session.query(OrderModel).filter(OrderModel.id == id_del).first()
+    print("Target Order:", target)
+
+    if target:
+        # ลบ OrderTermModel ที่อ้างถึง order_id นี้ก่อน
+        OrderTermModel.query.filter_by(order_id=id_del).delete()
+        db.session.commit()
+
+        # แล้วค่อยลบ OrderModel
+        db.session.query(OrderModel).filter(OrderModel.id == id_del).delete(synchronize_session=False)
+        db.session.commit()
+
+        flash('Deleted Order!', 'success')
+    else:
+        flash('No Order found for that ID', 'warning')
+
+    return redirect(url_for('order_blueprint.order_list'))
