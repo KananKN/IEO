@@ -468,19 +468,28 @@ function loadDataTable() {
                 orderable: false, // ปิดการเรียงลำดับในคอลัมน์นี้
                 render: function(data, type, row) {
                     const rowData = JSON.stringify(row).replace(/"/g, '&quot;'); 
+                    let buttons = ``;
+                    {% if current_user.has_permission('write_lead') %}
+                        buttons += `
+                            <a href="javascript:;" onclick="func_modal('${rowData}')" class="btn btn-dark btn-circle btn-icon">
+                                <i class="fas fa-pen"></i>
+                            </a>`;
+                    {% endif %}
+                    {% if current_user.has_permission('delete_lead') %}
+                        buttons += `
+                            <a class="btn btn-danger btn-icon btn-circle" onclick="sweetAlertDel(${row.data_list.id})">
+                                <i class="fas fa-trash"></i>
+                            </a>`;
+                        
+                    {% endif %}
+
                     
-                    return `
-                    <a href="javascript:;" class="btn btn-success  btn-icon btn-circle " hidden><i class="fas fa-check" onclick="sweetAlertAppove('${data.data_list.id}','active')"></i></a>
-                                           
-                    <a href="javascript:;" onclick="sweetAlertReject('${data.data_list.id}','rejected')" hidden class=" btn btn-danger btn-icon btn-circle "><i class="fas fa-times"></i></a>
-                
-                    <a  href="javascript:;" onclick="func_modal('${rowData}')" class=" btn btn-dark  btn-circle btn-icon"  ><i class="fas fa-pen"></i> </a>
-                    <a  href="javascript:;" onclick="func_modal_order('${rowData}')" hidden class=" btn btn-success btn-sm "  > <i class="fa fa-plus"></i> สร้าง Order</a>
-                    <a href="/order/order_create" class="btn btn-success ms-3 btn-sm  bg-gradient" hidden></a>
-                    <a class="btn btn-danger btn-icon btn-circle " onclick="sweetAlertDel(${data.data_list.id})">
-                            <i class="fas fa-trash"></i>
-                        </a>
-                    `;
+
+                    
+
+                   
+                   
+                    return buttons;
                     
                 }
             }

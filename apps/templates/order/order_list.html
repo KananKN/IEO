@@ -267,7 +267,113 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="{{ config.ASSETS_ROOT }}/js/order/main_orderList.js?v1.0"></script>
 <script>
+$(document).ready(function() {
+    loadDataTable();
+});
 
+
+function loadDataTable() {
+    if ($.fn.DataTable.isDataTable('#data-table-responsive')) {
+        $('#data-table-responsive').DataTable().destroy(); // ลบ DataTable เดิมก่อน
+    }
+
+    const table = $('#data-table-responsive').DataTable({
+        responsive: true,
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: "/order/get_order1",
+            type: "POST",
+            data: function(d) { 
+                return JSON.stringify(d); 
+            },
+            contentType: "application/json",
+            dataType: "json"
+        },
+        columns: [
+            { data: "id", className: "text-center" },
+            { data: null,
+                render: function(data, type, row) {
+                    const rowData = JSON.stringify(row).replace(/"/g, '&quot;'); 
+                    return `
+                    <a href="/order/order_update/${data.data_user.id}"  >
+                    ${data.order_number}</a>
+                    </a> `;
+                }
+            
+            } ,
+            { data: "customer_name"} ,
+            { data: "product_name" },
+            { data: "price",
+                render: function(data, type, row) {
+                    if (type === 'display' || type === 'filter') {
+                        // Format ตัวเลขให้มีเครื่องหมายคอมม่าและ 2 ทศนิยม
+                        return Number(data).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    }
+                    return data; // ถ้าไม่ใช่สำหรับการแสดงผล ให้ส่งคืนค่าตามเดิม
+                } 
+            },
+            
+            {
+                data: "created_at",
+                render: function (data) {
+                    const d = new Date(data);
+                    return d.toLocaleDateString("th-TH"); // แสดงวันที่แบบไทย
+                }
+            },
+            {
+                data: null,
+                render: function(data, type, row) {
+                    let status = data.data_user.status;
+                    let color_text = '';
+                    if (status.startsWith('installment_')) {
+                        const installmentNumber = status.split('_')[1];  // ดึงตัวเลขงวดจาก 'installment_1'
+                        color_text = 'info';
+                        text = `ชำระเงินงวดที่ ${installmentNumber}`;
+                    } else if (status === 'completed') {
+                        color_text = 'success';
+                        text = 'จบโครงการ';
+                    } else if (status === 'cancelled') {
+                        color_text = 'danger';
+                        text = 'ยกเลิก';
+                    } else {
+                        color_text = 'secondary';
+                        text = 'สถานะไม่ทราบแน่ชัด';
+                    }
+                    return `<span class=" text-${color_text} mb-1">${text}</span>`;
+                }
+            },
+            { 
+                data: null,  
+
+                orderable: false,  //ปิดการเรียงลำดับในคอลัมน์นี้
+                render: function(data, type, row) {
+                    const rowData = JSON.stringify(row).replace(/"/g, '&quot;'); 
+                    let buttons = '';
+
+                    {% if current_user.has_permission('delete_order') %}
+                    buttons += `
+                        <a class="btn btn-danger btn-icon btn-circle" onclick="sweetAlertDel(${data.data_user.id})">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                        <a href="javascript:;" onclick="sweetAlertReject('${data.data_user.id}','rejected')" hidden class="btn btn-danger btn-icon btn-circle">
+                            <i class="fas fa-times"></i>
+                        </a>
+                    `;
+                    {% endif %}
+
+                    return buttons;
+                    
+                }
+            }
+        ],
+        order: [[0, "asc"]],  // เรียงลำดับจาก ID
+        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+        pageLength: 10
+    });
+
+    
+}
 
 </script>
 {% endblock javascripts %}
