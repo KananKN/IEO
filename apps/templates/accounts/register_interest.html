@@ -131,97 +131,109 @@
                           </div>
 
                           <div class="mb-3">
-                              <div class="row">
-                                
-                                <div class="col-md-6">
-                                  <label for="email" class="form-label">เพศ<span class="text-danger form-label">*</span></label>
-                                  <div class="col-md-9 pt-2">
-                                    <div class="form-check form-check-inline">
-                                      <input class="form-check-input" type="radio" id="inlineRadio1" checked name="gender" value="men">
-                                      <label class="form-check-label" for="inlineRadio1" >ชาย</label>
-                                    </div>
-                                    <div class="form-check form-check-inline">
-                                      <input class="form-check-input" type="radio" id="customRadio2" name="gender"  value="female">
-                                      <label class="form-check-label" for="customRadio2">หญิง</label>
-                                    </div>
-                                    
-                                  </div>
-                                </div>
-                                <div class="col-md-6">
-                                  <label for="email" class="form-label">ปีที่สนใจเข้าร่วมโครงการ<span class="text-danger form-label">*</span></label>
-                                    <select name="inputYear" id="inputYear" class="default-select2 form-control">
-                                      {% set this_year = this_year or 2025 %}
-                                      {% for year in range(this_year - 5, this_year + 6) %}
-                                          <option value="{{ year }}" {% if year == this_year %}selected{% endif %}>{{ year }}</option>
-                                      {% endfor %}
-                                  </select>
-                                </div>
-                              </div>
-                          </div>
-                          
+                                                <div class="row">
+                                                  <div class="col-md-6">
+                                                      <label class="form-label">ที่อยู่</label>
+                                                        <textarea class="form-control px-2" id="address" rows="4" cols=""  name="address" placeholder="" ></textarea>
+                                                        
+                                                  </div>
+                                                  <div class="col-md-6">
+                                                    <label for="email" class="form-label">เพศ<span class="text-danger form-label">*</span></label>
+                                                    <div class="col-md-9 pt-2">
+                                                      <div class="form-check form-check-inline">
+                                                        <input class="form-check-input" type="radio" id="inlineRadio1" name="gender" checked value="men">
+                                                        <label class="form-check-label" for="inlineRadio1" >ชาย</label>
+                                                      </div>
+                                                      <div class="form-check form-check-inline">
+                                                        <input class="form-check-input" type="radio" id="customRadio2" name="gender"  value="female">
+                                                        <label class="form-check-label" for="customRadio2">หญิง</label>
+                                                      </div>
+                                                      
+                                                    </div>
+                                                  </div>
+                                                </div>
+                                            </div>
+                                            
+                  
+                                          <!-- เลือกโครงการ -->
+                                          <div class="mb-3">
+                                              <div class="row">
+                                                <div class="col-md-6">
+                                                  <div class="mb-3">
+                                                    <label class="form-label col-form-label">ช่องทางที่คุณรู้จักเรา<span class="text-danger form-label">*</span></label>
+                                                        <select class="default-select2 form-control" id="socail" required  name="social">
+                                                          {% for social in social_channels %}
+                                                          <option value="{{social.name}}">{{social.name}}</option>
+                                                          {% endfor %}
+                                                        </select>
+                                                    
 
-                        <!-- เลือกโครงการ -->
-                        <div class="mb-3">
-                            <div class="row">
-                              <div class="col-md-6">
-                                  <div class="mb-3">
-                                  <label class="form-label col-form-label">หมวดหมู่โครงการ (Category)<span class="text-danger form-label">*</span></label>
-                                    <select class="default-select2 form-control" id="category" name="category" required>
-                                        <option value="">-- เลือกหมวดหมู่ --</option>
-                                        {% for cat  in categorys  %}
-                                          <option value="{{cat.id}}">{{cat.name}}</option>
-                                        {% endfor %}
-                                    </select>
-                                  </div>
-                                  <div class="mb-3">
-                                     <label class="form-label col-form-label">โปรเจค (Project)<span class="text-danger form-label">*</span></label>
-                                        <select class="default-select2 form-control" id="project" disabled name="project[]" required multiple>
-                                          <option value="">-- เลือกโปรเจค --</option>
-                                        </select>
-                                  </div>
-                                  <div class="mb-3">
-                                    <label class="form-label col-form-label">ช่องทางที่คุณรู้จักเรา<span class="text-danger form-label">*</span></label>
-                                    <select class="default-select2 form-control" id="socail" required  name="social">
-                                      {% for social in social_channels %}
-                                      <option value="{{social.name}}">{{social.name}}</option>
-                                      {% endfor %}
-                                    </select>
+                                                  </div>
 
-                                </div>
-                                  
-                                
-                              </div>
-                              <div class="col-md-6">
-                                  <div class="mb-3">
-                                    <label class="form-label col-form-label">ประเทศ (Country)<span class="text-danger form-label">*</span></label>
-                                      <select id="country"  class="default-select2 form-control" disabled name="country[]" required multiple>
-                                        <option value="">-- เลือกประเทศ --</option>
-                                      </select>
-                                  </div>
+                                                    
+                                                  <div class="mb-3">
+                                                    <label class="form-label col-form-label">Agency<span class="text-danger form-label">*</span></label>
+                                                        {% if ref %}
+                                                          {% for agency in agencys %}
+                                                            {% if agency.agency_code == ref %}
+                                                              <input type="hidden" name="agency_id" value="{{ agency.id }}">
+                                                              <input type="text" class="form-control" value="{{ agency.first_name }} {{ agency.last_name }}" readonly>
+                                                            {% endif %}
+                                                          {% endfor %}
+                                                        {% else %}
+                                                          <select name="agency_id" id="agency" class="multiple-select2 form-control" required>
+                                                            <option value="">-- เลือก Agency --</option>
+                                                            {% for agency in agencys %}
+                                                              <option value="{{ agency.id }}" {% if agency.agency_code == 'AGY00001' %}selected{% endif %}>
+                                                                {{ agency.first_name }} {{ agency.last_name }}
+                                                              </option>
+                                                            {% endfor %}
+                                                          </select>
+                                                        {% endif %}
+                                                    
+                                                  </div>
+                                                    <div class="row mb-3">
+                                                      <label class="form-label col-form-label">ประเทศ (Country)<span class="text-danger form-label">*</span></label>
+                                                        <select id="country"  class="default-select2 form-control" required disabled name="country[]" multiple>
+                                                          <option value="">-- เลือกประเทศ --</option>
+                                                        </select>
+                                                    </div>
+                                                    
+                                                    
+                                                  
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                      <label for="email" class="form-label col-form-label">ปีที่สนใจเข้าร่วมโครงการ<span class="text-danger form-label">*</span></label>
+                                                    <select name="inputYear" id="inputYear" class="default-select2 form-control">
+                                                      {% set this_year = this_year or 2025 %}
+                                                      {% for year in range(this_year - 5, this_year + 6) %}
+                                                          <option value="{{ year }}" {% if year == this_year %}selected{% endif %}>{{ year }}</option>
+                                                      {% endfor %}
+                                                    </select>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                      <label class="form-label col-form-label">หมวดหมู่โครงการ (Category)<span class="text-danger form-label">*</span></label>
+                                                        <select class="default-select2 form-control" id="category" required name="category">
+                                                            <option value="">-- เลือกหมวดหมู่ --</option>
+                                                            {% for cat  in categorys  %}
+                                                              <option value="{{cat.id}}">{{cat.name}}</option>
+                                                            {% endfor %}
+                                                        </select>
+                                                    </div>
 
-                                  <div class="mb-3">
-                                    {% if ref %}
-                                    <label for="agency" class="form-label mt-2 mb-2">Agency</label>
-                                    <input type="text" class="form-control" hidden name="agency_id" value="{% for agency in agencys %}{% if agency.agency_code == ref %}{{ agency.id }}{% endif %}{% endfor %}"  style=" padding: 8px 12px;">
-                                    <input type="text" class="form-control" name="agency" readonly  value="{% for agency in agencys %}{% if agency.agency_code == ref %}{{ agency.first_name }} {{ agency.last_name }}{% endif %}{% endfor %}"  style=" padding: 8px 12px;">
-   
-                                      
-                                    {% else %}
-                                      <label class="form-label col-form-label">เลือก Agency<span class="text-danger form-label">*</span></label>
-                                      <select id="agency"  class="multiple-select2 form-control" name="agency_id" required>
-                                          {% for agency in agencys %}
-                                          <option value="{{ agency.id }}" {% if agency.agency_code == 'AGY00001' %}selected{% endif %} >
-                                            {{ agency.first_name }} {{ agency.last_name }}
-                                          </option>                                        
-                                          {% endfor %}
-                                      </select>
-                                      {% endif %}
-                                    
-                                  </div>
-                                    
-                              </div>
-                            </div>
-                        </div>                                            
+                                                    <div class="mb-3">
+                                                      <label class="form-label col-form-label">โปรเจค (Project)<span class="text-danger form-label">*</span></label>
+                                                          <select class="default-select2 form-control" id="project" required disabled name="project[]" multiple>
+                                                            <!-- <option value="">-- เลือกโปรเจค --</option> -->
+                                                          </select>
+                                                    </div>
+                  
+                                                    
+                                                      
+                                                </div>
+                                              </div>
+                                          </div>                                             
                                                 
                     <!-- เลือก Agency -->
                    
@@ -352,6 +364,7 @@ function validateForm() {
 }
 </script>
 <script>
+
 $(document).ready(function () {
   const ref = '{{ ref }}'; // ต้องให้ค่า ref ส่งมาจาก backend
   $('#agency option').each(function () {
@@ -374,38 +387,63 @@ $(document).ready(function () {
     placeholder: "-- เลือกโปรเจค --",
     //allowClear: true
   });
-  // เมื่อเลือกหมวดหมู่
+  $('select[name=agency_id]').change(function () {
+    const agencyId = $(this).val();
+
+    $('#category').html('<option value="">-- เลือกหมวดหมู่ --</option>');
+    $('#country').html('<option value="">-- เลือกประเทศ --</option>').prop('disabled', true);
+    $('#project').html('<option value="">-- เลือกโปรเจค --</option>').prop('disabled', true);
+
+    if (agencyId) {
+      $.getJSON('/api/get_categories_by_agency/' + agencyId, function (data) {
+        $.each(data, function (i, cat) {
+          $('#category').append($('<option>', {
+            value: cat.id,
+            text: cat.name
+          }));
+        });
+      });
+    }
+  });
+
+  // เมื่อเลือก Category
   $('#category').change(function () {
-    var categoryId = $(this).val();
-    $('#country').prop('disabled', true).html('<option value="">-- เลือกประเทศ --</option>').trigger('change');
-    $('#project').prop('disabled', true).html('<option value="">-- เลือกโปรเจค --</option>').trigger('change');
-  
-    if (categoryId) {
-      $.getJSON('/api/get_countries_by_category/' + categoryId, function (data) {
+    const categoryId = $(this).val();
+    const agencyId = $('[name=agency_id]').val();
+
+    $('#country').prop('disabled', true).html('<option value="">-- เลือกประเทศ --</option>');
+    $('#project').prop('disabled', true).html('<option value="">-- เลือกโปรเจค --</option>');
+
+    if (categoryId && agencyId) {
+      $.getJSON('/api/get_countries_by_category_admin/' + categoryId + '?agency_id=' + agencyId, function (data) {
         $.each(data, function (i, country) {
           $('#country').append($('<option>', {
             value: country.id,
             text: country.name
           }));
         });
-        $('#country').prop('disabled', false).trigger('change');
+        $('#country').prop('disabled', false);
       });
     }
   });
-  
+
+  // เมื่อเลือก Country
   $('#country').change(function () {
-    var categoryId = $('#category').val();
-    var countryIds = $(this).val() || [];
-    $('#project').prop('disabled', true).html('<option value="">-- เลือกโปรเจค --</option>').trigger('change');
-  
-    if (categoryId && countryIds.length > 0) {
+    const categoryId = $('#category').val();
+    const countryIds = $(this).val() || [];
+    const agencyId = $('[name=agency_id]').val();
+
+    $('#project').prop('disabled', true).html('<option value="">-- เลือกโปรเจค --</option>');
+
+    if (categoryId && countryIds.length > 0 && agencyId) {
       $.ajax({
         url: '/api/get_projects_bulk',
         method: 'POST',
         contentType: 'application/json',
         data: JSON.stringify({
           category_id: categoryId,
-          country_ids: countryIds
+          country_ids: countryIds,
+          agency_id: agencyId
         }),
         success: function (data) {
           $.each(data, function (i, project) {
@@ -414,15 +452,25 @@ $(document).ready(function () {
               text: project.name
             }));
           });
-          $('#project').prop('disabled', false).trigger('change');
+          $('#project').prop('disabled', false);
         }
       });
     }
   });
 
+  // ✅ ถ้ามี agency_id default อยู่แล้ว (จาก backend/ref)
+  const defaultAgencyId = $('[name=agency_id]').val();
+  if (defaultAgencyId) {
+    $('select[name=agency_id]').trigger('change');
+  }
+  
+  
 
 
-  /*$('#country').select2({
+
+// ของเดิม
+/*
+$('#country').select2({
     placeholder: "-- เลือกประเทศ --",
     allowClear: true
   });
@@ -448,22 +496,32 @@ $(document).ready(function () {
   // เมื่อเลือกประเทศ
   $('#country').change(function () {
     var categoryId = $('#category').val();
-    var countryId = $(this).val();
-    $('#project').prop('disabled', true).html('<option value="">-- เลือกโปรเจค --</option>');
-
-    if (categoryId && countryId) {
-      $.getJSON('/api/get_projects/' + categoryId + '/' + countryId, function (data) {
-        $.each(data, function (i, project) {
-          $('#project').append($('<option>', {
-            value: project.id,
-            text: project.name
-          }));
-        });
-        $('#project').prop('disabled', false);
+    var countryIds = $(this).val() || [];
+    $('#project').prop('disabled', true).html('<option value="">-- เลือกโปรเจค --</option>').trigger('change');
+  
+    if (categoryId && countryIds.length > 0) {
+      $.ajax({
+        url: '/api/get_projects_bulk',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+          category_id: categoryId,
+          country_ids: countryIds
+        }),
+        success: function (data) {
+          $.each(data, function (i, project) {
+            $('#project').append($('<option>', {
+              value: project.id,
+              text: project.name
+            }));
+          });
+          $('#project').prop('disabled', false).trigger('change');
+        }
       });
     }
-  }); */
+  });*/
 });
+
 </script>
 
 {% endblock javascripts %}

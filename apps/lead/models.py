@@ -40,6 +40,7 @@ class leadModel(db.Model):
     year = db.Column(db.String(), nullable=True,server_default='2025')
     nick_name = db.Column(db.String(100))
     tel = db.Column(db.String(30))
+    address = db.Column(db.Text())
     email = db.Column(db.String(100))
     status = db.Column(db.String(20))  # New, Contacted, Converted, Dropped
     gender = db.Column(db.String(20))  # pending / approved / rejected

@@ -111,15 +111,27 @@
                         
                     </div>
                     <div class="mb-3">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="first_nameEN" class="form-label">ชื่อภาษาอังกฤษ</label>
+                                <input name="first_nameEN"  class="form-control  me-2"   placeholder="ชื่อภาษาอังกฤษ">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="lastnameEN" class="form-label">นามสกุลภาษาอังกฤษ</label>
+                                <input name="lastnameEN"  class="form-control "  placeholder="นามสกุลภาษาอังกฤษ">
+                            </div>
+                        </div>
+                        
+                    </div>
+                    <div class="mb-3">
                               <div class="row">
                                 <div class="col-md-6">
                                   <label for="nickname" class="form-label">ชื่อเล่น</label>
                                   <input name="nickname"  class="form-control  me-2"   placeholder="ชื่อเล่น">
                                 </div>
                                 <div class="col-md-6">
-                                  <label for="birth_date" class="form-label">วันเกิด</label>
-                                  <input type="text" class="form-control" id="masked-input-date"  name="birth_date" placeholder="dd/mm/yyyy">
-                                  
+                                    <label for="email" class="form-label">อีเมล</label>
+                                    <input type="email" class="form-control" name="email"  placeholder="อีเมล">
                                 </div>
                               </div>
                             
@@ -127,21 +139,22 @@
                     <div class="mb-3">
                         <div class="row">
                             <div class="col-md-6">
-                                <label for="email" class="form-label">อีเมล</label>
-                                <input type="email" class="form-control" name="email"  placeholder="อีเมล">
-                            </div>
-                            <div class="col-md-6">
                                 <label for="phone" class="form-label">เบอร์โทร</label>
                                 <input name="phone" required class="form-control "  placeholder="เบอร์โทรศัพท์*">
-
+                                
+                            </div>
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">Line ID</label>
+                                <input type="email" class="form-control" name="line_id" >
                             </div>
                         </div>
                     </div>
                     <div class="mb-3">
                         <div class="row">
+                            
                             <div class="col-md-6">
-                                <label for="email" class="form-label">Line ID</label>
-                                <input type="email" class="form-control" name="line_id" >
+                                <label class="form-label">ที่อยู่</label>
+                                <textarea class="form-control px-2" id="address" rows="4" cols=""  name="address" placeholder="" ></textarea>
                             </div>
                             <div class="col-md-6">
                                 <label for="email" class="form-label">เพศ</label>
@@ -154,61 +167,74 @@
                                         <input class="form-check-input" type="radio" id="customRadio2" name="gender"  value="female">
                                         <label class="form-check-label" for="customRadio2">หญิง</label>
                                     </div>
-                                    
-                                    </div>
+                                        
+                                </div>
+   
 
+                                
+                            </div>
+                        </div>
+                    </div>
+                    <div class="">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label col-form-label">ช่องทางที่คุณรู้จักเรา<span class="text-danger form-label">*</span></label>
+                                    <select class="default-select2 form-control" id="socail" required  name="social">
+                                      {% for social in social_channels %}
+                                        <option  value="{{social.name}}">{{social.name}}</option>
+                                      {% endfor %}
+                                    </select>
+
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mt-2">
+
+                                    <label for="year" class="form-label">ปีที่สนใจ</label>
+                                    <input type="text" class="form-control mt-1" name="year" >
+                                </div>
                             </div>
                         </div>
                     </div>
                     <div class="mb-3">
                         <div class="row">
                             <div class="col-md-6">
+                                <label for="agency" class="form-label">ชื่อ Agency</label>
+                                <select class="default-select2  form-control" id="agency" required  name="agency">
+                                    {% for agency in agencys %}
+                                      <option  value="{{agency.id}}">{{agency.first_name}} {{agency.last_name}}</option>
+                                    {% endfor %}
+                                </select>
+
+                                
+                                
+                            </div>
+                            <div class="col-md-6">
+                                
                                 <label for="email" class="form-label">หมวดหมู่โครงการ</label>
                                 <select class="default-select2 form-control" id="category" required  name="category">
-                                    {% for category in categorys %}
-                                        <option  value="{{category.id}}">{{category.name}}</option>
-                                    {% endfor %}
-                                    </select>
+                                {% for category in categorys %}
+                                    <option  value="{{category.id}}">{{category.name}}</option>
+                                {% endfor %}
+                                </select>
                             </div>
+                            
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="row">
+                            
                             <div class="col-md-6">
                                 <label for="email" class="form-label">ประเทศ</label>
                                 <select class="default-select2 form-control" id="country" required  name="country">
-                                    
                                 </select>
                             </div>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <div class="row">
                             <div class="col-md-6">
                                 <label for="email" class="form-label">ชื่อโครงการ</label>
                                 <select class="default-select2 form-control" id="project" required  name="name_project">
                                     
                                 </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="email" class="form-label">ชื่อ Agency</label>
-                                <select class="default-select2 form-control" id="name_agency" required  name="name_agency">
-                                    {% for agency in agencys %}
-                                      <option  value="{{agency.id}}">{{agency.agency_code}}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <label for="email" class="form-label">ช่องทางที่คุณรู้จักเรา</label>
-                                <select class="default-select2 form-control" id="socail" required  name="social">
-                                        <option value=""> -- เลือกช่องทาง -- </option>
-                                    {% for social in social_channels %}
-                                      <option  value="{{social.name}}">{{social.name}}</option>
-                                    {% endfor %}
-                                  </select>                            
-                            </div>
-                            <div class="col-md-6">
-                                
                             </div>
                         </div>
                     </div>
@@ -260,7 +286,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true"></button>
                 </div>
                 <div class="modal-body">
-                     <div class="row mb-3" hidden>
+                     <div class="row mb-3" >
                         <label class="form-label col-form-label col-md-4">id</label>
                         <div class="col-md-8">
                             <input type="text"  class="form-control" name="id" id="id-update" data-parsley-required="true"/>
@@ -425,6 +451,81 @@
 $(document).ready(function() {
     loadDataTable();
 
+    $('#agency').change(function () {
+        const agencyId = $(this).val();
+    
+        // ล้างข้อมูลและ disable ช่องถัดไป
+        $('#category').html('<option value="">-- เลือกหมวดหมู่ --</option>');
+        $('#country').html('<option value="">-- เลือกประเทศ --</option>').prop('disabled', true).trigger('change');
+        $('#project').html('<option value="">-- เลือกโปรเจค --</option>').prop('disabled', true).trigger('change');
+    
+        if (agencyId) {
+          // โหลด category ตาม agency
+          $.getJSON('/api/get_categories_by_agency/' + agencyId, function (data) {
+            $.each(data, function (i, cat) {
+              $('#category').append($('<option>', {
+                value: cat.id,
+                text: cat.name
+              }));
+            });
+          });
+        }
+      });
+    
+      // เมื่อเลือก Category
+      $('#category').change(function () {
+        const categoryId = $(this).val();
+        const agencyId = $('#agency').val(); // <- ดึงใหม่ทุกครั้ง
+    
+        $('#country').prop('disabled', true).html('<option value="">-- เลือกประเทศ --</option>').trigger('change');
+        $('#project').prop('disabled', true).html('<option value="">-- เลือกโปรเจค --</option>').trigger('change');
+    
+        if (categoryId && agencyId) {
+          // โหลดประเทศ ตาม category และ agency
+          $.getJSON(`/api/get_countries_by_category_admin/${categoryId}?agency_id=${agencyId}`, function (data) {
+            $.each(data, function (i, country) {
+              $('#country').append($('<option>', {
+                value: country.id,
+                text: country.name
+              }));
+            });
+            $('#country').prop('disabled', false).trigger('change');
+          });
+        }
+      });
+    
+      // เมื่อเลือก Country
+      $('#country').change(function () {
+        const categoryId = $('#category').val();
+        const countryIds = $(this).val() || [];
+        const agencyId = $('#agency').val();
+    
+        $('#project').prop('disabled', true).html('<option value="">-- เลือกโปรเจค --</option>').trigger('change');
+    
+        if (categoryId && countryIds.length > 0 && agencyId) {
+          $.ajax({
+            url: '/api/get_projects_bulk_admin',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+              category_id: categoryId,
+              country_ids: countryIds,
+              agency_id: agencyId
+            }),
+            success: function (data) {
+              $.each(data, function (i, project) {
+                $('#project').append($('<option>', {
+                  value: project.id,
+                  text: project.name
+                }));
+              });
+              $('#project').prop('disabled', false).trigger('change');
+            }
+          });
+        }
+      });   
+    
+/*
     $('#category').change(function () {
         var categoryId = $(this).val();
         $('#country').prop('disabled', true).html('<option value="">-- เลือกประเทศ --</option>');
@@ -461,6 +562,7 @@ $(document).ready(function() {
       });
     }
   });
+  */
 });
 
 function loadDataTable() {
@@ -578,11 +680,13 @@ function loadDataTable() {
         pageLength: 10
     });
 
+    /*
     setInterval(function () {
         table.ajax.reload(function(settings) {
             table.order([[6, 'asc']]).draw();  // รีเซ็ตการเรียงลำดับให้คอลัมน์ที่ 6
         }, false);  // false = ไม่ reset pagination
     }, 10000);
+    */
 }
 
 
@@ -601,16 +705,19 @@ function func_modal(data) {
     $('.c_add').hide()
     $('.c_edit').show()
 
-    $('[name="id"]').val(data.data_list.id);
+    $('[name="id"]').val(data.lead.id);
+    $('[name="id_product"]').val(data.product_id);
     $('[name="product_id"]').val(data.product_id);
     $('[name="fullname"]').val(data.first_name);
     $('[name="lastname"]').val(data.last_name);
+    $('[name="first_nameEN"]').val(data.lead.first_nameEN);
+    $('[name="lastnameEN"]').val(data.lead.last_nameEN);
     $('[name="nickname"]').val(data.lead.nick_name);
+    $('[name="year"]').val(data.lead.year);
     $('[name="email"]').val(data.email);
     $('[name="phone"]').val(data.tel);
-    //$('[name="name_project"]').val(data.product_name);
-    //$('[name="category"]').val(data.category);
-    //$('[name="country"]').val(data.country);
+    $('[name="address"]').val(data.lead.address);
+    
     const agencyValue = data.agency_id ?? 'None';
     //console.log('✅ Will set value:', agencyValue);  // ควรเห็น 'None' หรือ '12' เป็นต้น
     $('[name="name_agency"]').val(agencyValue).trigger('change.select2');
@@ -624,17 +731,17 @@ function func_modal(data) {
 
 
     if (data.lead.birth_date) {
-            const date = new Date(data.lead.birth_date);  // แปลงเป็น Date object
-            if (!isNaN(date)) {
-                const day = String(date.getDate()).padStart(2, '0');
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const year = date.getFullYear();
-                const formattedDate = `${day}/${month}/${year}`;
-                $('[name="birth_date"]').val(formattedDate);
-            }
-        } else {
-            $('[name="birth_date"]').val("");  // ถ้าไม่มีวันเกิดให้ใส่ค่าว่าง
-        }
+             const date = new Date(data.lead.birth_date);  // แปลงเป็น Date object
+             if (!isNaN(date)) {
+                 const day = String(date.getDate()).padStart(2, '0');
+                 const month = String(date.getMonth() + 1).padStart(2, '0');
+                 const year = date.getFullYear();
+                 const formattedDate = `${day}/${month}/${year}`;
+                 $('[name="birth_date"]').val(formattedDate);
+             }
+         } else {
+             $('[name="birth_date"]').val("");  // ถ้าไม่มีวันเกิดให้ใส่ค่าว่าง
+         }
    
 
 }
@@ -751,12 +858,16 @@ function func_save(x){
             body: JSON.stringify({
 
                 id: $('[name="id"]').val(),
+                id_pd: $('[name="id_product"]').val(),
                 product_id: $('[name="name_project"]').val(),
                 status: $('[name="status_mode"]').val(),
                 remask: $('[name="remask"]').val(),
                 first_name: $('[name="fullname"]').val(),
                 last_name: $('[name="lastname"]').val(),
+                first_nameEN: $('[name="first_nameEN"]').val(),
+                last_nameEN: $('[name="lastnameEN"]').val(),
                 nickname:$('[name="nickname"]').val(),
+                year:$('[name="year"]').val(),
                 email:$('[name="email"]').val(),
                 tel:$('[name="phone"]').val(),
                 agency_id:$('[name="name_agency"]').val(),
@@ -765,10 +876,16 @@ function func_save(x){
                 country_id:$('[name="country"]').val(),
                 gender:$('input[name="gender"]:checked').val(),
                 line_id:$('[name="line_id"]').val(),
+                address:$('[name="address"]').val(),
             
             }),
         })
-        .then((response) => response.json())
+        .then(res => {
+            if (!res.ok) {
+              return res.json().then(err => { throw err }); // 💥 error จากฝั่ง server
+            }
+            return res.json(); // ✅ ผ่าน
+          })
         .then((data) => {
             console.log(data);
             x.attr('disabled',true);
@@ -784,7 +901,7 @@ function func_save(x){
             console.error("Error:", error);
             swal({
                 icon: "error",
-                title: "Error adding country!",
+                text: error.message,
                 confirmButtonText: "OK",  // ✅ ใช้ได้กับ Swal.fire()
                 showConfirmButton: true
             });

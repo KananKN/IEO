@@ -91,7 +91,7 @@
         <div class="modal-content">
             <form  method="POST" data-parsley-validate="true">
                 <div class="modal-header">
-                    <h4 class="modal-title">Name : </h4>
+                    <h4 class="modal-title">ชื่อ : </h4>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true"></button>
                 </div>
                 <div class="modal-body">
@@ -160,6 +160,10 @@
                         <div class="row">
                             
                             <div class="col-md-6">
+                                <label class="form-label">ที่อยู่</label>
+                                <textarea class="form-control px-2" id="address" rows="4" cols=""  name="address" placeholder="" ></textarea>
+                            </div>
+                            <div class="col-md-6">
                                 <label for="email" class="form-label">เพศ</label>
                                 <div class="col-md-9 pt-2">
                                     <div class="form-check form-check-inline">
@@ -172,49 +176,10 @@
                                     </div>
                                         
                                 </div>
+   
 
+                                
                             </div>
-                            <div class="col-md-6">
-                                <label for="year" class="form-label">ปีที่สนใจ</label>
-                                <input type="text" class="form-control" name="year" >
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <label for="email" class="form-label">หมวดหมู่โครงการ</label>
-                                <select class="default-select2 form-control" id="category" required  name="category">
-                                {% for category in categorys %}
-                                    <option  value="{{category.id}}">{{category.name}}</option>
-                                {% endfor %}
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="email" class="form-label">ประเทศ</label>
-                                <select class="default-select2 form-control" id="country" required  name="country">
-                                    
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <label for="email" class="form-label">ชื่อโครงการ</label>
-                                <select class="default-select2 form-control" id="project" required  name="name_project">
-                                    
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="agency" class="form-label">ชื่อ Agency</label>
-                                <select class="default-select2  form-control" id="name_agency" required  name="name_agency">
-                                    {% for agency in agencys %}
-                                      <option  value="{{agency.id}}">{{agency.first_name}} {{agency.last_name}}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-  
                         </div>
                     </div>
                     <div class="">
@@ -231,16 +196,62 @@
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                
+                                <div class="mt-2">
+
+                                    <label for="year" class="form-label">ปีที่สนใจ</label>
+                                    <input type="text" class="form-control mt-1" name="year" >
+                                </div>
                             </div>
                         </div>
                     </div>
+                    <div class="mb-3">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="agency" class="form-label">ชื่อ Agency</label>
+                                <select class="default-select2  form-control" id="agency" required  name="agency">
+                                    {% for agency in agencys %}
+                                      <option  value="{{agency.id}}">{{agency.first_name}} {{agency.last_name}}</option>
+                                    {% endfor %}
+                                </select>
+
+                                
+                                
+                            </div>
+                            <div class="col-md-6">
+                                
+                                <label for="email" class="form-label">หมวดหมู่โครงการ</label>
+                                <select class="default-select2 form-control" id="category" required  name="category">
+                                {% for category in categorys %}
+                                    <option  value="{{category.id}}">{{category.name}}</option>
+                                {% endfor %}
+                                </select>
+                            </div>
+                            
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="row">
+                            
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">ประเทศ</label>
+                                <select class="default-select2 form-control" id="country" required  name="country">
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">ชื่อโครงการ</label>
+                                <select class="default-select2 form-control" id="project" required  name="name_project">
+                                    
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <hr class="mt-3">
                     <div class="mb-3">
                         <div class="row">
                             <div class="col-md-6">
                                 <label class="form-label">หมายเหตุ / บันทึกการติดต่อ <span class="text-danger">*</span></label>
-                                <textarea class="form-control" id="i_remask" rows="4" cols="50" required name="remask" placeholder="" >{{datas.address}}</textarea>
+                                <textarea class="form-control" id="i_remask" rows="4" cols="50" required name="remask" placeholder="" ></textarea>
                             </div>
                             <div class="col-md-6">
                                 <label for="email" class="form-label">สถานะ Lead <span class="text-danger">*</span></label>
@@ -338,19 +349,96 @@ $.get("/lead/get_product_list", function(products) {
     });
 });
 
-$('#name_agency,#country, #project,#category').select2({
+/*
+$('#agency,#country, #project,#category').select2({
     dropdownParent: $('#modal-dialog')
-});
+}); */
 
+//const agencyId = $('#agency').val();
 
-    // เมื่อเลือกหมวดหมู่
+$('#agency').change(function () {
+    const agencyId = $(this).val();
+
+    // ล้างข้อมูลและ disable ช่องถัดไป
+    $('#category').html('<option value="">-- เลือกหมวดหมู่ --</option>');
+    $('#country').html('<option value="">-- เลือกประเทศ --</option>').prop('disabled', true).trigger('change');
+    $('#project').html('<option value="">-- เลือกโปรเจค --</option>').prop('disabled', true).trigger('change');
+
+    if (agencyId) {
+      // โหลด category ตาม agency
+      $.getJSON('/api/get_categories_by_agency/' + agencyId, function (data) {
+        $.each(data, function (i, cat) {
+          $('#category').append($('<option>', {
+            value: cat.id,
+            text: cat.name
+          }));
+        });
+      });
+    }
+  });
+
+  // เมื่อเลือก Category
+  $('#category').change(function () {
+    const categoryId = $(this).val();
+    const agencyId = $('#agency').val(); // <- ดึงใหม่ทุกครั้ง
+
+    $('#country').prop('disabled', true).html('<option value="">-- เลือกประเทศ --</option>').trigger('change');
+    $('#project').prop('disabled', true).html('<option value="">-- เลือกโปรเจค --</option>').trigger('change');
+
+    if (categoryId && agencyId) {
+      // โหลดประเทศ ตาม category และ agency
+      $.getJSON(`/api/get_countries_by_category_admin/${categoryId}?agency_id=${agencyId}`, function (data) {
+        $.each(data, function (i, country) {
+          $('#country').append($('<option>', {
+            value: country.id,
+            text: country.name
+          }));
+        });
+        $('#country').prop('disabled', false).trigger('change');
+      });
+    }
+  });
+
+  // เมื่อเลือก Country
+  $('#country').change(function () {
+    const categoryId = $('#category').val();
+    const countryIds = $(this).val() || [];
+    const agencyId = $('#agency').val();
+
+    $('#project').prop('disabled', true).html('<option value="">-- เลือกโปรเจค --</option>').trigger('change');
+
+    if (categoryId && countryIds.length > 0 && agencyId) {
+      $.ajax({
+        url: '/api/get_projects_bulk_admin',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+          category_id: categoryId,
+          country_ids: countryIds,
+          agency_id: agencyId
+        }),
+        success: function (data) {
+          $.each(data, function (i, project) {
+            $('#project').append($('<option>', {
+              value: project.id,
+              text: project.name
+            }));
+          });
+          $('#project').prop('disabled', false).trigger('change');
+        }
+      });
+    }
+  });
+/*
 $('#category').change(function () {
+
+
     var categoryId = $(this).val();
     $('#country').prop('disabled', true).html('<option value="">-- เลือกประเทศ --</option>');
     $('#project').prop('disabled', true).html('<option value="">-- เลือกโปรเจค --</option>');
   
     if (categoryId) {
-      $.getJSON('/api/get_countries_by_category/' + categoryId, function (data) {
+      $.getJSON('/api/get_countries_by_category_admin/' + categoryId, function (data) {
         $.each(data, function (i, country) {
           $('#country').append($('<option>', {
             value: country.id,
@@ -358,6 +446,8 @@ $('#category').change(function () {
           }));
         });
         $('#country').prop('disabled', false);
+
+        console.log('Countries loaded for category:', categoryId);
       });
     }
   });
@@ -381,7 +471,7 @@ $('#category').change(function () {
     }
   });
   
-    
+   */ 
 });
 
 $.fn.dataTable.ext.type.order['timestamp-millis-pre'] = function(d) {
@@ -528,6 +618,7 @@ function func_modal(data) {
     $('[name="nickname"]').val(data.lead.nick_name);
     $('[name="year"]').val(data.lead.year);
     $('[name="email"]').val(data.email);
+    $('[name="address"]').html(data.lead.address);
     $('[name="phone"]').val(data.tel);
     $('[name="line_id"]').val(data.lead.line_id);
     $('input[name="gender"][value="' + data.lead.gender + '"]').prop("checked", true);
@@ -536,9 +627,9 @@ function func_modal(data) {
     const agencyValue = data.data_list.agency_id ?? 'None';
     //console.log(agencyValue)
     //console.log('✅ Will set value:', agencyValue);  // ควรเห็น 'None' หรือ '12' เป็นต้น
-    $('[name="name_agency"]').val(agencyValue).trigger('change.select2');
+    $('[name="agency"]').val(agencyValue).trigger('change.select2');
 
-    //console.log('Options available:', $('[name="name_agency"] option').map(function() { return this.value }).get());
+    //console.log('Options available:', $('[name="agency"] option').map(function() { return this.value }).get());
 
 
     $('[name="remask"]').val(data.data_list.remask);
@@ -576,45 +667,60 @@ function func_modal(data) {
 </script>
 <script>
 
-function preloadSelectValues(data) {
-    // ตั้งค่า Category ก่อน
-    if (data.category) {
-      if (!$('#category').find("option[value='" + data.category + "']").length) {
-        $('#category').append(new Option("กำลังโหลด...", data.category, true, true));
-      }
-      $('#category').val(data.category).trigger('change.select2');
-    }
-  
-    // หลังตั้ง Category แล้วโหลด Countries
-    if (data.category) {
-      $.getJSON('/api/get_countries_by_category/' + data.category, function (countries) {
-        $('#country').empty();
-        $.each(countries, function (i, country) {
-          $('#country').append(new Option(country.name, country.id));
-        });
-  
-        // ตั้งค่า Country ตาม ID ที่ส่งมา
-        if (data.country) {
-          $('#country').val(data.country).trigger('change.select2');
+    function preloadSelectValues(data) {
+        console.log('Preloading select values with data:', data);
+      
+        const agencyId = $('#agency').val();
+      
+        // Load Category
+        if (data.category) {
+          if (!$('#category').find("option[value='" + data.category + "']").length) {
+            $('#category').append(new Option("กำลังโหลด...", data.category, true, true));
+          }
+          $('#category').val(data.category).trigger('change.select2');
         }
-  
-        // หลังตั้ง Country แล้วโหลด Projects
-        if (data.category && data.country) {
-          $.getJSON('/api/get_projects/' + data.category + '/' + data.country, function (projects) {
-            $('#project').empty();
-            $.each(projects, function (i, project) {
-              $('#project').append(new Option(project.name, project.id));
+      
+        // Load Countries by Category + Agency
+        if (data.category && agencyId) {
+          $.getJSON('/api/get_countries_by_category_admin/' + data.category + '?agency_id=' + agencyId, function (countries) {
+            $('#country').empty();
+            $.each(countries, function (i, country) {
+              $('#country').append(new Option(country.name, country.id));
             });
-  
-            // ตั้งค่า Project ตาม ID ที่ส่งมา
-            if (data.product_id) {
-              $('#project').val(data.product_id).trigger('change.select2');
+      
+            // Set country if available
+            if (data.country) {
+              $('#country').val(data.country).trigger('change.select2');
+            }
+      
+            // Load Projects by Category + Country + Agency
+            if (data.category && data.country && agencyId) {
+              $.ajax({
+                url: '/api/get_projects_bulk_admin',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                  category_id: data.category,
+                  country_ids: [data.country],
+                  agency_id: agencyId
+                }),
+                success: function (projects) {
+                  $('#project').empty();
+                  $.each(projects, function (i, project) {
+                    $('#project').append(new Option(project.name, project.id));
+                  });
+      
+                  // Set project if available
+                  if (data.product_id) {
+                    $('#project').val(data.product_id).trigger('change.select2');
+                  }
+                }
+              });
             }
           });
         }
-      });
-    }
-  }
+      }
+      
   
   // เรียกใช้งานเมื่อมีข้อมูล
   
@@ -649,7 +755,7 @@ function func_modal_order(data){
     $('[name="name_project"]').val(data.product_name);
     $('[name="category"]').val(data.category);
     $('[name="country"]').val(data.country);
-    $('[name="name_agency"]').val(data.agency);
+    $('[name="agency"]').val(data.agency);
     $('[name="remask"]').val(data.product.remask);
     $('[name="status_modeOrder"]').val(data.product.status);
     $('[name="price"]').val(parseFloat(data.price).toLocaleString('en-US'));
@@ -697,12 +803,13 @@ function func_save(x){
                 year:$('[name="year"]').val(),
                 email:$('[name="email"]').val(),
                 tel:$('[name="phone"]').val(),
-                agency_id:$('[name="name_agency"]').val(),
+                agency_id:$('[name="agency"]').val(),
                 social:$('[name="social"]').val(),
                 category_id:$('[name="category"]').val(),
                 country_id:$('[name="country"]').val(),
                 gender:$('input[name="gender"]:checked').val(),
                 line_id:$('[name="line_id"]').val(),
+                address:$('[name="address"]').val(),
             
             }),
         })

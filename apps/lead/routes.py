@@ -155,7 +155,7 @@ def lead_list():
     })
 
     # print(datas)
-    return render_template('lead/lead_list.html', segment='lead' ,datas=datas,categorys=category,countrys=country,products=product,agencys=agencies_with_IEO,social_channels=social_channels )
+    return render_template('lead/lead_list.html', segment='lead' ,datas=datas,categorys=category,countrys=country,products=product,agencys=agencies,social_channels=social_channels )
 
 
 def convert_thai_to_date(thai_date_str):
@@ -296,6 +296,7 @@ def check_statusLead():
     country_id =json_data["country_id"]
     gender =json_data["gender"]
     line_id =json_data["line_id"]
+    address =json_data["address"]
 
     agency_id = json_data.get("agency_id")
     if agency_id == 'None' or agency_id == '':
@@ -345,6 +346,7 @@ def check_statusLead():
         thisItem.product_id=product.id
         thisItem.gender=gender
         thisItem.line_id=line_id
+        thisItem.address=address
 
 
         
@@ -410,8 +412,20 @@ def check_statusLead():
                 ).first()
 
                 if existing_member:
+                    # 🔁 อัปเดตข้อมูลจาก lead ลง member เดิม
+                    existing_member.first_name = lead.first_name
+                    existing_member.last_name = lead.last_name
+                    existing_member.first_nameEN = lead.first_nameEN
+                    existing_member.last_nameEN = lead.last_nameEN
+                    existing_member.nick_name = lead.nickname
+                    existing_member.phone = lead.tel
+                    existing_member.email = lead.email
+                    existing_member.gender = lead.gender
+                    existing_member.line_id = lead.line_id
+                    existing_member.address = lead.address
+
                     new_member = existing_member
-                    print(f"🔁 พบ Member เดิม: {existing_member.id}")
+                    print(f"🔁 พบ Member เดิม: {existing_member.id} และอัปเดตข้อมูลเรียบร้อย")
                 else:
                     new_member = MemberModel(
                         first_name=lead.first_name,
@@ -423,6 +437,7 @@ def check_statusLead():
                         email=lead.email,
                         gender=lead.gender,
                         line_id=lead.line_id,
+                        address=lead.address,
                         status='installment_1',
                         approved_by=None,
                         approved_at=None,
@@ -440,6 +455,8 @@ def check_statusLead():
                     lead_id=lead.id,
                     product_id=product.id,
                     member_id=new_member.id,
+                    agency_id=lead.agency_id,
+                    year=lead.year,
                     total_price=0.00,
                     discount=0.00,
                     net_price=0.00,
@@ -894,6 +911,7 @@ def create_register_lead():
     country_id = data.getlist('country[]') or []
     social = data.get('social')
     remask = data.get('remask')
+    address = data.get('address')
 
     # เช็คว่า lead มีอยู่หรือยัง
     lead = leadModel.query.filter(
@@ -921,7 +939,8 @@ def create_register_lead():
             agency_id=agency_id,
             # product_id=product_id,
             social=social,
-            remask=remask
+            remask=remask,
+            address=address,
         )
         db.session.add(lead)
         db.session.flush()  # ให้ DB สร้าง lead.id ก่อน
@@ -945,6 +964,7 @@ def create_register_lead():
         # lead.product_id = product_id
         lead.social = social
         lead.remask = remask
+        lead.address = address
 
     db.session.commit()
 
