@@ -127,7 +127,7 @@
                                         <div class="row mb-15px">
                                             <label class="form-label col-form-label col-md-4">ที่อยู่</label>
                                             <div class="col-md-8">
-                                                <p>{{members.address}}</p>
+                                                <p>{{members.address or '' }}</p>
                                             </div>
                                         </div>
 
@@ -190,7 +190,7 @@
                                     <div class="col-md-7">
                                         <div class="row mt-4"  >
                                             <div class="col-md-8">
-                                                <p>{{datas.product.detail}}</p>
+                                                <p>{{datas.product.detail or ''}}</p>
                                             </div>
                                         </div> 
                                     </div>
@@ -265,7 +265,7 @@
                                                         </div>
                                                     </div>
                                                 
-                                                    <a href="#" class="pt-2 ps-2" onclick="sweetAlerPrintfile({{payment.id}},{{datas.id}})" >
+                                                    <a href="#" class="pt-2 ps-2" onclick="sweetAlerPrintfile({{payment.id}},{{datas.id}})" hidden >
                                                         <i class="material-icons">print</i>
                                                     </a>
                                             </div>
