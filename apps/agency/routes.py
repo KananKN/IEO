@@ -23,6 +23,7 @@ import uuid
 from sqlalchemy import and_, func, case, asc, or_
 from sqlalchemy.orm import aliased
 from collections import defaultdict
+from sqlalchemy.dialects import postgresql
 
 
 read_permission = Permission(RoleNeed("read_agency"))
@@ -422,7 +423,6 @@ def get_list_ProductAgency():
     
     # Step 1: Base query หาเฉพาะ agency.id (distinct ก่อน)
     base_query = db.session.query(Agency.id).\
-        outerjoin(CountryModel, CountryModel.id == Agency.country_id).\
         outerjoin(ProductAgencyAssociation, Agency.id == ProductAgencyAssociation.agency_id).\
         outerjoin(Product, Product.id == ProductAgencyAssociation.product_id)
 
@@ -432,16 +432,21 @@ def get_list_ProductAgency():
             or_(
                 Agency.first_name.ilike(search),
                 Agency.last_name.ilike(search),
-                CountryModel.name.ilike(search),
+                Agency.country.ilike(search),
                 Agency.tel.ilike(search),
                 Product.name.ilike(search)
             )
         )
 
+
+
     base_query = base_query.distinct()
 
+    # print("---- SQL FROM base_query ----")
+    # print(base_query.statement.compile(dialect=postgresql.dialect(), compile_kwargs={"literal_binds": True}))
+
     total_records = db.session.query(Agency.id).distinct().count()
-    filtered_records = base_query.count()
+    # filtered_records = base_query.count()
 
     # Step 2: pagination
     agency_ids = base_query.offset(start).limit(length).all()
@@ -452,8 +457,11 @@ def get_list_ProductAgency():
         filter(Agency.id.in_(agency_ids)).\
         outerjoin(ProductAgencyAssociation, Agency.id == ProductAgencyAssociation.agency_id).\
         outerjoin(Product, Product.id == ProductAgencyAssociation.product_id).\
-        outerjoin(CountryModel, CountryModel.id == Agency.country_id).\
         order_by(Agency.id)
+
+    # print("---- SQL FROM final query ----")
+    # print(query.statement.compile(dialect=postgresql.dialect(), compile_kwargs={"literal_binds": True}))
+
 
     rows = query.all()
 

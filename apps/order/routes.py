@@ -230,13 +230,13 @@ def order_update(id):
                     OrderTermModel.order_id == data.id,
                 ).order_by(OrderTermModel.sequence).all()
     
-    print("payment",payment)
+    # print("payment",payment)
     payment11 = PaymentModel.query.filter_by(order_id=data.id).all()
 
     file_data = FilePaymentModel.query.filter_by(order_id  = data.id).all()
-    print("data",data)
-    print("lead",lead)
-    print("orderItem",orderItem )
+    # print("data",data)
+    # print("lead",lead)
+    # print("orderItem",orderItem )
     return render_template('order/order_update.html', segment='order' ,lead=lead, orderItem=orderItem, datas=data, payments=payment,product=product,members=member,file_datas=file_data,orderTerms=orderTerm)
 
 @blueprint.route("/check_statusLead", methods=["POST"])
@@ -303,9 +303,8 @@ def save_payment():
         payment_no=request.form.get('cash_payment')
         # status =request.form.get('cash_payment')
         amount =request.form.get('amount')
-        payment_date =request.form.get('payment_date')
+        payment_date =request.form.getlist('payment_date')
         note =request.form.get('note')
-        formFile_payment = request.form.get('formFile_payment')
         
         raw_amount = request.form.get("amount", "0").replace(",", "")
         amount = float(raw_amount) 
@@ -323,6 +322,10 @@ def save_payment():
         installments = request.form.getlist('installments')
         discounts = request.form.getlist('discount')
         counts = request.form.getlist('count')
+
+        term_ids = request.form.getlist("term_id[]")
+        payment_dates = request.form.getlist("payment_date[]")
+        uploaded_files = request.files.getlist("formFile_payment[]")
         
         
         item_order= OrderModel.query.filter_by(id=id_order).first()
@@ -338,83 +341,131 @@ def save_payment():
             item_order.discount = sum_discount
             item_order.net_price = total_payment
             item_order.total_price = sum_installments
+            item_order.note = note
             item_member.status = payment_no
             db.session.commit()
 
             for i in range(len(term_ids)):
-                
                 term_id = int(term_ids[i])
                 discount = parse_decimal(discounts[i])
                 net_price = parse_decimal(counts[i])
-                print(discount)
-                print(net_price)
+                
+                # ตรวจสอบและแปลงวันที่ + เวลา
+                payment_dt = None
+                date_str = payment_dates[i]
+                if date_str:
+                    try:
+                        payment_dt = datetime.strptime(date_str, "%d-%m-%Y %H:%M")
+                    except ValueError:
+                        try:
+                            payment_dt = datetime.strptime(date_str, "%d-%m-%Y")  # fallback เผื่อไม่มีเวลา
+                        except ValueError:
+                            print(f"❌ วันที่ไม่ถูกต้อง: {date_str}")
                 # ค้นหา term ที่จะอัปเดต
                 term = OrderTermModel.query.get(term_id)
                 if term:
                     term.discount = discount
                     term.net_price = net_price
+                    term.payment_date = payment_dt
+                    
                 else:
                     print(f"❌ ไม่พบ OrderTermModel id: {term_id}")
             db.session.commit()
-            amount_raw = request.form.get("amount", "").replace(",", "").strip()
+            # amount_raw = request.form.get("amount", "").replace(",", "").strip()
 
-            # ตรวจสอบว่ามีค่า และไม่ใช่ 0
-            if amount_raw != 0:
-                try:
-                    amount_float = float(amount_raw)
-                    payment_date_str = request.form.get("payment_date") 
-                    payment_date = datetime.strptime(payment_date_str, "%d-%m-%Y") 
-                    if amount_float > 0:
-                        check_payment = PaymentModel.query.filter_by(payment_no=payment_no).first()
-                        if check_payment :
-                            check_payment.amount = amount_float
-                            check_payment.payment_date=payment_date
-                            check_payment.note=note
-                            check_payment.status='pending',
-                        else :
-                            newItem = PaymentModel(
-                                order_id=id_order,
-                                product_id=item_order.product_id,
-                                amount=amount_float,
-                                payment_date=payment_date,
-                                note=note,
-                                payment_no=payment_no,
-                                status= 'pending',
-                            )
-                            db.session.add(newItem)
-                        db.session.commit()
-                    else:
-                        print("[INFO] amount เป็น 0, ไม่บันทึกข้อมูล")
-                except ValueError:
-                    print(f"[ERROR] amount ไม่สามารถแปลงเป็น float ได้: {amount_raw}")
-            else:
-                print("[INFO] amount ว่าง, ไม่บันทึกข้อมูล")
+            # # ตรวจสอบว่ามีค่า และไม่ใช่ 0
+            # if amount_raw != 0:
+            #     try:
+            #         amount_float = float(amount_raw)
+            #         payment_date_str = request.form.get("payment_date") 
+            #         payment_date = datetime.strptime(payment_date_str, "%d-%m-%Y") 
+            #         if amount_float > 0:
+            #             check_payment = PaymentModel.query.filter_by(payment_no=payment_no).first()
+            #             if check_payment :
+            #                 check_payment.amount = amount_float
+            #                 check_payment.payment_date=payment_date
+            #                 check_payment.note=note
+            #                 check_payment.status='pending',
+            #             else :
+            #                 newItem = PaymentModel(
+            #                     order_id=id_order,
+            #                     product_id=item_order.product_id,
+            #                     amount=amount_float,
+            #                     payment_date=payment_date,
+            #                     note=note,
+            #                     payment_no=payment_no,
+            #                     status= 'pending',
+            #                 )
+            #                 db.session.add(newItem)
+            #             db.session.commit()
+            #         else:
+            #             print("[INFO] amount เป็น 0, ไม่บันทึกข้อมูล")
+            #     except ValueError:
+            #         print(f"[ERROR] amount ไม่สามารถแปลงเป็น float ได้: {amount_raw}")
+            # else:
+            #     print("[INFO] amount ว่าง, ไม่บันทึกข้อมูล")
                         
-            
-        if  request.files:
-            count = 0
-            if request.files.getlist("formFile_payment"):
-                for i, file_PO in enumerate(request.files.getlist("formFile_payment")):
-                    if file_PO.filename == '':
-                        break
-                    target = 'apps/static/assets/files/payment/'
-                    os.makedirs(target, exist_ok=True)  # สร้างโฟลเดอร์หากยังไม่มีอยู่
-                    ftype = file_PO.filename.split('.')
-                    order_code = order_code
-                    payment_no = payment_no
-                    memver_code = id_member
-                    filename = f'SLIP_{order_code}_{payment_no}_{memver_code}'
-                    file_name = filename + '.' + ftype[-1]
+            for i, (term_id, payment_date) in enumerate(zip(term_ids, payment_dates)):
+                # จัดการวันที่
+                try:
+                    date_obj = datetime.strptime(payment_date, '%d-%m-%Y') if payment_date else None
+                except Exception as e:
+                    print(f"[ERROR] วันที่ไม่ถูกต้อง: {payment_date}")
+                    date_obj = None
 
-                    file_path = os.path.join(target, file_name)
+                # ไฟล์ของแต่ละงวด
+                file_PO = uploaded_files[i]
+                if file_PO and file_PO.filename != '':
+                    target = 'apps/static/assets/files/payment/'
+                    os.makedirs(target, exist_ok=True)
+
+                    ftype = file_PO.filename.split('.')[-1]
+                    filename = f'SLIP_{order_code}_{payment_no}_{id_member}_{term_id}.{ftype}'
+                    file_path = os.path.join(target, filename)
+
                     try:
-                        file_PO.save(file_path)  # บันทึกไฟล์
+                        file_PO.save(file_path)
                     except Exception as e:
-                        return jsonify({'error': str(e)}), 500  # ส่งกลับหากมีข้อผิดพลาด
-                    count += 1
-                    newfile = FilePaymentModel(filename=file_name,filepath=file_path,file_type =1, order_id=id_order)
+                        return jsonify({'error': str(e)}), 500
+
+                    # บันทึกลง DB
+                    newfile = FilePaymentModel(
+                        filename=filename,
+                        filepath=file_path,
+                        file_type=1,
+                        order_id=id_order,
+                        term_id=term_id,              # แนะนำให้เพิ่ม field นี้ใน model
+                        payment_date=date_obj         # หากมี field วันที่ใน model
+                    )
                     db.session.add(newfile)
-                    db.session.commit()    
+                    db.session.commit()
+
+                    print(f"[INFO] บันทึกไฟล์: {filename} วันที่: {payment_date}")   
+        # if  request.files:
+        #     count = 0
+        #     if request.files.getlist("formFile_payment"):
+        #         for i, file_PO in enumerate(request.files.getlist("formFile_payment")):
+        #             if file_PO.filename == '':
+        #                 break
+        #             target = 'apps/static/assets/files/payment/'
+        #             os.makedirs(target, exist_ok=True)  # สร้างโฟลเดอร์หากยังไม่มีอยู่
+        #             ftype = file_PO.filename.split('.')
+        #             order_code = order_code
+        #             payment_no = payment_no
+        #             memver_code = id_member
+        #             filename = f'SLIP_{order_code}_{payment_no}_{memver_code}'
+        #             file_name = filename + '.' + ftype[-1]
+
+        #             file_path = os.path.join(target, file_name)
+        #             try:
+        #                 file_PO.save(file_path)  # บันทึกไฟล์
+        #             except Exception as e:
+        #                 return jsonify({'error': str(e)}), 500  # ส่งกลับหากมีข้อผิดพลาด
+        #             count += 1
+        #             newfile = FilePaymentModel(filename=file_name,filepath=file_path,file_type =1, order_id=id_order)
+        #             db.session.add(newfile)
+        #             db.session.commit()   
+        #             print(f"[INFO] บันทึกไฟล์: {file_name} ที่ {file_path}") 
     except Exception as e:
         # จับข้อผิดพลาดและแสดงข้อความ
         # flash(f"An error occurred: {str(e)}", "danger")

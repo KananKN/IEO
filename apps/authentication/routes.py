@@ -131,7 +131,17 @@ def login():
 @blueprint.route('/register', methods=['GET', 'POST'])
 def register_interest():
     ref = request.args.get('ref') 
-    category = ProductCategoryModel.query.all()
+    agency = AgencyModel.query.filter_by(agency_code=ref).first()
+    agency_id = agency.id if agency else None
+
+    print(f"➡️ register_interest: ref={ref}, agency_id={agency_id}")
+    # category = ProductCategoryModel.query.all()
+    category = db.session.query(ProductCategoryModel)\
+        .join(ProductForSalesModel, ProductForSalesModel.product_category_id == ProductCategoryModel.id)\
+        .join(ProductAgencyAssociation, ProductAgencyAssociation.product_id == ProductForSalesModel.id)\
+        .filter(ProductAgencyAssociation.agency_id == agency_id)\
+        .distinct().all()
+
     country = CountryModel.query.all()
     agencies = AgencyModel.query.filter_by(org_type='agency').order_by(AgencyModel.first_name.asc()).all()
     agencies_with_IEO = [agency.__dict__.copy() for agency in agencies]
@@ -160,16 +170,115 @@ def register_interest():
     #     return redirect(url_for('authentication_blueprint.waiting_approval'))
     return render_template('accounts/register_interest.html',categorys=category,countrys=country, agencys=agencies_with_IEO,product=product,social_channels=social_channels,ref=ref)
 
-@blueprint.route('/api/get_countries_by_category/<int:category_id>')
-def get_countries_by_category(category_id):
-    countries = db.session.query(CountryModel).join(ProductForSalesModel)\
-        .filter(ProductForSalesModel.product_category_id == category_id)\
+@blueprint.route('/api/get_categories_by_agency/<int:agency_id>')
+def get_categories_by_agency(agency_id):
+    categories = db.session.query(ProductCategoryModel)\
+        .join(ProductForSalesModel, ProductForSalesModel.product_category_id == ProductCategoryModel.id)\
+        .join(ProductAgencyAssociation, ProductAgencyAssociation.product_id == ProductForSalesModel.id)\
+        .filter(ProductAgencyAssociation.agency_id == agency_id)\
         .distinct().all()
+    
+    return jsonify([{'id': c.id, 'name': c.name} for c in categories])
+
+@blueprint.route('/api/get_countries_by_category_admin/<int:category_id>')
+def get_countries_by_category_admin(category_id):
+    ref = request.args.get('agency_id')
+    agency = AgencyModel.query.filter_by(id=ref).first()
+    agency_id = agency.id if agency else None
+    print(f"➡️ get_countries_by_category_admin: category_id={category_id}, agency_id={agency_id}")
+
+    countries = db.session.query(CountryModel)\
+        .join(ProductForSalesModel, ProductForSalesModel.country_id == CountryModel.id)\
+        .join(ProductAgencyAssociation, ProductAgencyAssociation.product_id == ProductForSalesModel.id)\
+        .filter(
+            ProductForSalesModel.product_category_id == category_id,
+            ProductAgencyAssociation.agency_id == agency_id,
+            ProductAgencyAssociation.status == 'active'
+        ).distinct().all()
+    # countries = db.session.query(CountryModel).join(ProductForSalesModel)\
+    #     .filter(ProductForSalesModel.product_category_id == category_id)\
+    #     .distinct().all()
     return jsonify([{'id': c.id, 'name': c.name} for c in countries])
 
+@blueprint.route('/api/get_countries_by_category/<int:category_id>')
+def get_countries_by_category(category_id):
+    ref = request.args.get('agency_id')
+    print(f"➡️ get_countries_by_category: ref={ref}")
+    # agency = AgencyModel.query.filter_by(agency_code=ref).first()
+    agency = AgencyModel.query.filter_by(id=ref).first()
+    agency_id = agency.id if agency else None
+    print(f"➡️ get_countries_by_category: category_id={category_id}, agency_id={agency_id}")
+
+    countries = db.session.query(CountryModel)\
+        .join(ProductForSalesModel, ProductForSalesModel.country_id == CountryModel.id)\
+        .join(ProductAgencyAssociation, ProductAgencyAssociation.product_id == ProductForSalesModel.id)\
+        .filter(
+            ProductForSalesModel.product_category_id == category_id,
+            ProductAgencyAssociation.agency_id == agency_id,
+            ProductAgencyAssociation.status == 'active'
+        ).distinct().all()
+    # countries = db.session.query(CountryModel).join(ProductForSalesModel)\
+    #     .filter(ProductForSalesModel.product_category_id == category_id)\
+    #     .distinct().all()
+    return jsonify([{'id': c.id, 'name': c.name} for c in countries])
+
+@blueprint.route('/api/get_projects_bulk', methods=['POST'])
+def get_projects_bulk():
+    data = request.get_json()
+    category_id = data.get('category_id')
+    country_ids = data.get('country_ids', [])
+    agency_id = data.get('agency_id')
+    # ref = data.get('agency_id')
+    # agency = AgencyModel.query.filter_by(id=ref).first()
+    # agency_id = agency.id if agency else None
+
+    print(f"➡️ get_projects_bulk: category_id={category_id}, countries={country_ids}, agency_id={agency_id}")
+
+    products = db.session.query(ProductForSalesModel)\
+        .join(ProductAgencyAssociation, ProductAgencyAssociation.product_id == ProductForSalesModel.id)\
+        .filter(
+            ProductForSalesModel.product_category_id == category_id,
+            ProductForSalesModel.country_id.in_(country_ids),
+            ProductAgencyAssociation.agency_id == agency_id,
+            ProductAgencyAssociation.status == 'active'
+        ).all()
+
+    return jsonify([{'id': p.id, 'name': p.name} for p in products])
+
+@blueprint.route('/api/get_projects_bulk_admin', methods=['POST'])
+def get_projects_bulk_admin():
+    data = request.get_json()
+    category_id = data.get('category_id')
+    country_ids = data.get('country_ids', [])
+    ref = data.get('agency_id')
+    # ✅ แปลง country_ids เป็น list หากส่งมาเป็น string
+    if isinstance(country_ids, str):
+        try:
+            country_ids = json.loads(country_ids)  # ลองแปลงจาก JSON string
+        except Exception:
+            country_ids = [int(country_ids)]  # หรือเป็นตัวเลขเดี่ยว
+
+    if not isinstance(country_ids, list):
+        country_ids = [country_ids]
+    agency = AgencyModel.query.filter_by(id=ref).first()
+    agency_id = agency.id if agency else None
+
+    print(f"➡️ get_projects_bulk_admin: category_id={category_id}, countries={country_ids}, agency_id={agency_id}")
+
+    products = db.session.query(ProductForSalesModel)\
+        .join(ProductAgencyAssociation, ProductAgencyAssociation.product_id == ProductForSalesModel.id)\
+        .filter(
+            ProductForSalesModel.product_category_id == category_id,
+            ProductForSalesModel.country_id.in_(country_ids),
+            ProductAgencyAssociation.agency_id == agency_id,
+            ProductAgencyAssociation.status == 'active'
+        ).all()
+
+    return jsonify([{'id': p.id, 'name': p.name} for p in products])
 
 @blueprint.route('/api/get_projects/<int:category_id>/<int:country_id>')
 def get_projects(category_id, country_id):
+    print(f"➡️ get_projects: category_id={category_id}, country_id={country_id}")
     products = ProductForSalesModel.query.filter_by(
         product_category_id=category_id,
         country_id=country_id
@@ -177,19 +286,6 @@ def get_projects(category_id, country_id):
     return jsonify([{'id': p.id, 'name': p.name} for p in products])
 
 
-@blueprint.route('/api/get_projects_bulk', methods=['POST'])
-def get_projects_bulk():
-    data = request.get_json()
-    category_id = data.get('category_id')
-    country_ids = data.get('country_ids', [])
-
-    # สมมุติใช้ SQLAlchemy
-    projects = db.session.query(ProductForSalesModel).filter(
-        ProductForSalesModel.product_category_id == category_id,
-        ProductForSalesModel.country_id.in_(country_ids)
-    ).all()
-
-    return jsonify([{'id': p.id, 'name': p.name} for p in projects])
 
 @blueprint.route('/logout')
 def logout():
@@ -477,6 +573,7 @@ def register_api():
     country_id = data.getlist('country[]') or []
     social = data.get('social')
     remask = data.get('remask')
+    address = data.get('address')
 
     # เช็คว่า lead มีอยู่หรือยัง
     lead = leadModel.query.filter(
@@ -504,7 +601,8 @@ def register_api():
             agency_id=referred_by_id,
             # product_id=product_id,
             social=social,
-            remask=remask
+            remask=remask,
+            address=address
         )
         db.session.add(lead)
         db.session.flush()  # ให้ DB สร้าง lead.id ก่อน
@@ -526,6 +624,7 @@ def register_api():
         # lead.product_id = product_id
         lead.social = social
         lead.remask = remask
+        lead.address = address
 
     db.session.commit()
 

@@ -217,6 +217,8 @@ class AgencyModel(db.Model):
     # interested_users = db.relationship("interestedUsersModel", back_populates="agency", lazy=True)
     lead = db.relationship("leadModel", back_populates="agency", lazy=True)
     lead_programs = db.relationship("LeadProgram", back_populates="agency", overlaps="products,agency")
+    orders = db.relationship("OrderModel", back_populates="agency", lazy=True, passive_deletes=True)
+
 
 
     created_at = db.Column(db.DateTime,  default=db.func.current_timestamp())

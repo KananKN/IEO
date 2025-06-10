@@ -43,6 +43,10 @@ class OrderModel(db.Model):
     order_items = db.relationship("OrderItemModel", back_populates="order", cascade="all, delete")
     payments = db.relationship("PaymentModel", back_populates="order", cascade="all, delete", lazy=True)
 
+    agency_id = db.Column(db.Integer, db.ForeignKey('agency.id', ondelete='CASCADE'), nullable=True)
+    agency = db.relationship("AgencyModel", back_populates="orders")
+    year = db.Column(db.String(), nullable=True)
+
     total_price = db.Column(db.Numeric(precision=10, scale=2), nullable=True)  # ราคารวมก่อนส่วนลด
     discount = db.Column(db.Numeric(precision=10, scale=2), default=0.00)  # ส่วนลดทั้งหมด
     net_price = db.Column(db.Numeric(precision=10, scale=2), nullable=True)
@@ -68,7 +72,7 @@ class OrderItemModel(db.Model):
 
     order = db.relationship("OrderModel", back_populates="order_items")
     product = db.relationship("ProductForSalesModel", back_populates="order_items")
-
+    note = db.Column(db.String()) 
     
 
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
@@ -92,7 +96,7 @@ class MemberModel(db.Model):
     approved_by = db.Column(db.String(100))
     approved_at = db.Column(db.DateTime)
     birth_date = db.Column(db.DateTime,  default=None)
-
+    address = db.Column(db.Text())
     first_nameEN = db.Column(db.String(100))
     last_nameEN = db.Column(db.String(100))
     year = db.Column(db.String(), nullable=True,server_default='2025')
@@ -143,7 +147,10 @@ class FilePaymentModel(db.Model):
 
     payment_id = db.Column(db.Integer, db.ForeignKey("payments.id", ondelete="CASCADE"))
     order_id = db.Column(db.Integer, db.ForeignKey("order.id", ondelete="CASCADE"))
+    term_id = db.Column(db.Integer, db.ForeignKey("order_terms.id", ondelete="CASCADE"))
+    
     flag_delete = db.Column(db.Boolean, default=False)
+    payment_date = db.Column(db.Date, nullable=True)
 
     created_at = db.Column(db.DateTime,  default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime,  default=db.func.current_timestamp(),
@@ -159,7 +166,13 @@ class OrderTermModel(db.Model):
     sequence = db.Column(db.Integer)  # งวดที่เท่าไหร่ เช่น 1, 2, 3
     discount = db.Column(db.Numeric(precision=12, scale=2), nullable=False, server_default="0.00")
     net_price = db.Column(db.Numeric(precision=10, scale=2), nullable=True)
+    payment_date = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime,  default=db.func.current_timestamp())
+
+    files = db.relationship("FilePaymentModel", backref="term", lazy="dynamic", cascade="all, delete", foreign_keys="FilePaymentModel.term_id")
+
+
+
 
 
 
