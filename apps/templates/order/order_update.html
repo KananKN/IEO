@@ -199,13 +199,13 @@
                                 <div class="row mt-3 g-3">
                                     {% for payment in orderTerms %}
                                     <!-- กลุ่มข้อมูลของแต่ละงวด -->
-                                    <div class="row mb-2  align-items-start" >
+                                    <div class="row mb-2  align-items-center" >
                                         <!-- ซ้าย: ข้อมูลงวด -->
                                         <div class="col-md-6  h-100">
                                             <div class="d-flex flex-row align-items-center gap-2">
                                                 <label class="col-md-5 col-form-label fw-bold">{{ payment.term_detail }}</label>
                                 
-                                                <div class="mx-1">
+                                                <div class="mx-1 mt-1">
                                                     <input type="hidden" name="term_id" value="{{ payment.id }}">
                                                     <input type="text" class="form-control text-end " name="installments"
                                                         value="{{ '{:,.2f}'.format(payment.amount)}}" readonly placeholder="จำนวนเงิน">
@@ -466,7 +466,7 @@
         const existingFiles = existingFilesContainer.querySelectorAll('.attached-file');
         console.log('📄 attached-file count:', existingFiles.length);
         if (existingFiles.length > 0) {
-            alert('มีไฟล์แนบอยู่แล้ว กรุณาลบไฟล์ก่อนแนบใหม่');
+            check_fail('มีไฟล์แนบอยู่แล้ว กรุณาลบไฟล์ก่อนแนบใหม่');
             input.value = ''; // ล้าง input
             validateFile(input); // ดำเนินต่อ
             return;
