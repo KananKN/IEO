@@ -199,7 +199,7 @@
                                 <div class="row mt-3 g-3">
                                     {% for payment in orderTerms %}
                                     <!-- กลุ่มข้อมูลของแต่ละงวด -->
-                                    <div class="row mb-2  align-items-center" >
+                                    <div class="row   align-items-center" >
                                         <!-- ซ้าย: ข้อมูลงวด -->
                                         <div class="col-md-6  h-100">
                                             <div class="d-flex flex-row align-items-center gap-2">
@@ -225,37 +225,39 @@
                                         </div>
                                 
                                         <!-- ขวา: วันจ่ายเงิน + ไฟล์ + ถังขยะ -->
-                                        <div class="col-md-6 h-100 align-items-center gap-2 ">
-                                            <div class="d-flex flex-row ">
+                                        <div class="col-md-6 h-100 d-flex align-items-center justify-content-center gap-2">
+                                            <div class="d-flex flex-row align-items-center w-100">
                                                 <label class="col-md-2 col-form-label">วันที่จ่ายเงิน</label>
-
-                                                    <input type="hidden" name="term_id[]" hidden value="{{ payment.id }}">
-
-                                                    <div class="d-flex align-items-center gap-2">
-                                                        <div class="input-group date flex-grow-1 " id="datepicker-disabled-past{{ payment.id }}" data-date-format="dd-mm-yyyy">
-                                                            <input type="text" class="form-control datetimepicker ps-2" placeholder="Select Date"
-                                                                   id="kt_datepicker_{{ payment.id }}" name="payment_date[]" autocomplete="off"
-                                                                   value="{{ payment.payment_date.strftime('%d-%m-%Y %H:%M') if payment.payment_date else '' }}" />
-                                                            <span class="input-group-text input-group-addon">
-                                                                <i class="fa fa-calendar"></i>
-                                                            </span>
-                                                        </div>
-                                                    
-                                                        <input class="form-control formFileInput" type="file" name="formFile_payment[]"
-                                                               accept=".pdf, .jpg, .jpeg, .png"  onchange="checkExistingFiles(this, {{ payment.id }})"
-                                                               style="height: 35px; max-width: 200px;" />
+                                        
+                                                <input type="hidden" name="term_id[]" value="{{ payment.id }}">
+                                        
+                                                <div class="d-flex align-items-center gap-2 flex-grow-1">
+                                                    <div class="input-group date flex-grow-1" id="datepicker-disabled-past{{ payment.id }}" data-date-format="dd-mm-yyyy">
+                                                        <input type="text" class="form-control datetimepicker ps-2" placeholder="Select Date"
+                                                               id="kt_datepicker_{{ payment.id }}" name="payment_date[]" autocomplete="off"
+                                                               value="{{ payment.payment_date.strftime('%d-%m-%Y %H:%M') if payment.payment_date else '' }}" />
+                                                        <span class="input-group-text input-group-addon">
+                                                            <i class="fa fa-calendar"></i>
+                                                        </span>
                                                     </div>
-                                                    
-                                                        
-                                                
-                                                    <a href="#" class="pt-2 ps-2" onclick="sweetAlerPrintfile({{payment.id}},{{datas.id}})" hidden >
-                                                        <i class="material-icons">print</i>
-                                                    </a>
+                                        
+                                                    <input class="form-control formFileInput" type="file" name="formFile_payment[]"
+                                                           accept=".pdf, .jpg, .jpeg, .png" onchange="checkExistingFiles(this, {{ payment.id }})"
+                                                           style="height: 35px; max-width: 200px;" />
+                                                </div>
+                                        
+                                                <a href="#" class="pt-2 ps-2" onclick="sweetAlerPrintfile({{payment.id}},{{datas.id}})" hidden>
+                                                    <i class="material-icons">print</i>
+                                                </a>
                                             </div>
+                                        </div>
+                                    </div>
+                                    <div class="row justify-content-end my-2">
+                                        <div class="col-6">
                                             <div class="d-flex flex-column gap-2" id="existing_files_{{ payment.id }}">
                                                 {% for file_data in payment.files %}
                                                 <div class="row ">
-                                                    <div class="col-md-12 col-sm-12 col-xs-12 mt-2 mb-2 attached-file" data-file-id="{{ file_data.id }}">
+                                                    <div class="col-md-12 col-sm-12 col-xs-12  attached-file" data-file-id="{{ file_data.id }}">
                                                         <a href="{{ url_for('order_blueprint.downloadPayment', filename=file_data.filename) }}"
                                                            style="text-decoration: none; color: black;">
                                                             <i class="fas fa-lg fa-fw ms-5px fa-file"></i>
@@ -269,7 +271,7 @@
                                                 {% endfor %}
                                                     
                                             </div>
-                                            
+
                                         </div>
                                     </div>
                                     {% endfor %}
