@@ -190,7 +190,7 @@
                                     <div class="col-md-7">
                                         <div class="row mt-4"  >
                                             <div class="col-md-8">
-                                                <p>{{datas.product.detail or ''}}</p>
+                                                <p>{{ datas.product.detail if datas.product and datas.product.detail else '' }}</p>
                                             </div>
                                         </div> 
                                     </div>
@@ -199,19 +199,19 @@
                                 <div class="row mt-3 g-3">
                                     {% for payment in orderTerms %}
                                     <!-- กลุ่มข้อมูลของแต่ละงวด -->
-                                    <div class="row mb-3 mt-2 align-items-stretch">
+                                    <div class="row mb-3 mt-2 align-items-start" >
                                         <!-- ซ้าย: ข้อมูลงวด -->
                                         <div class="col-md-6  h-100">
-                                            <div class="d-flex flex-row align-items-center h-100">
+                                            <div class="d-flex flex-row align-items-center gap-2">
                                                 <label class="col-md-5 col-form-label fw-bold">{{ payment.term_detail }}</label>
                                 
                                                 <div class="mx-1">
                                                     <input type="hidden" name="term_id" value="{{ payment.id }}">
-                                                    <input type="text" class="form-control text-end" name="installments"
+                                                    <input type="text" class="form-control text-end " name="installments"
                                                         value="{{ '{:,.2f}'.format(payment.amount)}}" readonly placeholder="จำนวนเงิน">
                                                 </div>
                                 
-                                                <div class="mx-1">
+                                                <div class="mx-1 ms-2">
                                                     <input type="text" class="form-control text-end price-input" name="discount"
                                                         oninput="formatInputNumberWithCommasDiscount(this)" onfocus="clearZeroWhenTyping(this)"
                                                         value="{{ '{:,.2f}'.format(payment.discount)}}" placeholder="ส่วนลด">
@@ -226,10 +226,10 @@
                                 
                                         <!-- ขวา: วันจ่ายเงิน + ไฟล์ + ถังขยะ -->
                                         <div class="col-md-6 h-100">
-                                            <div class="d-flex flex-row align-items-center h-100">
+                                            <div class="d-flex flex-row align-items-center gap-2">
                                                 <label class="col-md-2 col-form-label">วันที่จ่ายเงิน</label>
 
-                                                    <input type="" name="term_id[]" hidden value="{{ payment.id }}">
+                                                    <input type="hidden" name="term_id[]" hidden value="{{ payment.id }}">
 
                                                     <div class="d-flex align-items-center gap-2">
                                                         <div class="input-group date flex-grow-1 " id="datepicker-disabled-past{{ payment.id }}" data-date-format="dd-mm-yyyy">
@@ -242,37 +242,20 @@
                                                         </div>
                                                     
                                                         <input class="form-control formFileInput" type="file" name="formFile_payment[]"
-                                                               accept=".pdf, .jpg, .jpeg, .png" onchange="validateFile(this)"
+                                                               accept=".pdf, .jpg, .jpeg, .png"  onchange="checkExistingFiles(this, {{ payment.id }})"
                                                                style="height: 35px; max-width: 200px;" />
                                                     </div>
                                                     
-                                                    <div class="payment-row mt-2" data-files-exist="{{ 1 if files|length > 0 else 0 }}">
-                                                        <div class="d-flex flex-column mb-0 mt-2">
-                                                            {% for file_data in files %}
-                                                                <div class="row">
-                                                                    <div class="col-md-12 col-sm-12 col-xs-12">
-                                                                        <a href="{{ url_for('order_blueprint.downloadPayment', filename=file_data.filename) }}"
-                                                                           style="text-decoration: none; color: black;">
-                                                                            <i class="fas fa-lg fa-fw ms-5px fa-file"></i>
-                                                                            <span>{{ file_data.filename }}</span>
-                                                                        </a>
-                                                                        <a href="#" onclick="sweetAlertDelfile({{ file_data.id }}, {{ datas.id }})">
-                                                                            <i class="fas fa-lg fa-fw mx-5px fa-trash-can text-danger c_trash"></i>
-                                                                        </a>
-                                                                    </div>
-                                                                </div>
-                                                            {% endfor %}
-                                                        </div>
-                                                    </div>
+                                                        
                                                 
                                                     <a href="#" class="pt-2 ps-2" onclick="sweetAlerPrintfile({{payment.id}},{{datas.id}})" hidden >
                                                         <i class="material-icons">print</i>
                                                     </a>
                                             </div>
-                                            <div class="d-flex flex-column mb-0">
+                                            <div class="d-flex flex-column gap-2" id="existing_files_{{ payment.id }}">
                                                 {% for file_data in payment.files %}
-                                                <div class="row">
-                                                    <div class="col-md-12 col-sm-12 col-xs-12 ">
+                                                <div class="row mt-3">
+                                                    <div class="col-md-12 col-sm-12 col-xs-12 attached-file" data-file-id="{{ file_data.id }}">
                                                         <a href="{{ url_for('order_blueprint.downloadPayment', filename=file_data.filename) }}"
                                                            style="text-decoration: none; color: black;">
                                                             <i class="fas fa-lg fa-fw ms-5px fa-file"></i>
@@ -469,7 +452,29 @@
 <script src="{{ config.ASSETS_ROOT }}/js/demo/render.highlight.js"></script>
 
 <script src="{{ config.ASSETS_ROOT }}/js/supplier/main_supplier.js?v1.0"></script>
-
+<script>
+    function checkExistingFiles(input, paymentId) {
+        const existingFilesContainer = document.getElementById(`existing_files_${paymentId}`);
+        console.log('📦 paymentId:', paymentId);
+        console.log('📦 container:', existingFilesContainer);
+        if (!existingFilesContainer) {
+            console.warn(`ไม่พบ container: existing_files_${paymentId}`);
+            // ดำเนินต่อ
+            return;
+        }
+    
+        const existingFiles = existingFilesContainer.querySelectorAll('.attached-file');
+        console.log('📄 attached-file count:', existingFiles.length);
+        if (existingFiles.length > 0) {
+            alert('มีไฟล์แนบอยู่แล้ว กรุณาลบไฟล์ก่อนแนบใหม่');
+            input.value = ''; // ล้าง input
+            validateFile(input); // ดำเนินต่อ
+            return;
+        }
+        validateFile(input); 
+        console.log('ไม่มีไฟล์แนบเดิม -> อนุญาตให้แนบ');
+    }
+</script>
 <script>
     $("input[id^='kt_datepicker_']").each(function () {
         $(this).flatpickr({
@@ -497,13 +502,6 @@ let inputCount = 1;
 $(document).ready(function () {
     console.log("jQuery loaded");
 
-    $('.payment-row').each(function () {
-        let hasFiles = $(this).data('files-exist');
-        console.log("hasFiles?", hasFiles);
-        if (hasFiles == 1) {
-            $(this).find('input[type="file"]').prop('disabled', true);
-        }
-    });
 
     function generateInputs(termValue, payments = []) {
         let termNumber = parseInt(termValue, 10); 
