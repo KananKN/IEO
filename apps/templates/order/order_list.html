@@ -333,6 +333,9 @@ function loadDataTable() {
                     } else if (status === 'completed') {
                         color_text = 'success';
                         text = 'จบโครงการ';
+                    }  else if (status === 'pending') {
+                        color_text = 'info';
+                        text = 'รอการชำระเงิน';
                     } else if (status === 'cancelled') {
                         color_text = 'danger';
                         text = 'ยกเลิก';
