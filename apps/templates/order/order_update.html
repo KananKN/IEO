@@ -86,48 +86,64 @@
                                         <div class="row">
                                             <label class="form-label col-form-label col-md-4">รหัส Member:</label>
                                             <div class="col-lg-8">
-                                                <input name="member_code" required class="form-control-plaintext  me-2" value="{{members.member_code}}" readonly placeholder="ชื่อ">
+                                                <input name="member_code" required class="form-control-plaintext   mx-2" value="{{members.member_code}}" readonly placeholder="ชื่อ">
                                             </div>
                                         </div>                        
-                                        <div class="row ">
+                                        <div class="row mb-2">
                                             <label class="form-label col-form-label col-md-4">ชื่อ-นามสกุล</label>
-                                            <div class="col-lg-8">
-                                                <input name="fullname" required class="form-control-plaintext  me-2" value="{{members.first_name}} {{members.last_name}}" readonly placeholder="ชื่อ">
+                                            <div class="col-lg-4">
+                                                <input name="first_name" required class="form-control  me-2" value="{{members.first_name}} "  placeholder="ชื่อ">
+                                                
+                                            </div>
+                                            <div class="col-lg-4">
+                                                <input name="last_name" required class="form-control  me-2" value="{{members.last_name}}"  placeholder="ชื่อ">
+
                                             </div>
                                         </div>                        
-                                        <div class="form-group row " >
+                                        <div class="row mb-2">
+                                            <label class="form-label col-form-label col-md-4">ชื่อ-นามสกุล (ภาษาอังกฤษ)</label>
+                                            <div class="col-lg-4">
+                                                <input name="first_nameEN" required class="form-control  me-2" value="{{members.first_nameEN}} "  placeholder="ชื่อ">
+                                                
+                                            </div>
+                                            <div class="col-lg-4">
+                                                <input name="last_nameEN" required class="form-control  me-2" value="{{members.last_nameEN}}"  placeholder="ชื่อ">
+
+                                            </div>
+                                        </div>                        
+                                        <div class="form-group row mb-2" >
                                             <label class="form-label col-form-label col-lg-4">E-mail</label>
 
                                             <div class="col-lg-8">
-                                                <input type="email" class="form-control-plaintext" name="email" value="{{members.email}}" placeholder="อีเมล">
+                                                <input type="email" class="form-control" name="email" value="{{members.email}}" placeholder="อีเมล">
 
                                             </div>
                 
                                         </div>
                                         <div class="row ">
                                             <label class="form-label col-form-label col-md-4">ชื่อเล่น</label>
-                                            <div class="col-lg-8">
-                                                <input name="nickname"  class="form-control-plaintext me-2" value="{{members.nick_name}}"  placeholder="ชื่อเล่น">
+                                            <div class="col-lg-8 mb-2">
+                                                <input name="nickname"  class="form-control me-2" value="{{members.nick_name}}"  placeholder="ชื่อเล่น">
                                             </div>
                                         </div>
 
                                         <div class="row " hidden>
                                             <label class="form-label col-form-label col-md-4">วันเกิด</label>
                                             <div class="col-lg-8">
-                                                <input type="text" class="form-control-plaintext" id="masked-input-date" name="birth_date" value="{{ members.birth_date.strftime('%d/%m/%Y') if members.birth_date else '' }}" placeholder="dd/mm/yyyy">
+                                                <input type="text" class="form-control" id="masked-input-date" name="birth_date" value="{{ members.birth_date.strftime('%d/%m/%Y') if members.birth_date else '' }}" placeholder="dd/mm/yyyy">
                                             </div>
                                         </div>
                                     
-                                        <div class="row ">
+                                        <div class="row mb-2">
                                             <label class="form-label col-form-label col-md-4">เบอร์โทร</label>
                                             <div class="col-md-8">
-                                                <input name="phone" required value="{{members.phone}}" class="form-control-plaintext " placeholder="เบอร์โทรศัพท์*">
+                                                <input name="phone" required value="{{members.phone}}" class="form-control " placeholder="เบอร์โทรศัพท์*">
                                             </div>
                                         </div>
                                         <div class="row mb-15px">
                                             <label class="form-label col-form-label col-md-4">ที่อยู่</label>
                                             <div class="col-md-8">
-                                                <p>{{members.address or '' }}</p>
+                                                <textarea class="form-control" id="address" rows="4" cols="50"  name="address" placeholder="" >{{members.address or '' }}</textarea>
                                             </div>
                                         </div>
 
@@ -298,7 +314,7 @@
                                                 </div>
                                             </div>
                                             
-                                            <div class="row mt-3"  >
+                                            <div class="row mt-3"  hidden>
                                                 <label for="term" class="form-label col-form-label col-md-5">สถานะชำระเงิน  </label>
                                                 <div class="col-md-7">
                                                     <select class="default-select2 form-control col-3" id="installment" name="cash_payment">
@@ -500,11 +516,52 @@ $('.input-group.date').on('click', function (e) {
         $(this).find('input.datepicker').datepicker('show');
     }
 });
+function triggerInitialCalculation() {
+    $('input[name="installments"], input[name="discount"]').each(function () {
+        $(this).trigger('input');
+    });
+}
 let inputCount = 1;
 $(document).ready(function () {
     console.log("jQuery loaded");
+    //--------- คำนวณ -----------------
+    $('input[name="installments"], input[name="discount"]').on('input', function () {
+        let row = $(this).closest('.row'); // ใช้ closest('.row') แทน tr
+    
+        let installmentsInput = row.find('input[name="installments"]');
+        let discountInput = row.find('input[name="discount"]');
+        let totalInput = row.find('input[name="count"]'); // ช่องสำหรับผลลัพธ์รวม
+    
+        let installments = parseFloat(installmentsInput.val().replace(/,/g, '')) || 0;
+        let discount = parseFloat(discountInput.val().replace(/,/g, '')) || 0;
+    
+        let total = installments - discount;
+        total = parseFloat(total.toFixed(2));
+    
+        if (totalInput.length > 0) {
+            totalInput.val(total.toLocaleString('en-US', { minimumFractionDigits: 2 }));
+        }
+
+        calculateTotalcount();
+    });
 
 
+    $(`input[name="installments"]`).each(function () {
+        calculateTotalInstallments();
+        calculateTotalcount();
+    });
+    
+
+    $(document).on('input', 'input[name="discount"]', function () {
+        calculateTotalDiscount();
+    });
+
+    $('.row.mb-3.align-items-center').each(function () {
+        calculatdiscountPayment($(this));
+        //calculateTotalcount();
+    });
+
+    triggerInitialCalculation();
     function generateInputs(termValue, payments = []) {
         let termNumber = parseInt(termValue, 10); 
         let extraInputsContainer = $("#extra-inputs");
@@ -587,43 +644,7 @@ $(document).ready(function () {
 
 
 
-    //--------- คำนวณ -----------------
-    $('input[name="installments"], input[name="discount"]').on('input', function () {
-        let row = $(this).closest('.row'); // ใช้ closest('.row') แทน tr
     
-        let installmentsInput = row.find('input[name="installments"]');
-        let discountInput = row.find('input[name="discount"]');
-        let totalInput = row.find('input[name="count"]'); // ช่องสำหรับผลลัพธ์รวม
-    
-        let installments = parseFloat(installmentsInput.val().replace(/,/g, '')) || 0;
-        let discount = parseFloat(discountInput.val().replace(/,/g, '')) || 0;
-    
-        let total = installments - discount;
-        total = parseFloat(total.toFixed(2));
-    
-        if (totalInput.length > 0) {
-            totalInput.val(total.toLocaleString('en-US', { minimumFractionDigits: 2 }));
-        }
-
-        calculateTotalcount();
-    });
-
-
-    $(`input[name="installments"]`).each(function () {
-        calculateTotalInstallments();
-        calculateTotalcount();
-    });
-    
-
-    $(document).on('input', 'input[name="discount"]', function () {
-        calculateTotalDiscount();
-    });
-
-    $('.row.mb-3.align-items-center').each(function () {
-        calculatdiscountPayment($(this));
-        //calculateTotalcount();
-    });
-
    
     
 
@@ -714,7 +735,6 @@ function calculateTotalcount() {
     });
     
 }
-
 function func_deleteItem(el) {
 
     $(el).closest('.item-row').remove();

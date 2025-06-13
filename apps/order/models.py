@@ -51,6 +51,8 @@ class OrderModel(db.Model):
     discount = db.Column(db.Numeric(precision=10, scale=2), default=0.00)  # ส่วนลดทั้งหมด
     net_price = db.Column(db.Numeric(precision=10, scale=2), nullable=True)
 
+    terms = db.relationship('OrderTermModel', backref='order', lazy='dynamic')
+
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
 

@@ -8,7 +8,7 @@ from apps.order.models import *
 from apps.lead.models import *
 
 from apps import db
-from flask import render_template, request, redirect, url_for, flash, Markup, jsonify, abort, send_file, Response
+from flask import render_template, request, redirect, url_for, flash, Markup, jsonify, abort, send_file, Response,current_app, abort
 from flask_login import login_required, current_user, logout_user
 from jinja2 import TemplateNotFound
 import random
@@ -183,7 +183,7 @@ def get_order():
             "product_name": order.product.name if order.product else '',
             "term": order.product.term_of_payment.name if order.product and order.product.term_of_payment else '',
             "email": order.lead.email if order.lead else '',
-            "price": order.price ,
+            "price": order.net_price ,
             "created_at": int(order.created_at.timestamp() * 1000),
             "data_user": safe_model_to_dict(order),
             "lead": safe_model_to_dict(order.lead),
@@ -215,6 +215,9 @@ def order_create():
 @read_permission.require(http_exception=403)
 def order_update(id):
     data = OrderModel.query.filter_by(id=id).first()
+    if not data:
+        abort(404, description="ไม่พบข้อมูล Lead ที่คุณต้องการ")
+
     lead = leadModel.query.filter_by(id=data.lead_id).first()
     
     orderItem = OrderItemModel.query.filter_by(product_id=data.product_id).first()
@@ -230,13 +233,10 @@ def order_update(id):
                     OrderTermModel.order_id == data.id,
                 ).order_by(OrderTermModel.sequence).all()
     
-    # print("payment",payment)
     payment11 = PaymentModel.query.filter_by(order_id=data.id).all()
 
     file_data = FilePaymentModel.query.filter_by(order_id  = data.id).all()
-    # print("data",data)
-    # print("lead",lead)
-    # print("orderItem",orderItem )
+    
     return render_template('order/order_update.html', segment='order' ,lead=lead, orderItem=orderItem, datas=data, payments=payment,product=product,members=member,file_datas=file_data,orderTerms=orderTerm)
 
 @blueprint.route("/check_statusLead", methods=["POST"])
@@ -299,6 +299,16 @@ def save_payment():
     try:
         id_order = request.form.get('id')
         id_member = request.form.get('id_member')
+        first_name = request.form.get('first_name')
+        first_nameEN = request.form.get('first_nameEN')
+        last_name = request.form.get('last_name')
+        last_nameEN = request.form.get('last_nameEN')
+        email = request.form.get('email')
+        nickname = request.form.get('nickname')
+        phone = request.form.get('phone')
+        address = request.form.get('address')
+
+
         order_code = request.form.get('order_code')
         payment_no=request.form.get('cash_payment')
         # status =request.form.get('cash_payment')
@@ -342,9 +352,19 @@ def save_payment():
             item_order.net_price = total_payment
             item_order.total_price = sum_installments
             item_order.note = note
+
+            item_member.first_name = first_name
+            item_member.first_nameEN = first_nameEN
+            item_member.last_nameEN = last_nameEN
+            item_member.last_name = last_name       
+            item_member.email = email
+            item_member.nickname = nickname
+            item_member.phone = phone   
+            item_member.address = address
             item_member.status = payment_no
             db.session.commit()
 
+            updated_order_id = None 
             for i in range(len(term_ids)):
                 term_id = int(term_ids[i])
                 discount = parse_decimal(discounts[i])
@@ -367,10 +387,31 @@ def save_payment():
                     term.discount = discount
                     term.net_price = net_price
                     term.payment_date = payment_dt
+
+                     # จำ order_id ไว้
+                    if updated_order_id is None:
+                        updated_order_id = term.order_id
                     
                 else:
                     print(f"❌ ไม่พบ OrderTermModel id: {term_id}")
             db.session.commit()
+
+            if updated_order_id:
+                order = OrderModel.query.get(updated_order_id)
+                if order:
+                    all_terms = order.terms.all()  # เรียกทั้งหมดมาเป็น list
+                    paid_terms = [t for t in all_terms if t.payment_date is not None]
+
+                    if len(paid_terms) == 0:
+                        order.status = 'pending'
+                        print("🕐 ยังไม่มีการชำระเงิน → ตั้งสถานะเป็น 'pending'")
+                    elif len(paid_terms) == len(all_terms) and len(all_terms) > 0:
+                        order.status = 'completed'
+                        print("✅ ชำระครบทุกงวดแล้ว → เปลี่ยนสถานะเป็น 'completed'")
+                    else:
+                        order.status = f'installment_{len(paid_terms)}'
+                        print(f"📌 จ่ายแล้ว {len(paid_terms)} / {len(all_terms)} งวด")
+                    db.session.commit()  # อัปเดตสถานะ order
             # amount_raw = request.form.get("amount", "").replace(",", "").strip()
 
             # # ตรวจสอบว่ามีค่า และไม่ใช่ 0
@@ -481,12 +522,17 @@ def downloadPayment(filename):
 
     file = FilePaymentModel.query.filter_by(filename=filename).first()
    
-    filename_without_ext, file_extension = file.filepath.rsplit('.', 1)
-    path = os.path.join("static", "assets", "files", "payment", file.filename)
+    if not file:
+        abort(404, description="File record not found in database")
 
-    # path = "static\\assets\\files\\payment\\" + file.filename   
-    file_path = os.path.join(path)    # file = FileModel.query.filter_by(filename=filename).first()
-    return send_file(path, as_attachment=True)
+    # สร้าง path แบบ absolute ด้วย current_app.root_path
+    file_path = os.path.join(current_app.root_path, "static", "assets", "files", "payment", file.filename)
+
+    # เช็คว่ามีไฟล์อยู่จริงหรือไม่
+    if not os.path.exists(file_path):
+        abort(404, description="File not found on server")
+
+    return send_file(file_path, as_attachment=True)
 
 
 @blueprint.route('/delete_file', methods=['POST'])
