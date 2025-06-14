@@ -419,6 +419,7 @@ def addProductSale():
     # ✅ ตรวจสอบค่าจาก request.form
     name = request.form.get('name_product') or None
     year = request.form.get('selectedYear') or ''
+    
     price = request.form.get('price') or None
     product_category_id = request.form.get('productCategory') or None
     country_id = request.form.get('country') or None
@@ -426,8 +427,8 @@ def addProductSale():
     term_of_payment_id = request.form.get('term') or None
     detail = request.form.get('detail') or None
     inputYear = request.form.get('inputYear') or None
-    start = datetime.strptime(request.form.get("start"), "%d-%m-%Y") if request.form["start"] else None 
-    end = datetime.strptime(request.form.get("end"), "%d-%m-%Y") if request.form["end"] else None 
+    # start = datetime.strptime(request.form.get("start"), "%d-%m-%Y") if request.form["start"] else None 
+    # end = datetime.strptime(request.form.get("end"), "%d-%m-%Y") if request.form["end"] else None 
     # ✅ ตรวจสอบว่า country_id และ period_id ได้ค่าที่ถูกต้อง (ต้องเป็นตัวเลข ไม่ใช่ function)
     organization_ids = request.form.getlist('organization') or None
     employee_ids = request.form.getlist('employee') or None
@@ -472,14 +473,20 @@ def addProductSale():
         period_id=period_id,  # ✅ แก้ไขให้ period_id เป็น int หรือ None
         term_of_payment_id=term_of_payment_id,
         detail=detail,
-        start_at=start,
-        end_at=end,
+        # start_at=start,
+        # end_at=end,
     )
 
     # ✅ เพิ่มข้อมูลลงฐานข้อมูล
     db.session.add(new_item)
     db.session.commit()
         
+    try:
+        db.session.add(new_item)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        raise e
         
     uploaded_images  = request.files.getlist("formFile_img")
     if uploaded_images:
@@ -533,10 +540,9 @@ def addProductSale():
                 db.session.commit()    
                 
     term_years = request.form.getlist('term_year[]')
-    print(term_years)
-    print(f"price_2025: {request.form.get('price_2025')}")
     
-
+    
+    
 
     for year in term_years:
         ids = request.form.getlist(f'term_id_{year}[]')
@@ -544,14 +550,24 @@ def addProductSale():
         details = request.form.getlist(f'term_detail_{year}[]')
         price_str = request.form.get(f'price_{year}', '0').replace(',', '')
         price = Decimal(price_str or '0')
+        
 
-        print(f"ปี {year} | งวด {len(amounts)} | รายละเอียด {len(details)}")
+        raw_vats = request.form.getlist(f'check_vat_{year}[]')
+
+        # กลุ่มทีละ 2 ค่า (hidden, checkbox) → เอา '1' ถ้ามี, ไม่งั้น '0'
+        check_vats = []
+        for i in range(0, len(raw_vats), 2):
+            vat_pair = raw_vats[i:i+2]
+            check_vats.append('1' in vat_pair)
+
+        print("check_vats:", check_vats)
 
 
         for i in range(len(amounts)):
             amount = Decimal(amounts[i].replace(',', ''))
             detail = details[i].strip()
             term_id = ids[i].strip() if i < len(ids) else None
+            check_vat = check_vats[i]
 
             if term_id:
                 existing = installmentsPaymentModel.query.filter_by(id=term_id).first()
@@ -560,6 +576,7 @@ def addProductSale():
                     existing.amount = amount
                     existing.year = year
                     existing.price = price
+                    existing.check_vat = check_vat
                     continue
 
         
@@ -568,7 +585,8 @@ def addProductSale():
                 amount=amount,
                 year=year,
                 price=price,
-                product_for_sales_id=new_item.id
+                product_for_sales_id=new_item.id,
+                check_vat=check_vat
             ))
 
     db.session.commit()
@@ -674,6 +692,27 @@ def addProductSale():
     # print(datas)
     return redirect(url_for('product_blueprint.EditProductSales',id=new_item.id))
 
+def get_all_check_vat_values(term_years):
+    # อ่าน checkbox ตัวเดียว
+    single_check_vat = request.form.get('check_vat')
+    single_checked = single_check_vat == '1' or single_check_vat == 'on'  # กรณี checkbox ส่งค่า 'on'
+
+    # อ่าน checkbox เป็น list แยกตามปี
+    check_vat_years = {}
+    for year in term_years:
+        raw_vats = request.form.getlist(f'check_vat_{year}[]')
+        check_vats = []
+        for i in range(0, len(raw_vats), 2):
+            vat_pair = raw_vats[i:i+2]
+            check_vats.append('1' in vat_pair)
+        check_vat_years[year] = check_vats
+
+    return {
+        'single': single_checked,
+        'by_year': check_vat_years
+    }
+
+
 @blueprint.route('/updateProductSale', methods=['GET', 'POST'])
 @login_required
 @read_permission.require(http_exception=403)
@@ -694,8 +733,8 @@ def updateProductSale():
     agency_ids = request.form.getlist('agency') or None
     
     detail = request.form.get('detail') or None
-    start = datetime.strptime(request.form.get("start"), "%d-%m-%Y") if request.form["start"] else None 
-    end = datetime.strptime(request.form.get("end"), "%d-%m-%Y") if request.form["end"] else None
+    # start = datetime.strptime(request.form.get("start"), "%d-%m-%Y") if request.form["start"] else None 
+    # end = datetime.strptime(request.form.get("end"), "%d-%m-%Y") if request.form["end"] else None
     
     # if price:
     #     price = float(price.replace(',', ''))  # 
@@ -725,8 +764,8 @@ def updateProductSale():
         thisItem.period_id=period_id, 
         thisItem.term_of_payment_id=term_of_payment_id,
         thisItem.detail=detail
-        thisItem.start_at=start,
-        thisItem.end_at=end,
+        # thisItem.start_at=start,
+        # thisItem.end_at=end,
     
     db.session.commit()
     
@@ -734,21 +773,39 @@ def updateProductSale():
     term_years = request.form.getlist('term_year[]')
     print(term_years)
     print(f"price_2025: {request.form.get('price_2025')}")
-    
-
    
+
 
     
     for year in term_years:
         ids = request.form.getlist(f'term_id_{year}[]')
         amounts = request.form.getlist(f'installments_{year}[]')
         details = request.form.getlist(f'term_detail_{year}[]')
+        check_vats_raw = request.form.getlist(f'check_vat_{year}[]')  # ได้ list string เช่น ['0', 'on', '0', 'on', ...]
+
+        print("check_vats_raw:", check_vats_raw)
+
         price_str = request.form.get(f'price_{year}', '0').replace(',', '')
         price = Decimal(price_str or '0')
 
-        print(f"ปี {year} | งวด {len(amounts)} | รายละเอียด {len(details)}")
+        check_vats = []
+        i = 0
+        while i < len(check_vats_raw):
+            val = check_vats_raw[i]
+            if val == '0':
+                # ถ้า next คือ 'on' หรือ '1' → ติ๊ก
+                if i + 1 < len(check_vats_raw) and check_vats_raw[i + 1] in ['on', '1']:
+                    check_vats.append(True)
+                    i += 2  # ข้าม 2 ตัว
+                else:
+                    check_vats.append(False)
+                    i += 1
+            else:
+                # fallback กรณีไม่ตรง pattern
+                i += 1
 
-        # 🟥 ดึง id ที่มีอยู่ใน DB สำหรับปีนี้
+        print(check_vats)
+
         existing_ids_in_db = [
             str(x.id) for x in installmentsPaymentModel.query.filter_by(
                 year=year,
@@ -770,6 +827,12 @@ def updateProductSale():
             amount = Decimal(amounts[i].replace(',', ''))
             detail = details[i].strip()
             term_id = ids[i].strip() if i < len(ids) else None
+            # check_vat = check_vats[i] if i < len(check_vats) else False  # fallback ถ้าข้อมูลไม่ครบ
+            # check_vat ให้เช็คว่ามีข้อมูลใน check_vats หรือเปล่า
+            if check_vats_raw:
+                check_vat = check_vats[i] if i < len(check_vats) else False
+            else:
+                check_vat = None  # หรือจะใช้ None เพื่อบอกว่าไม่เปลี่ยนค่า
 
             if term_id:
                 existing = installmentsPaymentModel.query.filter_by(id=term_id).first()
@@ -778,6 +841,8 @@ def updateProductSale():
                     existing.amount = amount
                     existing.year = year
                     existing.price = price
+                    if check_vat is not None:
+                        existing.check_vat = check_vat
                     continue
 
         
@@ -786,7 +851,8 @@ def updateProductSale():
                 amount=amount,
                 year=year,
                 price=price,
-                product_for_sales_id=thisItem.id
+                product_for_sales_id=thisItem.id,
+                check_vat=check_vat if check_vat is not None else False,
             ))
 
     db.session.commit()

@@ -292,13 +292,15 @@
                                             <td>
                                                 <input class="form-control" name="term_id_{{year}}[]" hidden value="{{ sorted_items[i].id }}" oninput="formatNumberWithCommas(this)">
                                                 <input class="form-control" name="installments_{{year}}[]" value="{{ '{:,.2f}'.format(sorted_items[i].amount|float) }}" oninput="formatNumberWithCommas(this)">
-                                                <input class="form-control" name="term_detail_{{year}}[]" hidden value="{{ sorted_items[i].term_detail }}">
+                                                <input class="form-control" name="term_detail_{{year}}[]"  hidden value="{{ sorted_items[i].term_detail }}">
+
                                             </td>
                                         {% else %}
                                             <td class="d-none">
                                                 <input class="form-control" name="term_id_{{year}}[]" hidden value="{{ sorted_items[i].id }}" oninput="formatNumberWithCommas(this)">
                                                 <input class="form-control" name="installments_{{year}}[]" value="{{ '{:,.2f}'.format(sorted_items[i].amount|float) }}" oninput="formatNumberWithCommas(this)">
                                                 <input class="form-control" name="term_detail_{{year}}[]" hidden value="{{ sorted_items[i].term_detail }}">
+
                                             </td>
                                         {% endif %}
                                     {% endfor %}
@@ -476,45 +478,7 @@ $(document).ready(function () {
         updatePriceByYear(selectedYear);
     });
 
-
-
-
-    //-----------------------------
-    /*
-    function generateInputs(termValue, payments = []) {
-        //let termNumber = parseInt(termValue, 10);
-
-        if (isNaN(termNumber) && payments.length) {
-            termNumber = payments.length;
-        }
-
-        let extraInputsContainer = $('#extra-inputs');
-        extraInputsContainer.empty();
-
-        if (!isNaN(termNumber) && termNumber > 0) {
-            payments.sort((a, b) => a.id - b.id);
-            for (let i = 0; i < termNumber; i++) {
-                let defaultID = payments[i] ? payments[i].id || '' : '';
-                let defaultDetail = payments[i] ? payments[i].term_detail || '' : '';
-                let defaultAmount = payments[i] ? payments[i].amount || '' : '';
-
-                let newRow = `
-                    <div class="row mb-15px">
-                        <label class="form-label col-form-label col-md-4">จำนวนงวด ${i + 1}</label>
-                        <div class="col-md-4">
-                            <input type="text" class="form-control" hidden name="term_id[]" value="${defaultID}">
-                            <input type="text" class="form-control" name="term_detail" value="${defaultDetail}" placeholder="รายละเอียด">
-                        </div>
-                        <div class="col-md-4">
-                            <input type="text" class="form-control price-input" name="installments" value="${defaultAmount}" oninput="formatNumberWithCommas(this)" placeholder="จำนวนงวด ${i + 1}">
-                        </div>
-                    </div>
-                `;
-                extraInputsContainer.append(newRow);
-            }
-        }
-    }
-    */               
+              
     let payments = JSON.parse($("#paymentData").val() || "[]");
 
     let initialTermValue = $("#i_term").val();
@@ -567,9 +531,17 @@ $(document).ready(function () {
             payments.sort((a, b) => a.id - b.id);    
 
             for (let i = 0; i < termNumber; i++) {
+                let payment = payments[i] || {}; // ✅ ต้องมีบรรทัดนี้ก่อน
                 let defaultID = payments[i] ? payments[i].id : '';
                 let defaultDetail = payments[i] ? payments[i].term_detail : '';
                 let defaultAmount = payments[i] ? payments[i].amount : '';
+                let defaultVat = payments[i] ? payments[i].check_vat : '';
+                let usedYear = payment.year || $('#inputYear').val(); // ✅ ตอนนี้ payment ถูกประกาศแล้ว
+                //let year = payments[i] ? payments[i].year : '';
+
+                
+
+
                 // 🔧 ล้าง comma ก่อน parse และ format
                 let formattedAmount = defaultAmount
                 ? parseFloat(defaultAmount.toString().replace(/,/g, '')).toLocaleString('en-US', {
@@ -578,18 +550,20 @@ $(document).ready(function () {
                 })
                 : '';
 
-                //console.log(defaultID)
-                //console.log(`index ${i} — id: ${defaultID}, detail: ${defaultDetail}, amount: ${defaultAmount}`);
 
                 let newRow = `
                     <div class="row mb-15px">
                         <label class="form-label col-form-label col-md-4">จำนวนงวด ${i + 1}</label>
                         <div class="col-md-4">
                             <input type="text" class="form-control" name="term_id[]" hidden  value="${defaultID}" placeholder="รหัส">
-                            <input type="text" class="form-control" name="term_detail" value="${defaultDetail}" placeholder="รายละเอียด">
+                            <input type="text" class="form-control" name="term_detail[]" value="${defaultDetail}" placeholder="รายละเอียด">
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3 px-0">
                             <input type="text" class="form-control price-input" name="installments" value="${formattedAmount}" oninput="formatNumberWithCommas(this)" placeholder="จำนวนงวด ${i + 1}">
+                        </div>
+                        <div class="col-md-1" >
+                            <input type="hidden" name="check_vat_${usedYear}[]" value="0" />
+                            <input type="checkbox" name="check_vat_${usedYear}[]" ${(payments[i]?.check_vat == 1 || (payments[i]?.check_vat == null && i === 0)) ? 'checked' : ''} class="form-check-input mt-2"  />
                         </div>
                     </div>
                 `;
@@ -598,6 +572,7 @@ $(document).ready(function () {
         }
     }
 
+    let year = $('#inputYear').val();
     // ฟังก์ชันรวบรวมข้อมูลฟอร์มปัจจุบันไว้ใน object
     function gatherFormData() {
         let year = $('#inputYear').val();
@@ -605,13 +580,15 @@ $(document).ready(function () {
         let payments = [];
         $('#extra-inputs .row').each(function () {
             let amount = $(this).find('input[name="installments"]').val().replace(/,/g, '');
-            let term_detail = $(this).find('input[name="term_detail"]').val() || '';
+            let term_detail = $(this).find(`input[name="term_detail[]"]`).val() || '';
             let term_id = $(this).find('input[name="term_id[]"]').val() || '';
+            let check_vat = $(this).find(`input[name="check_vat_${year}[]"]`).is(':checked') ? 1 : 0;
 
             payments.push({
                 amount: amount,
                 term_detail: term_detail,
-                id: term_id  // เก็บ id ลงใน array ด้วย
+                id: term_id,  // เก็บ id ลงใน array ด้วย
+                check_vat: check_vat  // เก็บ id ลงใน array ด้วย
             });
         });
 
@@ -627,10 +604,11 @@ $(document).ready(function () {
     function getPaymentsData() {
         let payments = [];
         $('#extra-inputs .row').each(function () {
-            let id = $(this).find('input[name="term_id"]').val();
-            let detail = $(this).find('input[name="term_detail"]').val();
+            let id = $(this).find('input[name="term_id[]"]').val();
+            let detail = $(this).find(`input[name="term_detail[]"]`).val();
             let amount = $(this).find('input[name="installments"]').val();
-            payments.push({ id: id, term_detail: detail, amount: amount });
+            let check_vat = $(this).find(`input[name="check_vat_${year}[]"]`).is(':checked') ? 1 : 0;
+            payments.push({ id: id, term_detail: detail, amount: amount, check_vat:check_vat });
 
             //console.log(payments)
         });
@@ -644,8 +622,9 @@ $(document).ready(function () {
         $('#paymentData').val(JSON.stringify(data.payments || []));
 
         let payments = Array.isArray(data.payments) ? data.payments : [];
+        let year = data.year;
         // แสดง inputs งวดจากข้อมูล payments
-        generateInputs(data.term, data.payments);
+        generateInputs(data.term, data.payments, year);
     }
 
 
@@ -672,7 +651,8 @@ $(document).ready(function () {
                     return {
                         amount: payment.amount,
                         term_detail: payment.term_detail,
-                        id: payment.id
+                        id: payment.id,
+                        check_vat: payment.check_vat
                     };
                 }),
                 price: paymentsArray[0].price,
@@ -737,11 +717,13 @@ $(document).ready(function () {
         let termAmounts = [];
         let termDetails = [];
         let termIDs = [];
+        let termVat = [];
         $('#extra-inputs .row').each(function () {
             let amount = $(this).find('input[name="installments"]').val().replace(/,/g, '');
-            let detail = $(this).find('input[name="term_detail"]').val() || '';
+            let detail = $(this).find(`input[name="term_detail[]"]`).val() || '';
             let id = $(this).find('input[name="term_id[]"]').val() || '';
-            
+            let check_vat = $(this).find(`input[name="check_vat_${year}[]"]`).is(':checked') ? 1 : 0;
+
             //termAmounts.push(amount || '');
             //termDetails.push(detail);
             //termIDs.push(id);
@@ -749,6 +731,7 @@ $(document).ready(function () {
                 termAmounts.push(amount);
                 termDetails.push(detail);
                 termIDs.push(id);
+                termVat.push(check_vat);
             }
 
         });
@@ -780,7 +763,8 @@ $(document).ready(function () {
             const amount = parseFloat(termAmounts[i] || 0).toLocaleString('en-US', { minimumFractionDigits: 2 });
             const detail = termDetails[i] || '';
             const term_id = termIDs[i] || '';
-            //const hiddenAttr = i >= visibleTerms ? ' hidden' : '';
+            const check_vat = termVat[i] || '';
+            //const hiddenAttr = i >= visibleTerms ? ' ' : '';
             const hiddenAttr = i >= 3 ? 'hidden' : '';
             newRow += `
                 <td${hiddenAttr}>
@@ -1075,6 +1059,41 @@ function func_add_payment() {
             $('#tableBody').append(row); // ✅ เพิ่มแถวใหม่ที่เรียงแล้ว
         });
     }
+/*
+    function updateCurrentYearData() {
+        const year = $('#inputYear').val();
+        const payments = [];
+    
+        $('#extra-inputs .row').each(function () {
+            const amount = $(this).find('input[name="installments[]"]').val().replace(/,/g, '') || '0';
+            const term_detail = $(this).find(`input[name="term_detail_[]"]`).val() || '';
+            const term_id = $(this).find('input[name="term_id[]"]').val() || '';
+            const check_vat = $(this).find(`input[name="check_vat_${year}[]"]`).is(':checked') ? 1 : 0;
+    
+            if (parseFloat(amount) !== 0) {
+                payments.push({
+                    amount: amount,
+                    term_detail_etail,
+                    id: term_id,
+                    check_vat: check_vat
+                });
+            }
+        });
+    
+        yearDataStore[year] = {
+            year: year,
+            payments: payments,
+            price: parseFloat($('#i_prices').val().replace(/,/g, '') || 0),
+            term: payments.length.toString()
+        };
+    
+        console.log('📌 yearDataStore updated on input:', year, yearDataStore[year]);
+    }
+
+    $('#extra-inputs').on('input change', 'input', function () {
+        updateCurrentYearData();
+    });
+   */ 
 </script>
 
 

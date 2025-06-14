@@ -198,6 +198,7 @@ class installmentsPaymentModel(db.Model):
     term_detail: str
     amount: str
     year:str
+    check_vat: bool
     
     id = db.Column(db.Integer, primary_key=True)
     term_detail = db.Column(db.String(), nullable=False)
@@ -206,6 +207,8 @@ class installmentsPaymentModel(db.Model):
     price = db.Column(Numeric(precision=12, scale=2), nullable=False, server_default='0.00')
     product_for_sales_id = db.Column(db.Integer, db.ForeignKey("product_for_sales.id", ondelete="CASCADE"))
     product = db.relationship("ProductForSalesModel", back_populates="installments")
+    check_vat = db.Column(db.Boolean, default=False, comment="1:vat, 2:no vat")
+
     created_at = db.Column(db.DateTime,  default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime,  default=db.func.current_timestamp(),
                            onupdate=db.func.current_timestamp())
