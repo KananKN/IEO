@@ -40,7 +40,7 @@ function sweetAlertDel(id) {
         },
     }).then((result) => {
         if (result.dismiss !== "cancel") {
-            post("product/deleteTerm", { id: id });
+            post("product/delete_productSale", { id: id });
         }
     });
 }
@@ -110,101 +110,5 @@ function func_modal(mode, data) {
        
         
     }
-
-}
-
-function func_save(mode, x) {
-
-    console.log(mode)
-    x.attr('disabled', true);
-
-    let details = {
-        'name': $('[name="name"]').val(),
-        
-    }
-    if (details['name'].trim() == '') {
-        check_fail('กรุณากรอกชื่อ')
-        return
-    } 
-    
-        if (mode == 'add') {
-            fetch("product/addTerm", {
-                    method: "post",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-
-                        name: $('[name="name"]').val(),
-                    
-                    }),
-                })
-                .then((response) => response.json())
-                .then((data) => {
-                    console.log(data);
-                    x.attr('disabled',true);
-                    // swal({
-                    //     icon: "success",
-                    //     title: "Successfully added customer!",
-                    //     confirmButtonText: "OK", // ตัวเลือกที่ถูก deprecated
-                    //     showConfirmButton: true,
-                    //     // timer: 1500
-                    // });
-
-                    location.reload();
-                })
-                .catch((error) => {
-                    console.error("Error:", error);
-                    swal({
-                        icon: "error",
-                        title: "Error adding term of payment!",
-                        confirmButtonText: "OK",  // ✅ ใช้ได้กับ Swal.fire()
-                        showConfirmButton: true
-                    });
-                    x.attr('disabled', false);
-                });
-
-
-        } else if (mode == 'edit') {
-        // alert(mode)
-        fetch("product/editTerm", {
-                method: "post",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    id: $('[name="id"]').val(),
-                    name: $('[name="name"]').val(),
-                  
-                }),
-            })
-            .then((response) => response.json())
-            .then((data) => {
-                console.log(data);
-                x.attr('disabled',true);
-                // swal({
-                //     icon: "success",
-                //     title: "Successfully edit customer!",
-                //     confirmButtonText: "OK", // ตัวเลือกที่ถูก deprecated
-                //     showConfirmButton: true,
-                //     // timer: 1500
-                // });
-                location.reload();
-            })
-            .catch((error) => {
-                console.error("Error:", error);
-                swal({
-                    icon: "error",
-                    title: "error edit term of payment!",
-                    confirmButtonText: "OK", // ตัวเลือกที่ถูก deprecated
-                    showConfirmButton: true,
-                });
-                 x.attr('disabled', false);
-            });
-
-    }
-
-
-
 
 }
