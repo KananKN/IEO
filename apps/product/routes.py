@@ -563,34 +563,24 @@ def addProductSale():
         price = Decimal(price_str or '0')
         
 
-        check_vats_raw = request.form.getlist(f'check_vat_{year}[]')  # ได้ list string เช่น ['0', 'on', '0', 'on', ...]
-
-        print("check_vats_raw:", check_vats_raw)
-
+        # 👇 ใช้ to_dict(flat=False) เพื่อเก็บค่าทั้ง 0 และ 1
+        form_dict = request.form.to_dict(flat=False)
         check_vats = []
-        i = 0
-        while i < len(check_vats_raw):
-            val = check_vats_raw[i]
-            if val == '0':
-                # ถ้า next คือ 'on' หรือ '1' → ติ๊ก
-                if i + 1 < len(check_vats_raw) and check_vats_raw[i + 1] in ['on', '1']:
-                    check_vats.append(True)
-                    i += 2  # ข้าม 2 ตัว
-                else:
-                    check_vats.append(False)
-                    i += 1
-            else:
-                # fallback กรณีไม่ตรง pattern
-                i += 1
 
-        print(check_vats)
+        # 👇 loop ทีละ index ตามจำนวน amounts
+        for i in range(len(amounts)):
+            field_name = f'check_vat_{year}[{i}]'
+            values = form_dict.get(field_name, ['0'])  # fallback = '0' ถ้าไม่มี field นี้เลย
+            check_vats.append('1' in values)
+
+        print("check_vats:", check_vats)
 
 
         for i in range(len(amounts)):
             amount = Decimal(amounts[i].replace(',', ''))
             detail = details[i].strip()
             term_id = ids[i].strip() if i < len(ids) else None
-            check_vat = check_vats[i]
+            check_vat = check_vats[i] if i < len(check_vats) else False
 
             if term_id:
                 existing = installmentsPaymentModel.query.filter_by(id=term_id).first()
@@ -798,36 +788,33 @@ def updateProductSale():
     print(f"price_2025: {request.form.get('price_2025')}")
    
 
-
+    form_dict = request.form.to_dict(flat=False)
     
     for year in term_years:
         ids = request.form.getlist(f'term_id_{year}[]')
         amounts = request.form.getlist(f'installments_{year}[]')
         details = request.form.getlist(f'term_detail_{year}[]')
-        check_vats_raw = request.form.getlist(f'check_vat_{year}[]')  # ได้ list string เช่น ['0', 'on', '0', 'on', ...]
+        # check_vats_raw = request.form.getlist(f'check_vat_{year}[]')  # ได้ list string เช่น ['0', 'on', '0', 'on', ...]
+        
+        check_vats = []
+        has_check_vat_for_this_year = any(k.startswith(f"check_vat_{year}[") for k in form_dict)
 
-        print("check_vats_raw:", check_vats_raw)
+        # ✅ loop ทีละงวด
+        for i in range(len(amounts)):
+            field_name = f'check_vat_{year}[{i}]'
+            values = form_dict.get(field_name, ['0'])  # fallback = ['0']
+            check_vats.append('1' in values)
+
+        print("check_vats_raw:", check_vats)
+
+        # ตรวจสอบว่าความยาวถูกต้อง
+        if len(check_vats) != len(amounts):
+            print("⚠️ ความยาว check_vats ไม่เท่ากับจำนวน amounts")
 
         price_str = request.form.get(f'price_{year}', '0').replace(',', '')
         price = Decimal(price_str or '0')
 
-        check_vats = []
-        i = 0
-        while i < len(check_vats_raw):
-            val = check_vats_raw[i]
-            if val == '0':
-                # ถ้า next คือ 'on' หรือ '1' → ติ๊ก
-                if i + 1 < len(check_vats_raw) and check_vats_raw[i + 1] in ['on', '1']:
-                    check_vats.append(True)
-                    i += 2  # ข้าม 2 ตัว
-                else:
-                    check_vats.append(False)
-                    i += 1
-            else:
-                # fallback กรณีไม่ตรง pattern
-                i += 1
-
-        print(check_vats)
+        
 
         existing_ids_in_db = [
             str(x.id) for x in installmentsPaymentModel.query.filter_by(
@@ -850,12 +837,12 @@ def updateProductSale():
             amount = Decimal(amounts[i].replace(',', ''))
             detail = details[i].strip()
             term_id = ids[i].strip() if i < len(ids) else None
-            # check_vat = check_vats[i] if i < len(check_vats) else False  # fallback ถ้าข้อมูลไม่ครบ
+            check_vat = check_vats[i] if i < len(check_vats) else False
             # check_vat ให้เช็คว่ามีข้อมูลใน check_vats หรือเปล่า
-            if check_vats_raw:
-                check_vat = check_vats[i] if i < len(check_vats) else False
-            else:
-                check_vat = None  # หรือจะใช้ None เพื่อบอกว่าไม่เปลี่ยนค่า
+            # if check_vats_raw:
+            #     check_vat = check_vats[i] if i < len(check_vats) else False
+            # else:
+            #     check_vat = None  # หรือจะใช้ None เพื่อบอกว่าไม่เปลี่ยนค่า
 
             if term_id:
                 existing = installmentsPaymentModel.query.filter_by(id=term_id).first()
@@ -864,7 +851,7 @@ def updateProductSale():
                     existing.amount = amount
                     existing.year = year
                     existing.price = price
-                    if check_vat is not None:
+                    if has_check_vat_for_this_year:
                         existing.check_vat = check_vat
                     continue
 
@@ -875,7 +862,7 @@ def updateProductSale():
                 year=year,
                 price=price,
                 product_for_sales_id=thisItem.id,
-                check_vat=check_vat if check_vat is not None else False,
+                check_vat=check_vat if has_check_vat_for_this_year else False,
             ))
 
     db.session.commit()
