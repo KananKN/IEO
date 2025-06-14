@@ -644,14 +644,14 @@ $(document).ready(function () {
             const term_id = termIDs[i] || '';
             const check_vat = termVat[i] || '';
             //const hiddenAttr = i >= visibleTerms ? ' hidden' : '';
-            const hiddenAttr = i >= 3 ? ' ' : '';
+            const hiddenAttr = i >= 3 ? 'hidden ' : '';
             newRow += `
                 <td${hiddenAttr}>
                     <input class="form-control" name="term_id${year}[]" hidden value="${term_id}">
                     <input class="form-control" name="installments_${year}[]" oninput="formatNumberWithCommas(this)" value="${amount}">
                     <input class="form-control" name="term_detail_${year}[]" hidden value="${detail}">
                     <input type="hidden" name="check_vat_${year}[]" value="0" />
-                    <input type="checkbox" name="check_vat_${year}[]" ${check_vat === 1 ? 'checked' : ''} value="1" class="form-check-input mt-2"  />
+                    <input type="checkbox" name="check_vat_${year}[]" hidden ${check_vat === 1 ? 'checked' : ''} value="1" class="form-check-input mt-2"  />
                 </td>
             `;
         }
