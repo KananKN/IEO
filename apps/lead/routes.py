@@ -91,7 +91,7 @@ def generate_member_code():
     return f"{prefix}{str(next_number).zfill(5)}"
 
 # ---------- Fees ------------------------s
-@blueprint.route('//api/get_countries_by_category/ ')
+@blueprint.route('/api/get_countries_by_category/ ')
 @login_required
 @read_permission.require(http_exception=403)
 def get_countries_by_category():
@@ -438,7 +438,7 @@ def check_statusLead():
                         gender=lead.gender,
                         line_id=lead.line_id,
                         address=lead.address,
-                        status='installment_1',
+                        status='pending',
                         approved_by=None,
                         approved_at=None,
                         member_code=generate_member_code()
@@ -450,7 +450,7 @@ def check_statusLead():
                     note="",
                     order_number=None,
                     payment_method="cash",
-                    status="installment_1",
+                    status="pending",
                     price=product.price,
                     lead_id=lead.id,
                     product_id=product.id,

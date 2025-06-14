@@ -552,15 +552,27 @@ def addProductSale():
         price = Decimal(price_str or '0')
         
 
-        raw_vats = request.form.getlist(f'check_vat_{year}[]')
+        check_vats_raw = request.form.getlist(f'check_vat_{year}[]')  # ได้ list string เช่น ['0', 'on', '0', 'on', ...]
 
-        # กลุ่มทีละ 2 ค่า (hidden, checkbox) → เอา '1' ถ้ามี, ไม่งั้น '0'
+        print("check_vats_raw:", check_vats_raw)
+
         check_vats = []
-        for i in range(0, len(raw_vats), 2):
-            vat_pair = raw_vats[i:i+2]
-            check_vats.append('1' in vat_pair)
+        i = 0
+        while i < len(check_vats_raw):
+            val = check_vats_raw[i]
+            if val == '0':
+                # ถ้า next คือ 'on' หรือ '1' → ติ๊ก
+                if i + 1 < len(check_vats_raw) and check_vats_raw[i + 1] in ['on', '1']:
+                    check_vats.append(True)
+                    i += 2  # ข้าม 2 ตัว
+                else:
+                    check_vats.append(False)
+                    i += 1
+            else:
+                # fallback กรณีไม่ตรง pattern
+                i += 1
 
-        print("check_vats:", check_vats)
+        print(check_vats)
 
 
         for i in range(len(amounts)):
