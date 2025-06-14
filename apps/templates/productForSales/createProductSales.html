@@ -650,8 +650,8 @@ $(document).ready(function () {
                     <input class="form-control" name="term_id${year}[]" hidden value="${term_id}">
                     <input class="form-control" name="installments_${year}[]" oninput="formatNumberWithCommas(this)" value="${amount}">
                     <input class="form-control" name="term_detail_${year}[]" hidden value="${detail}">
-                    <input type="hidden" name="check_vat_${year}[]" value="0" />
-                    <input type="checkbox" name="check_vat_${year}[]" hidden ${check_vat === 1 ? 'checked' : ''} value="1" class="form-check-input mt-2"  />
+                    <input type="hidden" name="check_vat_${year}[${i}]" value="0" />
+                    <input type="checkbox" class="form-check-input" name="check_vat_${year}[${i}]" value="1" ${check_vat ? 'checked' : ''}
                 </td>
             `;
         }
