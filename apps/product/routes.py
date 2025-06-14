@@ -99,6 +99,17 @@ def delete_productCategory():
     id_del = request.form["id"]
     print( id_del)
     # thisItem = ProductCategoryModel.query.filter_by(id=id_del).first()
+    db.session.query(ProductCategoryModel).filter(ProductCategoryModel.id == id_del).delete()
+    db.session.commit()
+    flash(' Deleted!', 'success')
+    return redirect(url_for('product_blueprint.product_category'))
+
+@blueprint.route('/product/delete_productSale', methods=['POST'])
+@login_required
+def delete_productSale():
+    id_del = request.form["id"]
+    print( id_del)
+    # thisItem = ProductCategoryModel.query.filter_by(id=id_del).first()
     db.session.query(ProductForSalesModel).filter(ProductForSalesModel.id == id_del).delete()
     db.session.commit()
     flash(' Deleted!', 'success')
