@@ -156,6 +156,12 @@ function func_save(mode, x) {
         return; // ⛔ หยุดฟังก์ชัน ไม่ submit ฟอร์ม
     }
 
+    // ✅ อัปเดตค่า checkbox ให้เป็น '0' หรือ '1'
+    $('.vat-checkbox').each(function () {
+        this.value = this.checked ? '1' : '0';
+        this.checked = true; // ✅ บังคับให้ checkbox ถูกส่งเสมอ
+    });
+
     // ✅ ถ้าไม่มีปีซ้ำ ให้ตั้งค่า action และส่งฟอร์ม
     $('#myForm')
         .attr('action', '/product/addProductSale')

@@ -457,9 +457,9 @@ def check_statusLead():
                     member_id=new_member.id,
                     agency_id=lead.agency_id,
                     year=lead.year,
-                    total_price=0.00,
+                    total_price=product.price,
                     discount=0.00,
-                    net_price=0.00,
+                    net_price=product.price,
                 )
                 db.session.add(new_order)
                 db.session.commit()
