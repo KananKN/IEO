@@ -87,15 +87,54 @@ def comma_filter(value):
         return f"{float(value):,.0f}"
     except (ValueError, TypeError):
         return value
-    
+
+def generate_member_code():
+    year_month = datetime.now().strftime("%Y%m")
+    prefix = f"MB{year_month}"
+
+    # ดึงรหัสล่าสุดที่ขึ้นต้นด้วย prefix
+    latest_member = db.session.query(MemberModel.member_code)\
+        .filter(MemberModel.member_code.like(f"{prefix}%"))\
+        .order_by(MemberModel.member_code.desc()).first()
+
+    if latest_member and latest_member[0]:
+        last_number = int(latest_member[0][len(prefix):])  # ตัด prefix ออกเพื่อเอาเลข
+        next_number = last_number + 1
+    else:
+        next_number = 1
+
+    return f"{prefix}{str(next_number).zfill(5)}"   
 # -----------------------------------------s
 @blueprint.route('/')
 @login_required
 @read_permission.require(http_exception=403)
 def order_list():
     datas = OrderModel.query.all()
+
+    memvber = MemberModel.query.all()
+    category = ProductCategoryModel.query.all()
+    country = CountryModel.query.all()
+    agencies = AgencyModel.query.all()
+    product = ProductForSalesModel.query.all()
+
+    social_channels = [
+        {"id": 1, "name": "Facebook"},
+        {"id": 2, "name": "Instagram"},
+        {"id": 3, "name": "YouTube"},
+        {"id": 4, "name": "TikTok"},
+        {"id": 5, "name": "Line"},
+        {"id": 6, "name": "Twitter (X)"},
+        {"id": 7, "name": "Threads"},
+        {"id": 8, "name": "LinkedIn"},
+        {"id": 9, "name": "Pinterest"},
+        {"id": 10, "name": "อื่น ๆ"},
+    ]
+
+    # เพิ่มข้อความ "IEO" ให้กับข้อมูลที่ส่งไปยังหน้าเว็บ
+    agencies_with_IEO = [agency.__dict__.copy() for agency in agencies]
+    agencies_with_IEO.append({'id': None, 'agency_code': 'IEO'})
     # print(datas)
-    return render_template('order/order_list.html', segment='order' ,datas=datas, )
+    return render_template('order/order_list.html', segment='order' ,datas=datas,categorys=category,countrys=country, agencys=agencies_with_IEO,product=product,social_channels=social_channels )
 
 
 def convert_thai_to_date(thai_date_str):
@@ -206,9 +245,30 @@ def get_order():
 @login_required
 @read_permission.require(http_exception=403)
 def order_create():
-    datas = leadModel.query.all()
+    datas = MemberModel.query.all()
+    category = ProductCategoryModel.query.all()
+    country = CountryModel.query.all()
+    agencies = AgencyModel.query.all()
+    product = ProductForSalesModel.query.all()
+
+    social_channels = [
+        {"id": 1, "name": "Facebook"},
+        {"id": 2, "name": "Instagram"},
+        {"id": 3, "name": "YouTube"},
+        {"id": 4, "name": "TikTok"},
+        {"id": 5, "name": "Line"},
+        {"id": 6, "name": "Twitter (X)"},
+        {"id": 7, "name": "Threads"},
+        {"id": 8, "name": "LinkedIn"},
+        {"id": 9, "name": "Pinterest"},
+        {"id": 10, "name": "อื่น ๆ"},
+    ]
+
+    # เพิ่มข้อความ "IEO" ให้กับข้อมูลที่ส่งไปยังหน้าเว็บ
+    agencies_with_IEO = [agency.__dict__.copy() for agency in agencies]
+    agencies_with_IEO.append({'id': None, 'agency_code': 'IEO'})
     # print(datas)
-    return render_template('order/order_create.html', segment='order_create' ,datas=datas, )
+    return render_template('order/order_create.html', segment='order' ,datas=datas, )
 
 @blueprint.route('/order_update/<id>')
 @login_required
@@ -587,3 +647,268 @@ def delete_order_list():
         flash('No Order found for that ID', 'warning')
 
     return redirect(url_for('order_blueprint.order_list'))
+
+@blueprint.route("/create_order", methods=["POST"])
+@login_required
+@read_permission.require(http_exception=403)
+def create_order():
+    json_data = request.get_json()
+    print(json_data)
+    
+    product_id_value =json_data["product_id"]
+    first_name =json_data["first_name"]
+    last_name =json_data["last_name"]
+    first_nameEN =json_data["first_nameEN"]
+    last_nameEN =json_data["last_nameEN"]
+    year =json_data["year"]
+    nickname =json_data["nickname"]
+    email =json_data["email"]
+    tel =json_data["tel"]
+    category_id =json_data["category_id"]
+    country_id =json_data["country_id"]
+    gender =json_data["gender"]
+    line_id =json_data["line_id"]
+    address =json_data["address"]
+
+    agency_id = json_data.get("agency_id")
+    if agency_id == 'None' or agency_id == '':
+        agency_id = None
+
+  
+    lead = leadModel.query.filter(
+            or_(
+                leadModel.email == email,
+                leadModel.tel == tel  # หรือจะเปลี่ยนชื่อเป็น `tel` ด้วยก็ได้
+            )).first()
+    product = ProductForSalesModel.query.filter_by(id=product_id_value).first()
+    if not product:
+        return jsonify({"status": "error", "message": "ไม่พบสินค้า"}), 404
+    
+
+    # return
+    if not lead:
+        thisItem = leadModel(
+            first_name=first_name,
+            last_name=last_name,
+            first_nameEN=first_nameEN,
+            last_nameEN=last_nameEN,
+            nick_name=nickname,
+            tel=tel,
+            email=email,
+            gender=gender,
+            line_id=line_id,
+            address=address,
+            agency_id=agency_id,
+            product_id=product.id,
+            category_id=category_id,
+            country_id=country_id,
+        )
+        db.session.add(thisItem)
+        db.session.commit()
+
+        lead = thisItem
+
+    else:
+        thisItem = leadModel.query.filter_by(id=lead.id).first()
+        
+        thisItem.first_name=first_name
+        thisItem.last_name=last_name
+        thisItem.first_nameEN=first_nameEN
+        thisItem.last_nameEN=last_nameEN
+        thisItem.year=year
+        thisItem.nick_name=nickname
+        thisItem.email=email
+        thisItem.tel=tel
+        thisItem.agency_id=agency_id
+        thisItem.category_id=category_id
+        thisItem.country_id=country_id
+        thisItem.product_id=product.id
+        thisItem.gender=gender
+        thisItem.line_id=line_id
+        thisItem.address=address
+
+
+        
+    thisProgram = LeadProgram.query.filter_by(
+                    lead_id=int(thisItem.id),
+                    product_id=int(thisItem.product_id)
+                ).first()
+    
+    status = 'converted'
+
+    existing_order = None
+    current_year = datetime.utcnow().year
+    # print("current_year", current_year)
+    if status == 'converted':
+        existing_order = db.session.query(OrderModel).filter(
+                        OrderModel.lead_id == int(thisItem.id),
+                        OrderModel.status.notin_(['completed', 'cancelled']),
+                        # db.extract('year', OrderModel.created_at) == current_year
+                    ).first()
+
+    # === จัดการ LeadProgram ===
+    if thisProgram:
+        # แก้ไขข้อมูลเดิม
+        thisProgram.product_id = product.id
+        thisProgram.agency_id = agency_id
+        thisProgram.year = year
+        thisProgram.updated_at = datetime.utcnow()
+
+        # เปลี่ยนสถานะเฉพาะเมื่อไม่มีออร์เดอร์ที่ยังไม่จบ
+        if not existing_order:
+            thisProgram.status = status
+        else:
+            print("⚠️ มีออร์เดอร์ปีเดียวกันที่ยังไม่จบ -> ไม่เปลี่ยนสถานะ LeadProgram")
+    else:
+        # สร้างใหม่
+        new_program = LeadProgram(
+            lead_id=lead.id,
+            product_id=product.id,
+            agency_id=agency_id,
+            status=status if not existing_order else 'new',
+            year=year
+        )
+        db.session.add(new_program)
+
+    db.session.commit()
+
+    # ถ้ามีออร์เดอร์ค้างปีเดียวกัน และสถานะเป็น 'converted' => ห้ามสร้างใหม่
+    if existing_order:
+        print("⚠️ พบออร์เดอร์ปีเดียวกันที่ยังไม่จบ ไม่สามารถสร้างใหม่ได้")
+        return jsonify({
+            "status": "error",
+            "message": "ไม่สามารถสร้างออร์เดอร์ได้ เนื่องจากมีออร์เดอร์ที่ยังไม่จบในปีเดียวกัน"
+        }), 500
+
+    # === ถ้า status เป็น 'converted' ให้สร้าง Order ใหม่ ===
+    if status == 'converted':
+        try:
+            # ตรวจสอบว่า Member เคยมีหรือไม่
+            existing_member = MemberModel.query.filter(
+                (MemberModel.phone == lead.tel) | (MemberModel.email == lead.email)
+            ).first()
+
+            if existing_member:
+                # 🔁 อัปเดตข้อมูลจาก lead ลง member เดิม
+                existing_member.first_name = lead.first_name
+                existing_member.last_name = lead.last_name
+                existing_member.first_nameEN = lead.first_nameEN
+                existing_member.last_nameEN = lead.last_nameEN
+                existing_member.nick_name = lead.nick_name
+                existing_member.phone = lead.tel
+                existing_member.email = lead.email
+                existing_member.gender = lead.gender
+                existing_member.line_id = lead.line_id
+                existing_member.address = lead.address
+
+                new_member = existing_member
+                print(f"🔁 พบ Member เดิม: {existing_member.id} และอัปเดตข้อมูลเรียบร้อย")
+            else:
+                new_member = MemberModel(
+                    first_name=lead.first_name,
+                    last_name=lead.last_name,
+                    first_nameEN=lead.first_nameEN,
+                    last_nameEN=lead.last_nameEN,
+                    nick_name=lead.nick_name,
+                    phone=lead.tel,
+                    email=lead.email,
+                    gender=lead.gender,
+                    line_id=lead.line_id,
+                    address=lead.address,
+                    status='pending',
+                    approved_by=None,
+                    approved_at=None,
+                    member_code=generate_member_code()
+                )
+                db.session.add(new_member)
+
+            
+            product_price = Decimal(str(product.price or 0))
+
+            # สร้างคำสั่งซื้อใหม่
+            new_order = OrderModel(
+                note="",
+                order_number=None,
+                payment_method="cash",
+                status="pending",
+                price=product.price,
+                lead_id=lead.id,
+                product_id=product.id,
+                member_id=new_member.id,
+                agency_id=lead.agency_id,
+                year=lead.year,
+                total_price=product_price,
+                discount=0.00,
+                net_price=product_price,
+            )
+            db.session.add(new_order)
+            db.session.commit()
+
+            year_month = datetime.now().strftime("%Y%m")
+            order_number = f"{year_month}-{str(new_order.id).zfill(5)}"
+            new_order.order_number = order_number
+            db.session.commit()
+
+            # เพิ่มสินค้าในคำสั่งซื้อ
+            new_item = OrderItemModel(
+                product_id=product.id,
+                product_name=product.name,
+                order_id=new_order.id,
+                order_number=order_number,
+                unit_price=product.price
+            )
+            db.session.add(new_item)
+            db.session.commit()
+            print("✅ สร้าง Order สำเร็จ")
+
+            # ✅ ดึงงวดการผ่อนจาก installmentsPaymentModel
+            payment_plans = installmentsPaymentModel.query.filter(
+                installmentsPaymentModel.product_for_sales_id == product.id,
+                installmentsPaymentModel.year == str(product.year)
+            ).order_by(installmentsPaymentModel.id).all()
+
+            print(payment_plans)
+            # ✅ วนลูปสร้าง OrderTermModel ตามงวด
+            for i, plan in enumerate(payment_plans, start=1):
+                term = OrderTermModel(
+                    order_id=new_order.id,
+                    term_detail=plan.term_detail,
+                    amount=Decimal(plan.amount),
+                    sequence=i,  # ลำดับงวดที่ 1, 2, 3,...
+                    discount=0.00,
+                    net_price=Decimal(plan.amount),
+                    created_at=datetime.utcnow()
+                )
+                db.session.add(term)
+            db.session.commit()
+            print("✅ สร้าง payment_plans สำเร็จ")
+            return jsonify({
+                'status': 'Success',
+                'message': 'บันทึกข้อมูลและสร้างคำสั่งซื้อเรียบร้อยแล้ว',
+                'data': {
+                    'order_id': new_order.id,
+                    'order_number': new_order.order_number,
+                    'member_id': new_member.id
+                }
+            }), 200
+
+        except Exception as e:
+            db.session.rollback()
+            print("❌ สร้าง Order ไม่สำเร็จ:", e)
+            return jsonify({"status": "error", "message": "ไม่สามารถสร้างคำสั่งซื้อได้"}), 500
+
+    else:
+        # ถ้าไม่ใช่ converted => อัปเดตสถานะของ Order ที่มีให้เป็น cancelled
+        thisOrder = OrderModel.query.filter_by(lead_id=lead.id, product_id=product.id).first()
+        if thisOrder:
+            thisOrder.status = 'cancelled'
+            db.session.commit()
+
+        return jsonify({
+            'status': 'Success',
+            'message': 'บันทึกข้อมูลเรียบร้อยแล้ว (ไม่มีการสร้าง Order)',
+            'data': {
+                'lead_id': lead.id,
+                'status': status
+            }
+        }), 200
