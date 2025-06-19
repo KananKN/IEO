@@ -18,9 +18,11 @@
     input[type="file"] {
         height: 35px; /* หรือ 100% ถ้าใน flex */
         line-height: 1.5;
-
-     
-
+}
+.amount-error {
+    font-size: 0.85rem;
+    margin-top: 4px;
+    display: block;
 }
 </style>
 {% endblock stylesheets %}
@@ -211,86 +213,180 @@
                                         </div> 
                                     </div>
                                 </div>
-                                
-                                <div class="row mt-3 g-3">
-                                    {% for payment in orderTerms %}
-                                    <!-- กลุ่มข้อมูลของแต่ละงวด -->
-                                    <div class="row   align-items-center" >
-                                        <!-- ซ้าย: ข้อมูลงวด -->
-                                        <div class="col-md-6  h-100">
-                                            <div class="d-flex flex-row align-items-center gap-2">
-                                                <label class="col-md-5 col-form-label fw-bold">{{ payment.term_detail }}</label>
-                                
-                                                <div class="mx-1 mt-1">
-                                                    <input type="hidden" name="term_id" value="{{ payment.id }}">
-                                                    <input type="text" class="form-control text-end " name="installments"
-                                                        value="{{ '{:,.2f}'.format(payment.amount)}}" readonly placeholder="จำนวนเงิน">
-                                                </div>
-                                
-                                                <div class="mx-1 ms-2">
-                                                    <input type="text" class="form-control text-end price-input" name="discount"
-                                                        oninput="formatInputNumberWithCommasDiscount(this)" onfocus="clearZeroWhenTyping(this)"
-                                                        value="{{ '{:,.2f}'.format(payment.discount)}}" placeholder="ส่วนลด">
-                                                </div>
-                                
-                                                <div class="mx-1">
-                                                    <input type="text" class="form-control text-end price-input" name="count"
-                                                        value="{{ '{:,.2f}'.format(payment.net_price)}}" oninput="formatInputNumberWithCommas(this)" readonly placeholder="รวมราคา">
-                                                </div>
-                                            </div>
-                                        </div>
-                                
-                                        <!-- ขวา: วันจ่ายเงิน + ไฟล์ + ถังขยะ -->
-                                        <div class="col-md-6 h-100 d-flex align-items-center justify-content-center gap-2">
-                                            <div class="d-flex flex-row align-items-center w-100">
-                                                <label class="col-md-2 col-form-label">วันที่จ่ายเงิน</label>
-                                        
-                                                <input type="hidden" name="term_id[]" value="{{ payment.id }}">
-                                        
-                                                <div class="d-flex align-items-center gap-2 flex-grow-1">
-                                                    <div class="input-group date flex-grow-1" id="datepicker-disabled-past{{ payment.id }}" data-date-format="dd-mm-yyyy">
-                                                        <input type="text" class="form-control datetimepicker ps-2" placeholder="Select Date"
-                                                               id="kt_datepicker_{{ payment.id }}" name="payment_date[]" autocomplete="off"
-                                                               value="{{ payment.payment_date.strftime('%d-%m-%Y %H:%M') if payment.payment_date else '' }}" />
-                                                        <span class="input-group-text input-group-addon">
-                                                            <i class="fa fa-calendar"></i>
-                                                        </span>
-                                                    </div>
-                                        
-                                                    <input class="form-control formFileInput" type="file" name="formFile_payment[]"
-                                                           accept=".pdf, .jpg, .jpeg, .png" onchange="checkExistingFiles(this, {{ payment.id }})"
-                                                           style="height: 35px; max-width: 200px;" />
-                                                </div>
-                                        
-                                                <a href="#" class="pt-2 ps-2" onclick="sweetAlerPrintfile({{payment.id}},{{datas.id}})" hidden>
-                                                    <i class="material-icons">print</i>
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row justify-content-end my-2">
-                                        <div class="col-6">
-                                            <div class="d-flex flex-column gap-2" id="existing_files_{{ payment.id }}">
-                                                {% for file_data in payment.files %}
-                                                <div class="row ">
-                                                    <div class="col-md-12 col-sm-12 col-xs-12  attached-file" data-file-id="{{ file_data.id }}">
-                                                        <a href="{{ url_for('order_blueprint.downloadPayment', filename=file_data.filename) }}"
-                                                           style="text-decoration: none; color: black;">
-                                                            <i class="fas fa-lg fa-fw ms-5px fa-file"></i>
-                                                            <span>{{ file_data.filename }}</span>
-                                                        </a>
-                                                        <a href="#" onclick="sweetAlertDelfile({{ file_data.id }}, {{ datas.id }})" >
-                                                            <i class="fas fa-lg fa-fw mx-5px fa-trash-can text-danger c_trash"></i>
-                                                        </a>
-                                                    </div>
-                                                </div>
-                                                {% endfor %}
-                                                    
-                                            </div>
+                                {% set show_index = 0 %}
+{% for term in orderTerms %}
+    {% if (term.outstanding_amount | float) > 0 and show_index == 0 %}
+        {% set show_index = loop.index %}
+    {% endif %}
+{% endfor %}
+                                  
 
+
+                                <div class="row mt-3 g-3">
+                                    <div class="col-xl-12">
+                                        {% for term in orderTerms %}
+
+                                        
+                                        <!-- BEGIN #accordion -->
+                                        <div class="accordion" id="accordion-{{ loop.index }}">
+                                            <div class="accordion-item border-0" data-outstanding="{{ term.outstanding_amount or 0 }}">
+                                                <div class="accordion-header" id="heading-{{ loop.index }}">
+                                                    <button class="accordion-button text-drak px-3 py-10px pointer-cursor" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ loop.index }}" aria-expanded="{{ 'true' if loop.first else 'false' }}"
+                                                    aria-controls="collapse-{{ loop.index }}">
+                                                        <div class="d-flex w-100 align-items-center" style="flex-wrap: nowrap;" >
+                                                            <!-- ซ้าย: ข้อมูลงวด -->
+                                                            <div class="left-section pe-2" style="width: 50%;" >
+                                                                <div class="d-flex flex-row align-items-center gap-2 ">
+                                                                    <label class="col-form-label fw-bold">{{ term.term_detail }}</label>
+                                                                </div>
+                                                            </div>
+                                                            <div class="right-section ps-2" style="width: 50%;" >
+                                                                <div class="d-flex flex-row align-items-center gap-2">
+                                                                    <div class="mx-1 mt-1">
+                                                                        <input type="hidden" name="term_id" value="{{ term.id }}">
+                                                                        <input type="text" class="form-control text-end " name="installments" data-term-id="{{ term.id }}" value="{{ '{:,.2f}'.format(term.amount)}}" readonly placeholder="จำนวนเงิน">
+                                                                    </div>
+                                                    
+                                                                    <div class="mx-1 ms-2">
+                                                                        <input type="text" class="form-control text-end price-input" name="discount"data-term-id="{{ term.id }}" 
+                                                                            oninput="formatInputNumberWithCommasDiscount(this);" onfocus="clearZeroWhenTyping(this)"
+                                                                            value="{{ '{:,.2f}'.format(term.discount)}}" placeholder="ส่วนลด">
+                                                                    </div>
+                                                    
+                                                                    <div class="mx-1">
+                                                                        <input type="text" class="form-control text-end price-input" name="count" data-term-id="{{ term.id }}"
+                                                                            value="{{ '{:,.2f}'.format(term.net_price)}}" oninput="formatInputNumberWithCommas(this)" readonly placeholder="รวมราคา">
+                                                                    </div>
+                                                                    <div class="mx-1">
+                                                                        <label class="col-form-label fw-bold w-50px">ค้างชำระ</label>
+                                
+                                                                    </div>
+                                                                    <div class="mx-1">
+                                                                        <input type="text" class="form-control text-end price-input" name="outstanding_amount" data-term-id="{{ term.id }}"
+                                                                            value="{{ '{:,.2f}'.format(term.outstanding_amount or 0)}}" oninput="formatInputNumberWithCommas(this)" readonly placeholder="ยอดค้างชำระ">
+                                                                    </div>
+                                
+                                                                </div>
+                                                            </div>
+                                                    
+                                                            
+                                                        </div>
+                                                        
+                                                    </button>
+                                                </div>
+                                            
+                                                <div id="collapse-{{ loop.index }}" class="accordion-collapse collapse {% if loop.index == show_index and show_index != 0 %} show {% endif %}" 
+                                                aria-labelledby="heading-{{ loop.index }}" 
+                                                data-bs-parent="#accordion-{{ loop.index }} ">
+                                                    <div class="accordion-body text-drak bg-white ">
+                                                        
+                                                            <div class="row " id="term-form-{{ term.id }}"> 
+                                                                <div class="col-md-6 h-100 d-flex align-items-center justify-content-center flex-column gap-2 ">
+                                                                    <div class="d-flex flex-row align-items-center w-100 ">
+                                                                        <label class="col-md-3 col-form-label">วันที่จ่ายเงิน</label>
+                                                                        
+
+                                                                        <input type="hidden" name="term_ids" value="{{ term.id }}">
+                                                                        
+                                                                
+                                                                        <div class="d-flex align-items-center  flex-grow-1  ">
+                                                                            <div class="input-group date flex-grow-1 me-2" id="datepicker-disabled-past{{ term.id }}" data-date-format="dd-mm-yyyy" style="height: 35px; max-width: 230px;" >
+                                                                                <input type="text" class="form-control  datetimepicker ps-2" placeholder="Select Date"
+                                                                                    id="kt_datepicker_{{ term.id }}" name="payment_dates" autocomplete="off"
+                                                                                    value="" />
+                                                                                <span class="input-group-text input-group-addon">
+                                                                                    <i class="fa fa-calendar"></i>
+                                                                                </span>
+                                                                            </div>
+                                                                            <input hidden name="check_count" value="{{ '{:,.2f}'.format(term.outstanding_amount or 0) }}">
+
+
+                                                                            <div class="mx-1 w-100px ms-2">
+                                                                                <input type="text" class="form-control text-end price-input" name="amount" data-term-id="{{ term.id }}"
+                                                                                    value="0" oninput="formatInputNumberWithCommas(this); check_price(this)"  placeholder="จำนวนเงิน">
+                                                                            </div>
+                                                                            
+                                                                            
+                                                                        </div>
+                                                                
+                                                                    </div>
+                                                                    
+                                                                    <div class="d-flex flex-row  flex-grow-1 w-100 ">
+                                                                        <label class="col-md-3 col-form-label"></label>
+                                    
+                                                                        <input class="form-control formFileInput me-2" type="file" id="file-{{ term.id }}" name="formFile_payment" 
+                                                                            accept=".pdf, .jpg, .jpeg, .png" onchange="validateFile(this)"
+                                                                            style="height: 35px; max-width: 230px;" />
+                                                                            
+                                                                        <div class="mx-1 w-100px ps-1">
+                                                                            <a href="javascript:;" class="btn btn-primary w-100px" onclick="saveSingleTerm({{ term.id }})">Save</a>
+                                                                        </div>
+                                                                    </div>
+                                                                    
+                                                                    <!-- <a href="#" class="pt-2 ps-2" onclick="sweetAlerPrintfile({{term.id}},{{datas.id}})" hidden>
+                                                                        <i class="material-icons">print</i>
+                                                                    </a> -->
+                                                                </div>
+                                                                
+                                                                <div class="col-md-6 d-flex align-items-center justify-content-center flex-column gap-2 ps-0">
+                                                                    
+
+                                                                    {% set payment_file_list = term_payment_files_map.get(term.id, []) %}
+                                                                    {% if payment_file_list %}
+                                                                        {% for pf in payment_file_list %}
+                                                                            <div class="d-flex w-100" id="existing_files_{{ pf.file.id }} ps-0">
+                                                                                <div class="attached-file w-425px" data-file-id="{{ pf.file.id }}">
+                                                                                    <a href="{{ url_for('order_blueprint.downloadPayment', filename=pf.file.filename) }}"
+                                                                                    style="text-decoration: none; color: black;">
+                                                                                        <i class="fas fa-lg fa-fw ms-5px fa-file"></i>
+                                                                                        <span class="fs-6">{{ pf.file.filename }}</span>
+                                                                                    </a>
+                                                                                    <a href="#" onclick="sweetAlertDelfile({{ pf.file.id }}, {{ datas.id }})">
+                                                                                        <i class="fas fa-lg fa-fw mx-5px fa-trash-can text-danger c_trash"></i>
+                                                                                    </a>
+                                                                                </div>
+                                                                                <div class="ms-2 row" style="width: 140px;">
+                                                                                    <span >{{ pf.payment.payment_date.strftime('%d-%m-%Y %H:%M') if pf.payment.payment_date else '' }}</span>
+                                                                                </div>
+                                                                                <div class="ms-2 row" style="width: 100px;">
+                                                                                    <!-- ใส่ default เสมอไว้ด้านล่างหลัง term.id -->
+                                                                                    {% set ns = namespace(total_paid=0.0) %}
+                                                                                        {% if payment_file_list %}
+                                                                                            {% for pf in payment_file_list %}
+                                                                                                {% set ns.total_paid = ns.total_paid + (pf.payment.amount or 0) %}
+                                                                                            {% endfor %}
+                                                                                        {% endif %}
+                                                                                        <input type="hidden" name="paid_amount" data-term-id="{{ term.id }}"
+                                                                                            value="{{ '%.2f' % ns.total_paid }}">
+
+                                                                                    <span>{{ '{:,.2f}'.format(pf.payment.amount or 0) }}</span>
+                                                                                </div>
+                                                                                
+                                                                            </div>
+                                                                        {% endfor %}
+                                                                    {% else %}
+                                                                        <p>ยังไม่มีไฟล์แนบสำหรับงวดนี้</p>
+                                                                    {% endif %}
+                                                                    
+
+
+
+
+
+                                                                </div>
+                                                            </div>
+                                                        
+                                
+                                                    </div>
+                                                    
+                                                </div>
+                                            </div>
+                                            
+                                            
                                         </div>
+                                            
+                                        {%endfor%}
                                     </div>
-                                    {% endfor %}
 
                                     <!-- สรุปยอดรวม -->
                                     <div class="row mt-2" >
@@ -343,84 +439,7 @@
                                 
                                 
 
-                                <div class="row mt-3 " hidden>
-                                    <div class="col-sm-6">
-                                        <h5>การชำระเงิน</h5>
-                                        <div class="row mb-3"  hidden>
-                                            <label for="term" class="form-label col-form-label col-md-4">สถานะชำระเงิน </label>
-                                            <div class="col-md-8">
-                                                <input type="text" class="form-control-plaintext text-primary" name="status_payment" readonly
-                                                    value="{% if datas.status.startswith('installment_') %}ชำระเงินงวดที่ {{ datas.status.split('_')[1] }}
-                                                           {% elif datas.status == 'completed' %}จบโครงการ
-                                                           {% elif datas.status == 'cancelled' %}ยกเลิก
-                                                           {% else %}สถานะไม่ทราบแน่ชัด
-                                                           {% endif %}">
-                                            </div>
-                                        </div> 
-                                        <div class="row mb-3"  >
-                                            <label for="term" class="form-label col-form-label col-md-4">สถานะชำระเงิน <span class="text-danger">*</span> </label>
-                                            <div class="col-md-8">
-                                                <select class="default-select2 form-control col-4" id="installment" name="cash_payment">
-                                                    {% for payment in payments %}
-                                                        <option value="installment_{{ loop.index }}" {% if datas.status == 'installment_' ~ loop.index %}selected{% endif %}>ชำระเงินงวด {{ loop.index }}</option>
-                                                    {% endfor %}
-                                                    <option value="cancelled" {% if datas.status == 'cancelled' %}selected{% endif %}>ยกเลิก</option>
-                                                    <option value="completed" {% if datas.status == 'completed' %}selected{% endif %}>จบโครงการ</option>
-                                                </select>
-                                            </div>
-                                        </div> 
-                                        <div class="row mb-3"  >
-                                            <label class="form-label col-form-label col-md-4">จำนวนเงิน <span class="text-danger">*</span></label>
-                                            <div class="col-md-8">
-                                                <input type="text" class="form-control" name="amount" value="0" placeholder="" oninput="formatNumberInter(this)" >                                                
-                                            </div>
-                                        </div> 
-                                        <div class="row mb-3"  >
-                                            <label class="form-label col-form-label col-md-4">วันที่จ่ายเงิน <span class="text-danger">*</span></label>
-                                            <div class="col-md-8">
-                                                <div class="input-group date" id="datepicker-disabled-past" data-date-format="dd-mm-yyyy" >
-                                                    <input type="text" class="form-control" placeholder="Select Date" id="kt_daterangepicker_2" name="payment_dates"  autocomplete="off" />
-                                                    <span class="input-group-text input-group-addon"><i class="fa fa-calendar"></i></span>
-                                                </div>                                            
-                                            </div>
-                                        </div> 
-                                        <div class="row mb-3"  >
-                                            <label class="form-label col-form-label col-md-4">Note</label>
-                                            <div class="col-md-8">
-                                                <input type="text" class="form-control" name="notes" value="" placeholder=""  >                                                                                          
-                                            </div>
-                                        </div> 
-                                        <div class="row mb-15px">
-                                            <label class="form-label col-form-label col-md-4">UPload สลิปการโอน <span class="text-danger">*</span></label>
-                                            <div class="col-md-8">
-                                                <input class="form-control" type="file" id="formFile_payments" name="formFile_payments" placeholder=""  multiple accept=".pdf, .jpg, .jpeg, .png"  onchange="validateFile(this)"/>
-                                            </div>
-            
                                             
-                                        </div> 
-                                    </div>
-                                    <div class="col-sm-6">
-                                        <div class="row"> 
-                                            <h5>
-                                                หลักฐานการโอนเงิน
-                                            </h5>
-
-                                        </div>
-                                        {% for file_data in file_datas %}
-                                            
-                                            <div class="row ">
-            
-                                                <div class="col-md-12 col-sm-12 col-xs-12 mb-5px mt-2">
-                                                    <a href="{{ url_for('order_blueprint.downloadPayment', filename=file_data.filename)}}" style="text-decoration: none; color: black;"><i class="fas fa-lg fa-fw ms-5px  fa-file"></i> <span>{{ file_data.filename }}</span></a> 
-                                                    <a href="#" onclick="sweetAlertDelfile({{file_data.id}},{{datas.id}})">
-                                                        <i class="fas fa-lg fa-fw mx-5px fa-trash-can text-danger c_trash"></i>			
-                                                    </a> 
-                                                </div>
-                                            </div>
-                                            
-                                        {% endfor %}
-                                    </div>
-                                </div>               
                             </div>
                         </div>
                     </div>
@@ -429,6 +448,8 @@
             
         </div>
     </div>
+
+    
 
 </form>
 <a href="javascript:;" class="btn btn-icon btn-circle btn-primary btn-scroll-to-top" data-toggle="scroll-to-top"><i class="fa fa-angle-up"></i></a>
@@ -473,16 +494,16 @@
 <script>
     function checkExistingFiles(input, paymentId) {
         const existingFilesContainer = document.getElementById(`existing_files_${paymentId}`);
-        console.log('📦 paymentId:', paymentId);
-        console.log('📦 container:', existingFilesContainer);
+        //console.log('📦 paymentId:', paymentId);
+        //console.log('📦 container:', existingFilesContainer);
         if (!existingFilesContainer) {
-            console.warn(`ไม่พบ container: existing_files_${paymentId}`);
+            //console.warn(`ไม่พบ container: existing_files_${paymentId}`);
             // ดำเนินต่อ
             return;
         }
     
         const existingFiles = existingFilesContainer.querySelectorAll('.attached-file');
-        console.log('📄 attached-file count:', existingFiles.length);
+       // console.log('📄 attached-file count:', existingFiles.length);
         if (existingFiles.length > 0) {
             check_fail('มีไฟล์แนบอยู่แล้ว กรุณาลบไฟล์ก่อนแนบใหม่');
             input.value = ''; // ล้าง input
@@ -490,7 +511,7 @@
             return;
         }
         validateFile(input); 
-        console.log('ไม่มีไฟล์แนบเดิม -> อนุญาตให้แนบ');
+        //console.log('ไม่มีไฟล์แนบเดิม -> อนุญาตให้แนบ');
     }
 </script>
 <script>
@@ -524,8 +545,72 @@ function triggerInitialCalculation() {
 let inputCount = 1;
 $(document).ready(function () {
     console.log("jQuery loaded");
+    triggerInitialCalculation() 
+    let foundIndex = null;
+
+  $('.accordion-item').each(function(index) {
+    const outstandingInput = $(this).find('input[name="outstanding_amount"]');
+    if (outstandingInput.length === 0) return; // ข้ามถ้าไม่มี
+
+    const outstanding = parseFloat(outstandingInput.val().replace(/,/g, '')) || 0;
+
+    if (foundIndex === null && outstanding > 0.00) {
+      foundIndex = index;
+      return false; // หยุด loop
+    }
+  });
+
+  if (foundIndex !== null) {
+    const $itemToOpen = $('.accordion-item').eq(foundIndex);
+    const $button = $itemToOpen.find('.accordion-button');
+    const $collapse = $itemToOpen.find('.accordion-collapse');
+
+    $button.removeClass('collapsed').attr('aria-expanded', 'true');
+    $collapse.addClass('show');
+  }
     //--------- คำนวณ -----------------
-    $('input[name="installments"], input[name="discount"]').on('input', function () {
+    $(document).on('input', 'input[name="discount"]', function () {
+        const termId = $(this).data('term-id');
+
+        const installmentsInput = $(`input[name="installments"][data-term-id="${termId}"]`);
+        const discountInput = $(`input[name="discount"][data-term-id="${termId}"]`);
+        const totalInput = $(`input[name="count"][data-term-id="${termId}"]`);
+        const outstanding_amountInput = $(`input[name="outstanding_amount"][data-term-id="${termId}"]`);
+    
+        if (
+            installmentsInput.length === 0 ||
+            discountInput.length === 0 ||
+            totalInput.length === 0 ||
+            outstanding_amountInput.length === 0 
+        ) {
+            console.warn(`⚠️ ไม่พบ input ครบทุกตัวของ term ID: ${termId}`);
+            return;
+        }
+
+        const paid_amountInput = $(`input[name="paid_amount"][data-term-id="${termId}"]`);
+        const paidAmount = paid_amountInput.length > 0
+            ? parseFloat((paid_amountInput.val() || "0").replace(/,/g, '')) || 0
+            : 0;
+    
+        const installments = parseFloat((installmentsInput.val() || "0").replace(/,/g, '')) || 0;
+        const discount = parseFloat((discountInput.val() || "0").replace(/,/g, '')) || 0;
+        const paid_amount = parseFloat((paid_amountInput.val() || "0").replace(/,/g, '')) || 0;
+        const total = parseFloat((installments - discount).toFixed(2));
+    
+        totalInput.val(total.toLocaleString('en-US', { minimumFractionDigits: 2 }));
+        const outstanding = Math.max(0, parseFloat((total - paidAmount).toFixed(2)));  // ❗ ป้องกันค่าติดลบ
+
+
+        //outstanding_amountInput.val(total.toLocaleString('en-US', { minimumFractionDigits: 2 }));
+    
+        console.log(`✅ term ${termId}: ${installments} - ${discount} = ${total}`);
+        outstanding_amountInput.val(outstanding.toLocaleString('en-US', { minimumFractionDigits: 2 }));
+        console.log(`✅ term ${termId}: ${installments} - ${discount} = ${total} → -${paid_amount} = outstanding: ${outstanding}`);
+
+
+        calculateTotalcount();
+    });
+    /*$('input[name="installments"], input[name="discount"]').on('input', function () {
         let row = $(this).closest('.row'); // ใช้ closest('.row') แทน tr
     
         let installmentsInput = row.find('input[name="installments"]');
@@ -538,13 +623,41 @@ $(document).ready(function () {
         let total = installments - discount;
         total = parseFloat(total.toFixed(2));
     
+        console.log("total",total)
         if (totalInput.length > 0) {
             totalInput.val(total.toLocaleString('en-US', { minimumFractionDigits: 2 }));
         }
 
         calculateTotalcount();
     });
+    
 
+    $('[id^="term-form-"]').each(function () {
+        const row = $(this);
+        const termId = row.attr('id').replace('term-form-', '');
+
+        // คำนวณ total (installments - discount)
+        row.find('input[name="installments"], input[name="discount"]').on('input', function () {
+            let installmentsInput = row.find('input[name="installments"]');
+            let discountInput = row.find('input[name="discount"]');
+            let totalInput = row.find('input[name="count"]');
+
+            let installments = parseFloat(installmentsInput.val().replace(/,/g, '')) || 0;
+            let discount = parseFloat(discountInput.val().replace(/,/g, '')) || 0;
+
+            let total = installments - discount;
+            total = parseFloat(total.toFixed(2));
+
+            if (totalInput.length > 0) {
+                totalInput.val(total.toLocaleString('en-US', { minimumFractionDigits: 2 }));
+            }
+            console.log(total)
+            calculateTotalcount(); // ถ้ามีฟังก์ชันรวมทั้งหมด
+        });
+
+        
+    });
+*/
 
     $(`input[name="installments"]`).each(function () {
         calculateTotalInstallments();
@@ -654,6 +767,66 @@ $(document).ready(function () {
 
 });
 
+function check_price(input){
+    const $input = $(input);
+    const $row = $input.closest('.accordion-body'); // หรือ .row ถ้า input อยู่ใน .row เดียวกัน
+
+    const amountInput = $row.find('input[name="amount"]');
+    const countInput = $row.find('input[name="check_count"]');
+
+    if (amountInput.length === 0 || countInput.length === 0) {
+        console.warn('❌ ไม่พบ input amount หรือ count ใน DOM');
+        return;
+    }
+
+    const amount = parseFloat((amountInput.val() || '0').replace(/,/g, '')) || 0;
+    const count = parseFloat((countInput.val() || '0').replace(/,/g, '')) || 0;
+
+    console.log("amount",amount)
+    console.log("count",count)
+    // ลบข้อความ error เก่า
+    amountInput.next('.amount-error').remove();
+
+    if (amount > count) {
+        amountInput.after(`<small class="text-danger amount-error" style="font-size: 0.65rem;">เกินยอดรวม</small>`);
+
+    }
+}
+
+function check_discounts(input){
+    const $input = $(input);
+    const $row = $input.closest('.accordion-header'); // หรือเปลี่ยนเป็น .row ถ้าอยู่ใน .row
+
+    const discountInput = $row.find('input[name="discount"]');
+    const countInput = $row.find('input[name="outstanding_amount"]');
+
+    if (discountInput.length === 0 || countInput.length === 0) {
+        console.warn('❌ ไม่พบ input discount หรือ outstanding_amount ใน DOM');
+        return;
+    }
+
+    // ลบข้อความ error เก่า
+    discountInput.next('.amount-error').remove();
+
+    // รอให้ input เสร็จ (debounce)
+    setTimeout(() => {
+        let discount = parseFloat((discountInput.val() || '0').replace(/,/g, '').trim()) || 0;
+        let count = parseFloat((countInput.val() || '0').replace(/,/g, '').trim()) || 0;
+
+        console.log("discount", discount);
+        console.log("count", count);
+
+        if (discount > count) {
+            // รีเซตเป็น 0.00
+            discountInput.val("0.00");
+
+            // แจ้งเตือน
+            discountInput.after(`<small class="text-danger amount-error" style="font-size: 0.65rem;">ส่วนลดเกินยอดค้างชำระ</small>`);
+        }
+    }, 100);
+}
+
+
 //  
 // ฟังก์ชันคำนวณ count ในแต่ละแถว
 function calculatdiscountPayment(row) {
@@ -703,7 +876,7 @@ function calculateTotalDiscount() {
             const value = Number(rawValue.replace(/,/g, '')) || 0;
             total_discount += value;
         }
-        console.log(total_discount)
+        //console.log(total_discount)
     });
 
     const $sumInputdiscount = $('input[name="sum_discount"]');
@@ -1013,6 +1186,66 @@ function sweetAlertDelfile(id_file,id_order) {
         row.find('input[id^="total"]').val(total);
         
     });
+</script>
+<script>
+    
+    function saveSingleTerm(termId) {
+        var container = $(`#term-form-${termId}`);  // เลือก form ตาม termId
+        var paymentDate = container.find('input[name="payment_dates"]').val() || '';
+        var amount = container.find('input[name="amount"]').val() || 0;
+        var fileInput = container.find('input[name="formFile_payment"]')[0]; // [0] เพื่อเอา DOM element
+
+        var rawAmount = container.find('input[name="amount"]').val() || '';
+        var amount = rawAmount.replace(/,/g, '').trim();
+
+        // ✅ ตรวจสอบค่าที่จำเป็น
+        if (!paymentDate) {
+            alert("❌ กรุณาเลือกวันที่จ่ายเงิน");
+            return;
+        }
+
+        if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
+            alert("❌ กรุณาระบุจำนวนเงินให้ถูกต้อง");
+            return;
+        }
+        // ✅ Validate ไฟล์แนบ
+        if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+            alert("❌ กรุณาแนบไฟล์การชำระเงิน");
+            return;
+        }
+
+        var formData = new FormData();
+        formData.append('term_ids', termId);
+        formData.append('payment_date', paymentDate);
+        formData.append('amount', amount);
+
+        if (fileInput && fileInput.files && fileInput.files.length > 0) {
+            formData.append('formFile_payment', fileInput.files[0]);
+        }
+        // Debug ดูข้อมูล formData
+        for (const pair of formData.entries()) {
+            console.log(pair[0], pair[1]);
+        }
+    
+        fetch("/order/save_single_term", {
+            method: "POST",
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                check_fail("✅ บันทึกข้อมูลเรียบร้อยแล้ว");
+                location.reload();
+            } else {
+                check_fail("❌ " + data.error);
+            }
+        })
+        .catch(err => {
+            check_fail("เกิดข้อผิดพลาด: " + err.message);
+        });
+    }
+    
+    
 </script>
 
 {% endblock javascripts %}

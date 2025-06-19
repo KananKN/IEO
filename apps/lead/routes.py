@@ -496,7 +496,8 @@ def check_statusLead():
                         amount=Decimal(plan.amount),
                         sequence=i,  # ลำดับงวดที่ 1, 2, 3,...
                         discount=0.00,
-                        net_price=0.00,
+                        net_price=Decimal(plan.amount),
+                        outstanding_amount=Decimal(plan.amount),
                         created_at=datetime.utcnow()
                     )
                     db.session.add(term)
