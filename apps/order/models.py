@@ -129,6 +129,14 @@ class PaymentModel(db.Model):
     note = db.Column(db.String(250)) 
     status = db.Column(db.String(100))  # New, Contacted, Converted, Dropped
 
+    files = db.relationship(
+        "FilePaymentModel",
+        back_populates="payment",
+        primaryjoin="PaymentModel.id == foreign(FilePaymentModel.term_id)",
+        lazy="joined"
+    )
+
+
 
     created_at = db.Column(db.DateTime,  default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime,  default=db.func.current_timestamp(),
@@ -148,6 +156,11 @@ class FilePaymentModel(db.Model):
     file_type  = db.Column(db.Integer, comment='1:PS')
 
     payment_id = db.Column(db.Integer, db.ForeignKey("payments.id", ondelete="CASCADE"))
+    payment = db.relationship(
+        "PaymentModel",
+        back_populates="files",
+        foreign_keys=[payment_id]
+    )
     order_id = db.Column(db.Integer, db.ForeignKey("order.id", ondelete="CASCADE"))
     term_id = db.Column(db.Integer, db.ForeignKey("order_terms.id", ondelete="CASCADE"))
     
@@ -168,10 +181,11 @@ class OrderTermModel(db.Model):
     sequence = db.Column(db.Integer)  # งวดที่เท่าไหร่ เช่น 1, 2, 3
     discount = db.Column(db.Numeric(precision=12, scale=2), nullable=False, server_default="0.00")
     net_price = db.Column(db.Numeric(precision=10, scale=2), nullable=True)
+    outstanding_amount = db.Column(db.Numeric(precision=12, scale=2), nullable=True, server_default="0.00")
+
     payment_date = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime,  default=db.func.current_timestamp())
 
-    files = db.relationship("FilePaymentModel", backref="term", lazy="dynamic", cascade="all, delete", foreign_keys="FilePaymentModel.term_id")
 
 
 
