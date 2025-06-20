@@ -390,21 +390,30 @@
 
                                     <!-- สรุปยอดรวม -->
                                     <div class="row mt-2" >
-                                        <div class="col-md-6">
+                                        <div class="col-md-4">
+                                            <div class="row mt-3"  >
+                                                <label class="form-label col-form-label col-md-5">Note</label>
+                                                <div class="col-md-7">
+                                                    <textarea class="form-control" id="i_note" rows="4" cols="50"  name="note" placeholder="" >{{datas.note}}</textarea>
+            
+                                                </div>
+                                            </div>                                          
+                                        </div>
+                                        <div class="col-md-8">
                                             <div class="row g-2 align-items-center">
-                                                <label class="col-md-4 col-form-label fw-bold me-5">ยอดรวม</label>
+                                                <label class="col-md-2 col-form-label fw-bold text-end me-4">ยอดรวม</label>
                                 
-                                                <div class="col-md-2 ">
+                                                <div class="col-md-2 ms-3">
                                                     <input type="text" class="form-control-plaintext text-end" name="sum_installments"
                                                         value="0" onchange="formatInputNumberWithCommas(this)">
                                                 </div>
                                 
-                                                <div class="col-md-2 ms-2">
+                                                <div class="col-md-2 ">
                                                     <input type="text" class="form-control-plaintext text-end" name="sum_discount"
                                                         value="{{ '{:,.2f}'.format(datas.discount)}}" onchange="formatNumberWithCommas(this)">
                                                 </div>
                                 
-                                                <div class="col-md-2 ms-3">
+                                                <div class="col-md-2 me-3">
                                                     <input type="text" class="form-control-plaintext text-end" name="total_payment"
                                                     value="" readonly placeholder="รวมทั้งหมด">
                                                 </div>
@@ -422,17 +431,9 @@
                                                     </select>
                                                 </div>
                                             </div> 
-                                            <div class="row mt-3"  >
-                                                <label class="form-label col-form-label col-md-5">Note</label>
-                                                <div class="col-md-7">
-                                                    <textarea class="form-control" id="i_note" rows="4" cols="50"  name="note" placeholder="" >{{datas.note}}</textarea>
-            
-                                                </div>
-                                            </div> 
+                                            
                                         </div>
-                                        <div class="col-md-6">
-                                                                                   
-                                        </div>
+                                        
                                     </div>
                                 </div>
                                 
