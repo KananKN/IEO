@@ -40,32 +40,6 @@
                 overflow: hidden;          /* ซ่อนข้อความที่เกิน */
                 text-overflow: ellipsis;   /* เพิ่ม '...' เมื่อข้อความยาวเกิน */
             }
-            #priceTable {
-                table-layout: fixed;
-                width: auto !important; 
-                border-collapse: collapse;
-              }
-              
-              #priceTable th,
-              #priceTable td {
-                width: 125px;
-                min-width: 125px;
-                max-width: 125px;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                border-bottom: 1px solid #ccc;   /* เส้นขีดล่างเท่านั้น */
-                border-top: none;
-                border-left: none;
-                border-right: none;
-                text-align: center;
-                padding: 6px 8px;
-              }
-              
-              .table-responsive-horizontal {
-                overflow-x: auto;
-                width: 100%;
-              }
     </style>
 {% endblock stylesheets %}
 
@@ -211,8 +185,8 @@
 
             <hr class="my-3">
             <div class="row">
+                <h5>Price List</h5>
                 <div class="col-sm-6">
-                    <h5>Price List</h5>
                     <div class="row mb-3" >
                         <label class="form-label col-form-label col-md-4">Year</label>
                         <div class="col-md-4">
@@ -262,21 +236,21 @@
                     </div>
                 </div>
                 <div class="col-sm-6">
-                    <div style="overflow-x: auto; width: 100%;">
-                        <table id="priceTable">
-                            
-                            <thead>
-                                <tr id="thead-years">
-                                    <!-- <td  ><strong>รายการ</strong></td> -->
-                                </tr>
-                            </thead>
-                            <tbody id="tableBody">
-                                <div class="d-flex justify-content-center align-items-center no_date" style="height: 100px;">
-                                    <span class="">ยังไม่มีข้อมูลในตาราง</span>
-                                </div>
-                            </tbody>
-                        </table>
-                    </div>
+                    <table class="table" id="priceTable">
+                        <thead>
+                            <tr>
+                                <th class="w-50px">Select</th>
+                                <th class="w-75px">Year</th>
+                                <th class="w-100px">Price</th>
+                                <th class="w-100px">Term 1</th>
+                                <th class="w-100px">Term 2</th>
+                                <th class="w-100px">Term 3</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <!-- แถวข้อมูลจะถูกเพิ่มที่นี่ -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
             <hr class="my-3">
@@ -382,101 +356,7 @@ $(document).ready(function () {
     sortTableByYear(true);  
     //-----------------------------
     
-    function renderVerticalTable(yearDataStore) {
-        $('.no_date').remove();
 
-        $('#priceTable').find('colgroup').remove();
-
-        // สร้าง colgroup ใหม่ตามจำนวนปี (จำนวนคอลัมน์)
-        let colgroupHtml = '<colgroup>';
-        colgroupHtml += '<col style="width: 125px;">'; // คอลัมน์ชื่อรายการ
-        Object.keys(yearDataStore).forEach(() => {
-            colgroupHtml += '<col style="width: 125px;">';
-        });
-        colgroupHtml += '</colgroup>';
-
-        // ใส่ colgroup เข้าไปก่อน thead และ tbody
-        $('#priceTable').prepend(colgroupHtml);
-
-
-        if (!yearDataStore || typeof yearDataStore !== 'object') return;
-
-        const years = Object.keys(yearDataStore);
-        if (years.length === 0) return;
-
-        const maxTerms = Math.max(...years.map(y => {
-            const payments = yearDataStore[y]?.payments || [];
-            return payments.length;
-        }));
-
-        const $tbody = $('#priceTable tbody');
-        $tbody.empty();
-
-    
-        // 🔸 แถวหัวตาราง
-        const $thead = $('#priceTable thead #thead-years');
-        $thead.empty();  // ล้างก่อน
-        let headerRow = '<td style="width: 75px; max-width: 75px; padding: 4px 8px; vertical-align: middle;" ><strong class="mb-2"><strong>รายการ</strong></td>';
-        years.forEach(y => {
-            headerRow += `<td class="text-center" style="width: 75px; max-width: 75px; padding: 4px 8px; vertical-align: middle;" ><input class="form-control-plaintext text-center" name="term_year[]" value="${y}" style="text-align: center;"></td>`;
-        });
-        $thead.append(headerRow);
-
-        // 🔸 แถวเลือกปี (radio)
-        let selectRow = '<tr><td><strong>เลือก</strong></td>';
-            const defaultYear = $('#defaultProductYear').val();  // ปีที่ควรเลือก
-
-        years.forEach(y => {
-            const checked = y === '2025' ? 'checked' : '';
-            selectRow += `<td class="text-center" style="width: 75px; max-width: 75px; text-align:center; padding: 4px 8px;">
-                <input type="radio" class="mt-2" name="selectedYear" value="${y}" ${checked}>
-            </td>`;
-        });
-        selectRow += '</tr>';
-        $tbody.append(selectRow);
-
-        // 🔸 แถวราคารวม
-        let priceRow = '<tr><td><strong>ราคารวม</strong></td>';
-        years.forEach(y => {
-            const price = parseFloat(yearDataStore[y].price || 0);
-            priceRow += `<td>
-                <input class="form-control text-end" name="price_${y}" 
-                value="${price.toLocaleString('en-US', {minimumFractionDigits: 2})}" 
-                oninput="formatNumberWithCommas(this)" style="width: 100px;">
-            </td>`;
-        });
-        priceRow += '</tr>';
-        $tbody.append(priceRow);
-
-        // 🔸 แถว Term 1-N
-        for (let i = 0; i < maxTerms; i++) {
-            let termRow = `<tr><td><strong>Term ${i + 1}</strong></td>`;
-            years.forEach(y => {
-                const payments = yearDataStore[y]?.payments || [];
-                const payment = payments[i];
-
-                if (payment) {
-                    const check_vat = payment.check_vat == 1 || payment.check_vat === '1' || payment.check_vat === true;
-
-                    termRow += `<td>
-                        <input class="form-control text-end" name="installments_${y}[]" 
-                            value="${parseFloat(payment.amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2})}" 
-                            oninput="formatNumberWithCommas(this)" style="width: 100px;">
-                        <input type="hidden" name="term_id_${y}[]" value="${payment.id || ''}">
-                        <input type="hidden" name="term_detail_${y}[]" value="${payment.term_detail || payment.detail || ''}">
-                        <input type="hidden"   name="check_vat_${y}[${i}]" value="0" />
-                        <input type="checkbox" style="display:none;" class="form-check-input" name="check_vat_${y}[${i}]" value="1" ${check_vat ? 'checked' : ''}
-
-
-                    </td>`;
-                } else {
-                    termRow += `<td><input class="form-control" readonly hidden style="width: 100px;"></td>`;
-                }
-            });
-            termRow += '</tr>';
-            $tbody.append(termRow);
-        }
-    }
 
     //-----------------------------
     /*function generateInputs(termValue, payments = []) {
@@ -621,7 +501,7 @@ $(document).ready(function () {
             let check_vat = $(this).find('input[name="check_vat"]').is(':checked') ? 1 : 0;
             payments.push({ id: id, term_detail: detail, amount: amount, check_vat:check_vat });
 
-            //console.log(payments)
+            console.log(payments)
         });
         return payments;
     }
@@ -748,7 +628,7 @@ $(document).ready(function () {
 
         //console.log('termVat:', termVat);
         // 🔸 สร้างแถวใหม่
-        /*
+
         let newRow = `
             <tr data-year="${year}">
                 <td class="text-center align-middle">
@@ -780,16 +660,6 @@ $(document).ready(function () {
 
 
         $('#tableBody').append(newRow);
-        */
-        yearDataStore[year] = gatherFormData();
-
-        
-        // 🔸 ยกเลิกเลือกปีอื่น
-        Object.keys(yearDataStore).forEach(y => {
-            if (y !== year) yearDataStore[y].selected = false;
-        });
-        // 🔸 แสดงผลแนวตั้ง
-        renderVerticalTable(yearDataStore);
         sortTableByYear(true);
         
         /// 🟩 บันทึกข้อมูลปีปัจจุบัน
@@ -811,7 +681,7 @@ $(document).ready(function () {
         // 🔍 ตรวจสอบว่ามีปีนี้ในตารางแล้วหรือยัง
         let isDuplicate = false;
         $('#tableBody input[name="term_year[]"]').each(function () {
-            //console.log('มีใน DOM:', $(this).val());
+            console.log('มีใน DOM:', $(this).val());
             if ($(this).val() === year) {
                 isDuplicate = true;
                 return false; // break loop

@@ -418,8 +418,15 @@ def EditProductSales(id):
         grouped_payments[p.year].append(p)
     print(grouped_payments)
 
+    max_terms = 0
+    if grouped_payments:
+        max_terms = max(len(items) for items in grouped_payments.values())
+    number_of_columns = len(grouped_payments)
+    col_list = list(range(number_of_columns)) 
+
+
     return render_template('/productForSales/EditProductSales.html', segment='productSales' , datas=datas, productCars=productCar, countrys=country, periods=period,termOfPaymentModels=termOfPaymentModel, file_data=file_data,payments=payment,organizations=organization,employees=employee,selected_organizations=selected_organizations,selected_employee=selected_employee,selected_agencys=selected_agency,agencys=agency,universitys=university,
-                           grouped_payments=grouped_payments)
+                           grouped_payments=grouped_payments,max_terms=max_terms,col_list=col_list)
 
 @blueprint.route('/addProductSale', methods=['GET', 'POST'])
 @login_required
@@ -477,7 +484,7 @@ def addProductSale():
     
     new_item = ProductForSalesModel(
         name=name,
-        year=inputYear,
+        year=year,
         price=price,
         product_category_id=product_category_id,
         country_id=country_id,  # ✅ แก้ไขให้ country_id เป็น int หรือ None
@@ -843,8 +850,9 @@ def updateProductSale():
             #     check_vat = check_vats[i] if i < len(check_vats) else False
             # else:
             #     check_vat = None  # หรือจะใช้ None เพื่อบอกว่าไม่เปลี่ยนค่า
+            print(f"term_id: '{term_id}', amount: '{amount}', detail: '{detail}', check_vat: {check_vat}")
 
-            if term_id:
+            if term_id and term_id.strip() != '':
                 existing = installmentsPaymentModel.query.filter_by(id=term_id).first()
                 if existing:
                     existing.term_detail = detail
@@ -855,15 +863,25 @@ def updateProductSale():
                         existing.check_vat = check_vat
                     continue
 
-        
-            db.session.add(installmentsPaymentModel(
-                term_detail=detail,
-                amount=amount,
-                year=year,
-                price=price,
-                product_for_sales_id=thisItem.id,
-                check_vat=check_vat if has_check_vat_for_this_year else False,
-            ))
+                else:    
+                    db.session.add(installmentsPaymentModel(
+                        term_detail=detail,
+                        amount=amount,
+                        year=year,
+                        price=price,
+                        product_for_sales_id=thisItem.id,
+                        check_vat=check_vat if has_check_vat_for_this_year else False,
+                        ))
+            else:
+                # กรณีไม่มี term_id → เพิ่มใหม่
+                db.session.add(installmentsPaymentModel(
+                    term_detail=detail,
+                    amount=amount,
+                    year=year,
+                    price=price,
+                    product_for_sales_id=thisItem.id,
+                    check_vat=check_vat if has_check_vat_for_this_year else False,
+                ))
 
     db.session.commit()
     # installments_list = request.form.getlist('installments')  

@@ -40,36 +40,6 @@
                 overflow: hidden;          /* ซ่อนข้อความที่เกิน */
                 text-overflow: ellipsis;   /* เพิ่ม '...' เมื่อข้อความยาวเกิน */
             }
-            #priceTable {
-                table-layout: fixed;
-                width: auto !important; 
-                border-collapse: collapse;
-              }
-              
-              #priceTable th,
-              #priceTable td {
-                width: 125px;
-                min-width: 125px;
-                max-width: 125px;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                border-bottom: 1px solid #ccc;   /* เส้นขีดล่างเท่านั้น */
-                border-top: none;
-                border-left: none;
-                border-right: none;
-                text-align: center;
-                padding: 6px 8px;
-              }
-              
-              .table-responsive-horizontal {
-                overflow-x: auto;
-                width: 100%;
-              }
-
-              
-            
-             
     </style>
 {% endblock stylesheets %}
 
@@ -232,14 +202,14 @@
                 </div>
                                 
             </div>
-            <input type="" id="defaultProductYear" hidden  value="{{ datas.year }}">
+            <input type="" id="defaultProductYear" hidden value="{{ datas.year }}">
 
 
             <hr class="my-3">
+            <h5>Price List</h5>
             <div class="row">
                 <div class="col-sm-6">
-                    <h5>Price List</h5>
-                    <div class="row my-3" >
+                    <div class="row mb-3" >
                         <label class="form-label col-form-label col-md-4">Year</label>
                         <input type="hidden" id="paymentData" value='{{ grouped_payments | tojson }}'>
 
@@ -288,74 +258,71 @@
                     </div>
                 </div>
                 <div class="col-sm-6">
-                    <div style="overflow-x: auto; width: 100%;">
-                        <table id="priceTable">
-                        <colgroup>
-                            <col style="width: 125px;">  {# อันแรกเขียนแยก #}
-                            {% for _ in col_list %}
-                                <col style="width: 125px;">
-                            {% endfor %}
-                          </colgroup>
+                    <table class="table" id="priceTable" >
                         <thead>
-                            <!-- แถวปี -->
-                            <tr id="thead-years">
-                                <td><strong class="mb-2">รายการ</strong></td>
-                                {% for year in grouped_payments.keys() %}
-                                    <td class="text-center" style="width: 100px; max-width: 100px; text-align:center; padding: 4px 8px;"><input class="form-control-plaintext " name="term_year[]" value="{{ year }}" style="text-align: center;"></td>
-                                {% endfor %}
+                            <tr>
+                                <th class="w-50px">Select</th>
+                                <th class="w-75px">Year</th>
+                                <th class="w-100px">Price</th>
+                                <th class="w-100px">Term 1</th>
+                                <th class="w-100px">Term 2</th>
+                                <th class="w-100px">Term 3</th>
                             </tr>
-                            <!-- แถวเลือก -->
                         </thead>
-                        <tbody>
+                        <tbody id="tableBody">
                             
-                            <tr>
-                                <td ><strong>เลือก</strong></td>
-                                {% for year in grouped_payments.keys() %}
-                                    <td class="text-center" style="width: 75px; max-width: 75px; text-align:center; padding: 4px 8px;">
-                                        <input type="radio" name="selectedYear" class="mt-2" value="{{ year }}" {% if year == datas.year %}checked{% endif %}>
-                                    </td>
-                                {% endfor %}
-                            </tr>
-                            
-                    
-                            <!-- แถวราคารวม -->
-                            <tr>
-                                <td><strong>ราคารวม</strong></td>
-                                {% for year, items in grouped_payments.items() %}
-                                    {% set price = (items[0].price if items|length > 0 and items[0].price|float != 0 else datas.price) %}
-                                    <td>
-                                        <input class="form-control text-end" name="price_{{ year }}" 
-                                            value="{{ '{:,.2f}'.format(price|float) }}" 
-                                            oninput="formatNumberWithCommas(this)" style="width: 100px;">
-                                    </td>
-                                {% endfor %}
-                            </tr>
-                            
-                            <!-- หาค่า max_terms -->
-                            {# แสดง Term ตามจำนวน max_terms ที่ส่งมา #}
-                                {% for term_index in range(max_terms) %}
-                                <tr>
-                                    <td><strong>Term {{ term_index + 1 }}</strong></td>
-                                    {% for year, items in grouped_payments|dictsort %}
 
+                            {% for year, items in grouped_payments.items() %}
+                                <tr data-year="{{ year }}">
+                                    <td class="text-center align-middle">
+                                        <input type="radio"  name="selectedYear" value="{{ year }}" {% if year == datas.year %}checked{% endif %}>
+                                    </td>
+                                    <td><input class="form-control w-75px" name="term_year[]" value="{{ year }}">
+                                        <div class="invalid-feedback">ปีนี้ซ้ำกับรายการอื่น</div>
+
+                                    </td>
+
+                                    {# รวมราคารวม #}
+                                    <td>
+                                        <input class="form-control " name="price_{{year}}" value="{{ '{:,.2f}'.format((items[0].price if items|length > 0 and items[0].price|float != 0 else datas.price)|float) }}"
+                                        oninput="formatNumberWithCommas(this)">
+                                    </td>
+
+                                    {% set sorted_items = items|sort(attribute='id') %}
+                                    {% for i in range(sorted_items|length) %}
+                                        {% if i < 3 %}
+                                            <td>
+                                                <input class="form-control" name="term_id_{{year}}[]" hidden value="{{ sorted_items[i].id }}" oninput="formatNumberWithCommas(this)">
+                                                <input class="form-control" name="installments_{{year}}[]" value="{{ '{:,.2f}'.format(sorted_items[i].amount|float) }}" oninput="formatNumberWithCommas(this)">
+                                                <input class="form-control" name="term_detail_{{year}}[]"  hidden value="{{ sorted_items[i].term_detail }}">
+
+                                            </td>
+                                        {% else %}
+                                            <td class="d-none">
+                                                <input class="form-control" name="term_id_{{year}}[]" hidden value="{{ sorted_items[i].id }}" oninput="formatNumberWithCommas(this)">
+                                                <input class="form-control" name="installments_{{year}}[]" value="{{ '{:,.2f}'.format(sorted_items[i].amount|float) }}" oninput="formatNumberWithCommas(this)">
+                                                <input class="form-control" name="term_detail_{{year}}[]" hidden value="{{ sorted_items[i].term_detail }}">
+
+                                            </td>
+                                        {% endif %}
+                                    {% endfor %}
+
+                                    {# Term 1, 2, 3 ตามลำดับ #}
+                                    <!-- {% for i in range(3) %}
                                         <td>
-                                            {% if items|length > term_index %}
-                                                <input class="form-control text-end" name="installments_{{ year }}[]"
-                                                    value="{{ '{:,.2f}'.format(items[term_index].amount|float) }}"
-                                                    oninput="formatNumberWithCommas(this)" style="width: 100px;">
-                                                <input type="hidden" name="term_id_{{ year }}[]" value="{{ items[term_index].id }}">
-                                                <input type="hidden" name="term_detail_{{ year }}[]" value="{{ items[term_index].term_detail }}">
+                                            {% if items[i] %}
+                                                <input class="form-control" name="term{{ i+1 }}" value="{{ '{:,.2f}'.format(items[i].amount|float) }}">
                                             {% else %}
-                                            <div style="width: 100px; height: 34px;"></div>
+                                                <input class="form-control" name="term{{ i+1 }}" value="">
                                             {% endif %}
                                         </td>
-                                    {% endfor %}
+                                    {% endfor %} -->
                                 </tr>
                             {% endfor %}
+
+
                         </tbody>
                     </table>
-                    
-                    </div>
                 </div>
             </div>
             <hr class="my-3">
@@ -546,96 +513,6 @@ $(document).ready(function () {
 
 //-----------------------------------------------------//
     let yearDataStore = {};
-    // เก็บข้อมูลปีทั้งหมด
-
-    function renderVerticalTable(yearDataStore) {
-
-        $('#priceTable').find('colgroup').remove();
-
-        // สร้าง colgroup ใหม่ตามจำนวนปี (จำนวนคอลัมน์)
-        let colgroupHtml = '<colgroup>';
-        colgroupHtml += '<col style="width: 125px;">'; // คอลัมน์ชื่อรายการ
-        Object.keys(yearDataStore).forEach(() => {
-            colgroupHtml += '<col style="width: 125px;">';
-        });
-        colgroupHtml += '</colgroup>';
-
-        // ใส่ colgroup เข้าไปก่อน thead และ tbody
-        $('#priceTable').prepend(colgroupHtml);
-
-        if (!yearDataStore || typeof yearDataStore !== 'object') return;
-
-        const years = Object.keys(yearDataStore);
-        if (years.length === 0) return;
-
-        const maxTerms = Math.max(...years.map(y => {
-            const payments = yearDataStore[y]?.payments || [];
-            return payments.length;
-        }));
-
-        const $tbody = $('#priceTable tbody');
-        $tbody.empty();
-
-    
-        // 🔸 แถวหัวตาราง
-        const $thead = $('#priceTable thead #thead-years');
-        $thead.empty();  // ล้างก่อน
-        let headerRow = '<td><strong>รายการ</strong></td>';
-        years.forEach(y => {
-            headerRow += `<td class="text-center" ><input class="form-control-plaintext text-center" name="term_year[]" value="${y}" style="text-align: center;"></td>`;
-        });
-        $thead.append(headerRow);
-
-        // 🔸 แถวเลือกปี (radio)
-        let selectRow = '<tr><td><strong>เลือก</strong></td>';
-            const defaultYear = $('#defaultProductYear').val();  // ปีที่ควรเลือก
-
-            console.log("years",years)
-        years.forEach(y => {
-            const checked = y === defaultYear ? 'checked' : '';
-            selectRow += `<td class="text-center">
-                <input type="radio" class="mt-2" name="selectedYear" value="${y}" ${checked}>
-            </td>`;
-        });
-        selectRow += '</tr>';
-        $tbody.append(selectRow);
-
-        // 🔸 แถวราคารวม
-        let priceRow = '<tr><td><strong>ราคารวม</strong></td>';
-        years.forEach(y => {
-            const price = parseFloat(yearDataStore[y].price || 0);
-            priceRow += `<td>
-                <input class="form-control text-end" name="price_${y}" 
-                value="${price.toLocaleString('en-US', {minimumFractionDigits: 2})}" 
-                oninput="formatNumberWithCommas(this)" style="width: 100px;">
-            </td>`;
-        });
-        priceRow += '</tr>';
-        $tbody.append(priceRow);
-
-        // 🔸 แถว Term 1-N
-        for (let i = 0; i < maxTerms; i++) {
-            let termRow = `<tr><td><strong>Term ${i + 1}</strong></td>`;
-            years.forEach(y => {
-                const payments = yearDataStore[y]?.payments || [];
-                const payment = payments[i];
-
-                if (payment) {
-                    termRow += `<td>
-                        <input class="form-control text-end" name="installments_${y}[]" 
-                            value="${parseFloat(payment.amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2})}" 
-                            oninput="formatNumberWithCommas(this)" style="width: 100px;">
-                        <input type="hidden" name="term_id_${y}[]" value="${payment.id || ''}">
-                        <input type="hidden" name="term_detail_${y}[]" value="${payment.term_detail || payment.detail || ''}">
-                    </td>`;
-                } else {
-                    termRow += `<td><input class="form-control" readonly hidden style="width: 100px;"></td>`;
-                }
-            });
-            termRow += '</tr>';
-            $tbody.append(termRow);
-        }
-    }
     
     // ฟังก์ชันสร้าง input งวดตาม term และข้อมูล payments
     function generateInputs(termValue, payments = []) {
@@ -669,8 +546,8 @@ $(document).ready(function () {
                 let usedYear = payment.year || $('#inputYear').val(); // ✅ ตอนนี้ payment ถูกประกาศแล้ว
                 //let year = payments[i] ? payments[i].year : '';
 
-                //console.log("payments",payments)
-                //console.log("defaultVat",defaultVat)
+                console.log("payments",payments)
+                console.log("defaultVat",defaultVat)
                 
                 // 🔧 ล้าง comma ก่อน parse และ format
                 let formattedAmount = defaultAmount
@@ -699,7 +576,7 @@ $(document).ready(function () {
                         </div>
                         <div class="col-md-1" >
                             <input type="hidden" name="check_vat_${usedYear}[${i}]" value="0" />
-                            <input type="checkbox" class="form-check-input mt-2" name="check_vat_${usedYear}[${i}]" value="1" ${isChecked}>
+                            <input type="checkbox" class="form-check-input" name="check_vat_${usedYear}[${i}]" value="1" ${isChecked}>
                         </div>
                     </div>
                 `;
@@ -772,8 +649,7 @@ $(document).ready(function () {
         $('#extra-inputs').empty();
     }
     let groupedPayments = {{ grouped_payments|tojson|safe }};
-    console.log('Original groupedPayments:', groupedPayments);
-
+    //console.log('Original groupedPayments:', groupedPayments);
 
     // แปลงโครงสร้างข้อมูลให้ตรงกับที่ต้องการ
     for (let year in groupedPayments) {
@@ -784,7 +660,7 @@ $(document).ready(function () {
             yearDataStore[year] = {
                 year: year,
                 payments: paymentsArray.map(function(payment) {
-                    //console.log('Inside map:', payment);  // 🟨 Debug ตรงนี้ด้วย
+                    console.log('Inside map:', payment);  // 🟨 Debug ตรงนี้ด้วย
                     return {
                         amount: payment.amount,
                         term_detail: payment.term_detail,
@@ -793,9 +669,7 @@ $(document).ready(function () {
                     };
                 }),
                 price: paymentsArray[0].price,
-                term: paymentsArray.length.toString(),
-    
-            
+                term: paymentsArray.length.toString()
             };
         }
     }
@@ -864,6 +738,9 @@ $(document).ready(function () {
             let check_vat = $(this).find('input[type="checkbox"]').is(':checked') ? 1 : 0;
             //let check_vat = $(this).find(`input[name="check_vat_${year}[]"]`).is(':checked') ? 1 : 0;
 
+            //termAmounts.push(amount || '');
+            //termDetails.push(detail);
+            //termIDs.push(id);
             if (amount && parseFloat(amount) !== 0) {
                 termAmounts.push(amount);
                 termDetails.push(detail);
@@ -873,7 +750,12 @@ $(document).ready(function () {
 
         });
 
-       
+        // รองรับ term1 ถึง term3
+        //while (termAmounts.length < 3) {
+        //    termAmounts.push('');
+        //    termDetails.push('');
+        //   termIDs.push('');
+        //}
 
         // 🔸 ตรวจสอบว่ามีแถวปีนี้อยู่แล้วหรือยัง
         let $existingRow = $(`#tableBody tr[data-year="${year}"]`);
@@ -882,20 +764,35 @@ $(document).ready(function () {
         }
 
 
+        let newRow = `
+            <tr data-year="${year}">
+                <td class="text-center align-middle">
+                    <input type="radio" name="selectedYear" value="${year}" ${year === selectedYear ? 'checked' : ''}>
+                </td>
+                <td><input class="form-control w-75px" name="term_year[]" value="${year}"></td>
+                <td><input class="form-control" name="price_${year}" value="${parseFloat(price.replace(/,/g, '') || 0).toLocaleString('en-US', {minimumFractionDigits: 2})}" oninput="formatNumberWithCommas(this)"></td>
+        `;  
 
-        yearDataStore[year] = gatherFormData();
+        for (let i = 0; i < termAmounts.length; i++) {
+            const amount = parseFloat(termAmounts[i] || 0).toLocaleString('en-US', { minimumFractionDigits: 2 });
+            const detail = termDetails[i] || '';
+            const term_id = termIDs[i] || '';
+            const check_vat = termVat[i] || '';
+            //const hiddenAttr = i >= visibleTerms ? ' ' : '';
+            const hiddenAttr = i >= 3 ? ' style="display:none;" ' : '';
+            newRow += `
+                <td${hiddenAttr}>
+                    <input class="form-control" name="term_id_${year}[]" hidden value="${term_id}">
+                    <input class="form-control" name="installments_${year}[]" value="${amount}" oninput="formatNumberWithCommas(this)">
+                    <input class="form-control" name="term_detail_${year}[]" hidden  value="${detail}">
+                </td>
+            `;
+        }
 
-        
-        // 🔸 ยกเลิกเลือกปีอื่น
-        Object.keys(yearDataStore).forEach(y => {
-            if (y !== year) yearDataStore[y].selected = false;
-        });
-        // 🔸 แสดงผลแนวตั้ง
-        renderVerticalTable(yearDataStore);
-        
+        newRow += `</tr>`;
 
 
-        //$('#tableBody').append(newRow);
+        $('#tableBody').append(newRow);
         sortTableByYear(true);
         
         /// 🟩 บันทึกข้อมูลปีปัจจุบัน
