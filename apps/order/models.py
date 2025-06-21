@@ -128,6 +128,7 @@ class PaymentModel(db.Model):
     payment_no = db.Column(db.String(250)) 
     note = db.Column(db.String(250)) 
     status = db.Column(db.String(100))  # New, Contacted, Converted, Dropped
+    sequence = db.Column(db.Integer)  # งวดที่เท่าไหร่ เช่น 1, 2, 3
 
     files = db.relationship(
         "FilePaymentModel",

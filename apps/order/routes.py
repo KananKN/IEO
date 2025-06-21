@@ -571,17 +571,21 @@ def delete_file():
 
         # ✅ ตรวจสอบสถานะ order ใหม่
         all_terms = OrderTermModel.query.filter_by(order_id=term.order_id).order_by(OrderTermModel.sequence).all()
+        order_status = db.session.query(OrderModel).filter(OrderModel.id == term.order_id).first()
+
 
         completed = True
         for t in all_terms:
             if t.outstanding_amount and float(t.outstanding_amount) > 0.01:
                 completed = False
                 term.order.status = f"installment_{t.sequence}"
+                order_status.status = f"installment_{t.sequence}"
                 break
 
         if completed:
             term.order.status = "completed"
-
+            order_status.status = "completed"
+ 
         db.session.commit()
 
         print(f"🗑️ ลบไฟล์ของ term {term.sequence} → ยอดที่จ่ายเหลือ: {paid_total:.2f}, ค้าง: {term.outstanding_amount:.2f}")
@@ -887,9 +891,12 @@ def save_single_term():
     payment_date = request.form.get("payment_date")
     amount = request.form.get("amount")
     file = request.files.get("formFile_payment")
+    total_pay = request.files.get("total_pay")
 
     raw_amount = request.form.get("amount", "0").replace(",", "")
     amount = float(raw_amount) 
+    raw_total_pay = request.form.get("total_pay", "0").replace(",", "")
+    total_pay = float(raw_total_pay) 
 
     
 
@@ -911,7 +918,7 @@ def save_single_term():
         
     payment_no = f'installment_{term.sequence}'
     member = term.order.member_id
-    # order_id=term.order_id
+    order_id=term.order_id
 
     # check_payment = PaymentModel.query.filter_by(order_id=order_id).first()
     # if check_payment :
@@ -928,25 +935,31 @@ def save_single_term():
         # note=note,
         payment_no=payment_no,
         status= 'pending',
+        sequence=term.sequence
     )
     db.session.add(newItem)
-    db.session.commit()
+   # ยังไม่ commit ตอนนี้
 
-    # คำนวณยอดที่จ่ายรวมทั้งหมดของ order_id นี้
-    order_id = term.order_id
-    total_paid = db.session.query(db.func.sum(PaymentModel.amount)).filter_by(order_id=order_id).scalar() or 0
+    # คำนวณยอดรวมโดยไม่รวม payment ใหม่ล่าสุด
+    # (กรณีที่คุณต้องการดูยอดก่อนบันทึก)
+    total_paid = db.session.query(db.func.sum(PaymentModel.amount))\
+        .filter(
+            PaymentModel.order_id == order_id,
+            PaymentModel.id != newItem.id  # หรือ filter โดยไม่รวม payment ล่าสุด
+        ).scalar() or 0
 
-    # สมมุติ net_price อยู่ใน order
+    # เพิ่มของใหม่เข้าไปเองถ้าต้องการ:
+    total_paid += amount
+
     net_price = term.net_price or 0
-
-    # คำนวณยอดคงเหลือ
     outstanding_amount = round(float(net_price) - total_paid, 2)
 
+    print("net_price", net_price)
+    print("total_paid", total_paid)
+    print("outstanding_amount", outstanding_amount)
 
-    # อัปเดตยอดคงเหลือในทุก term ที่เกี่ยวข้องกับ order นี้
-    OrderTermModel.query.filter_by(id=term.id).update({
-        'outstanding_amount': outstanding_amount
-    })
+    # อัปเดตยอดใน term
+    term.outstanding_amount = outstanding_amount
 
     db.session.commit()
 
@@ -981,33 +994,28 @@ def save_single_term():
 
         print(f"[INFO] บันทึกไฟล์: {filename} ที่ {file_path}")
 
-    # สรุปยอดจ่ายทั้งหมดของงวดนั้น
-    related_files = FilePaymentModel.query.filter_by(term_id=term.id).all()
-    related_payment_ids = [f.payment_id for f in related_files if f.payment_id]
+    # คำนวณยอดคงเหลือของ term ปัจจุบัน
+    # 1. หา term ทั้งหมดของ order
+    order_id = term.order_id
+ 
 
-    paid_total = db.session.query(db.func.sum(PaymentModel.amount))\
-        .filter(PaymentModel.id.in_(related_payment_ids)).scalar() or 0
-
-    outstanding_amount = float(term.amount or 0) - float(paid_total)
-    term.outstanding_amount = max(0, round(outstanding_amount, 2))
-
-    # ตรวจสถานะทั้งหมดของ order
+    # ตรวจสอบสถานะของ order
     all_terms = OrderTermModel.query.filter_by(order_id=term.order_id).order_by(OrderTermModel.sequence).all()
+    order = OrderModel.query.get(term.order_id)
 
-    completed = True
-    for t in all_terms:
-        if t.outstanding_amount and float(t.outstanding_amount) > 0.01:
-            completed = False
-            term.order.status = f"installment_{t.sequence}"
-            break
+    # ค้นหางวดแรกที่ยังค้าง
+    next_outstanding_term = next((t for t in all_terms if float(t.outstanding_amount or 0) > 0.01), None)
 
-    if completed:
-        term.order.status = "completed"
+    # อัปเดตสถานะ
+    if next_outstanding_term:
+        order.status = f"installment_{next_outstanding_term.sequence}"
+    else:
+        order.status = "completed"
 
     db.session.commit()
 
-    print(f"\u2705 บันทึกงวด {term.sequence} ยอดจ่ายรวม: {paid_total:.2f}, ค้าง: {term.outstanding_amount:.2f}")
-    print(f"\u2705 อัปเดตสถานะออร์เดอร์: {term.order.status}")
+    # print(f"\u2705 บันทึกงวด {term.sequence} ยอดจ่ายรวม: {paid_total:.2f}, ค้าง: {term.outstanding_amount:.2f}")
+    # print(f"\u2705 อัปเดตสถานะออร์เดอร์: {term.order.status}")
 
     try:
         db.session.commit()
