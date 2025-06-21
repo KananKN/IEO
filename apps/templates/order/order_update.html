@@ -1215,16 +1215,24 @@ function sweetAlertDelfile(id_file,id_order) {
         // ✅ ตรวจสอบค่าที่จำเป็น
         if (!paymentDate) {
             alert("❌ กรุณาเลือกวันที่จ่ายเงิน");
+            x.attr('disabled', false);
             return;
         }
 
         if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
             alert("❌ กรุณาระบุจำนวนเงินให้ถูกต้อง");
+            x.attr('disabled', false);
             return;
         }
         // ✅ Validate ไฟล์แนบ
         if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
             alert("❌ กรุณาแนบไฟล์การชำระเงิน");
+            x.attr('disabled', false);
+            return;
+        }
+        if (total_pay == 0 ) {
+            alert("❌ ไม่สามารถเพิ่มได้ เนื่องจากยอดค้างชำระเป็น 0");
+            x.attr('disabled', true);
             return;
         }
 
