@@ -320,7 +320,7 @@
                                                                             style="height: 35px; max-width: 230px;" />
                                                                             
                                                                         <div class="mx-1 w-100px ps-1">
-                                                                            <a href="javascript:;" class="btn btn-primary w-100px" onclick="saveSingleTerm({{ term.id }},this)">Save</a>
+                                                                            <a href="javascript:;" class="btn btn-primary w-100px" onclick="saveSingleTerm({{ term.id }},$(this))">Save</a>
                                                                         </div>
                                                                     </div>
                                                                     
@@ -1210,8 +1210,7 @@ function sweetAlertDelfile(id_file,id_order) {
         var rawTotalPat = container.find('input[name="total_pay"]').val() || '';
         var total_pay = rawTotalPat.replace(/,/g, '').trim();
 
-        const $btn = $(x);
-        $btn.prop("disabled", true);
+        x.attr('disabled', true);
 
         // ✅ ตรวจสอบค่าที่จำเป็น
         if (!paymentDate) {
@@ -1260,7 +1259,7 @@ function sweetAlertDelfile(id_file,id_order) {
                 });
             } else {
                 check_fail("❌ " + data.error);
-                $btn.prop("disabled", false);
+                x.attr('disabled', false);
             }
         })
         .catch(err => {

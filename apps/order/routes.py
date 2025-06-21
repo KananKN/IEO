@@ -480,20 +480,18 @@ def save_payment():
             if updated_order_id:
                 order = OrderModel.query.get(updated_order_id)
                 if order:
-                    all_terms = order.terms.all()  # เรียกทั้งหมดมาเป็น list
-                    paid_terms = [t for t in all_terms if t.payment_date is not None]
+                    all_terms = order.terms.order_by(OrderTermModel.sequence).all()
 
-                    if len(paid_terms) == 0:
-                        order.status = 'pending'
-                        print("🕐 ยังไม่มีการชำระเงิน → ตั้งสถานะเป็น 'pending'")
-                    elif len(paid_terms) == len(all_terms) and len(all_terms) > 0:
-                        order.status = 'completed'
-                        print("✅ ชำระครบทุกงวดแล้ว → เปลี่ยนสถานะเป็น 'completed'")
+                    # ✅ หา term แรกที่ยังมียอดค้าง > 0.01
+                    next_term = next((t for t in all_terms if float(t.outstanding_amount or 0) > 0.01), None)
+
+                    if next_term:
+                        order.status = f"installment_{next_term.sequence}"
+                        print(f"📌 พบงวดที่ยังค้าง → ตั้งสถานะเป็น {order.status}")
                     else:
-                        order.status = f'installment_{len(paid_terms)}'
-                        print(f"📌 จ่ายแล้ว {len(paid_terms)} / {len(all_terms)} งวด")
-                    db.session.commit()  
-            
+                        order.status = "completed"
+                        print("✅ ชำระครบทุกงวด → ตั้งสถานะเป็น completed")  
+                    db.session.commit()
             
     except Exception as e:
         # จับข้อผิดพลาดและแสดงข้อความ
