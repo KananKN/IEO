@@ -17,32 +17,58 @@ function post(path, params, method = "post") {
     form.submit();
 }
 
-function sweetAlertDel(id) {
-    swal({
-        title: "Are you sure?",
-        text: "Delete!",
-        icon: "error",
-        buttons: {
-            cancel: {
-                text: "Cancel",
-                value: null,
-                visible: true,
-                className: "btn btn-default",
-                closeModal: true,
-            },
-            confirm: {
-                text: "Delete",
-                value: true,
-                visible: true,
-                className: "btn btn-danger",
-                closeModal: true,
-            },
-        },
-    }).then((result) => {
-        if (result.dismiss !== "cancel") {
-            post("product/delete_productSale", { id: id });
+function sweetAlertDel(productId) {
+    // ตรวจสอบว่า product นี้มีข้อมูลเชื่อมโยงหรือไม่
+    $.post("/product/check_product_reference", { id: productId }, function (res) {
+        let warningMessage = "คุณแน่ใจหรือไม่ว่าต้องการลบสินค้านี้?";
+
+        if (res.has_reference) {
+            warningMessage = `
+                สินค้านี้มีข้อมูลที่เชื่อมโยงกับโปรแกรมอื่นๆ<br>
+                หากคุณลบ รายการที่เชื่อมโยงทั้งหมดจะถูกลบไปด้วย และไม่สามารถกู้คืนได้!
+            `;  
         }
+
+        swal({
+            title: "แจ้งเตือน!",
+            content: {
+                element: "div",
+                attributes: {
+                    innerHTML: warningMessage
+                },
+            },
+            icon: "warning",
+            buttons: {
+                cancel: {
+                    text: "ยกเลิก",
+                    value: null,
+                    visible: true,
+                    className: "btn btn-secondary",
+                    closeModal: true,
+                },
+                confirm: {
+                    text: "ลบข้อมูล",
+                    value: true,
+                    visible: true,
+                    className: "btn btn-danger",
+                    closeModal: true,
+                },
+            },
+            dangerMode: true,
+        }).then((willDelete) => {
+            if (willDelete) {
+                $.post("/product/delete_productSale", { id: productId }, function () {
+                    swal("ลบข้อมูลเรียบร้อยแล้ว!", {
+                        icon: "success",
+                    }).then(() => location.reload());
+                }).fail(function (xhr) {
+                    const error = xhr.responseJSON?.message || "ไม่สามารถลบได้";
+                    swal("เกิดข้อผิดพลาด", error, "error");
+                });
+            }
+        });
     });
+    
 }
 function sweetAlertDel_all(id) {
     swal({
