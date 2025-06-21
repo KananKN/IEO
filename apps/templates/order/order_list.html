@@ -179,6 +179,7 @@
                                     <label for="year" class="form-label">ปีที่สนใจ<span class="text-danger form-label">*</span></label>
                                     <input type="text" class="form-control mt-1" required name="year" >
 
+
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -410,8 +411,8 @@ function loadDataTable() {
                     let color_text = '';
                     if (status.startsWith('installment_')) {
                         const installmentNumber = status.split('_')[1];  // ดึงตัวเลขงวดจาก 'installment_1'
-                        color_text = 'info';
-                        text = `ชำระเงินงวดที่ ${installmentNumber}`;
+                        color_text = 'danger';
+                        text = `ค้างชำระเงินงวดที่ ${installmentNumber}`;
                     } else if (status === 'completed') {
                         color_text = 'success';
                         text = 'จบโครงการ';
@@ -419,7 +420,7 @@ function loadDataTable() {
                         color_text = 'info';
                         text = 'รอการชำระเงิน';
                     } else if (status === 'cancelled') {
-                        color_text = 'danger';
+                        color_text = 'secondary';
                         text = 'ยกเลิก';
                     } else {
                         color_text = 'secondary';

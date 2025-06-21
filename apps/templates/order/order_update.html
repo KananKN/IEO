@@ -249,7 +249,7 @@
                                                     
                                                                     <div class="mx-1 ms-2">
                                                                         <input type="text" class="form-control text-end price-input" name="discount"data-term-id="{{ term.id }}" 
-                                                                            oninput="formatInputNumberWithCommasDiscount(this);" onfocus="clearZeroWhenTyping(this)"
+                                                                            oninput="formatInputNumberWithCommasDiscount(this);check_discounts(this)" onfocus="clearZeroWhenTyping(this)"
                                                                             value="{{ '{:,.2f}'.format(term.discount)}}" placeholder="ส่วนลด">
                                                                     </div>
                                                     
@@ -298,7 +298,7 @@
                                                                                     <i class="fa fa-calendar"></i>
                                                                                 </span>
                                                                             </div>
-                                                                            <input hidden name="check_count" value="{{ '{:,.2f}'.format(term.outstanding_amount or 0) }}">
+                                                                            
 
 
                                                                             <div class="mx-1 w-100px ms-2">
@@ -306,7 +306,8 @@
                                                                                     value="0" oninput="formatInputNumberWithCommas(this); check_price(this)"  placeholder="จำนวนเงิน">
                                                                             </div>
                                                                             
-                                                                            
+                                                                            <input hidden name="check_count" value="{{ '{:,.2f}'.format(term.outstanding_amount or 0) }}">
+                                                                            <input  name="total_pay" hidden data-term-id="{{ term.id }}" value="0">
                                                                         </div>
                                                                 
                                                                     </div>
@@ -319,7 +320,7 @@
                                                                             style="height: 35px; max-width: 230px;" />
                                                                             
                                                                         <div class="mx-1 w-100px ps-1">
-                                                                            <a href="javascript:;" class="btn btn-primary w-100px" onclick="saveSingleTerm({{ term.id }})">Save</a>
+                                                                            <a href="javascript:;" class="btn btn-primary w-100px" onclick="saveSingleTerm({{ term.id }},this)">Save</a>
                                                                         </div>
                                                                     </div>
                                                                     
@@ -577,6 +578,7 @@ $(document).ready(function () {
         const discountInput = $(`input[name="discount"][data-term-id="${termId}"]`);
         const totalInput = $(`input[name="count"][data-term-id="${termId}"]`);
         const outstanding_amountInput = $(`input[name="outstanding_amount"][data-term-id="${termId}"]`);
+        const total_payInput = $(`input[name="total_pay"][data-term-id="${termId}"]`);
     
         if (
             installmentsInput.length === 0 ||
@@ -604,9 +606,11 @@ $(document).ready(function () {
 
         //outstanding_amountInput.val(total.toLocaleString('en-US', { minimumFractionDigits: 2 }));
     
-        console.log(`✅ term ${termId}: ${installments} - ${discount} = ${total}`);
+        //console.log(`✅ term ${termId}: ${installments} - ${discount} = ${total}`);
         outstanding_amountInput.val(outstanding.toLocaleString('en-US', { minimumFractionDigits: 2 }));
-        console.log(`✅ term ${termId}: ${installments} - ${discount} = ${total} → -${paid_amount} = outstanding: ${outstanding}`);
+        total_payInput.val(outstanding.toLocaleString('en-US', { minimumFractionDigits: 2 }));
+        
+        //console.log(`✅ term ${termId}: ${installments} - ${discount} = ${total} → -${paid_amount} = outstanding: ${outstanding}`);
 
 
         calculateTotalcount();
@@ -783,8 +787,7 @@ function check_price(input){
     const amount = parseFloat((amountInput.val() || '0').replace(/,/g, '')) || 0;
     const count = parseFloat((countInput.val() || '0').replace(/,/g, '')) || 0;
 
-    console.log("amount",amount)
-    console.log("count",count)
+   
     // ลบข้อความ error เก่า
     amountInput.next('.amount-error').remove();
 
@@ -799,9 +802,12 @@ function check_discounts(input){
     const $row = $input.closest('.accordion-header'); // หรือเปลี่ยนเป็น .row ถ้าอยู่ใน .row
 
     const discountInput = $row.find('input[name="discount"]');
-    const countInput = $row.find('input[name="outstanding_amount"]');
+    const installmentsInput = $row.find('input[name="installments"]');
+    const countInput = $row.find('input[name="count"]');
 
-    if (discountInput.length === 0 || countInput.length === 0) {
+    const count = countInput
+
+    if (discountInput.length === 0 || installmentsInput.length === 0) {
         console.warn('❌ ไม่พบ input discount หรือ outstanding_amount ใน DOM');
         return;
     }
@@ -812,17 +818,18 @@ function check_discounts(input){
     // รอให้ input เสร็จ (debounce)
     setTimeout(() => {
         let discount = parseFloat((discountInput.val() || '0').replace(/,/g, '').trim()) || 0;
-        let count = parseFloat((countInput.val() || '0').replace(/,/g, '').trim()) || 0;
+        let installments = parseFloat((installmentsInput.val() || '0').replace(/,/g, '').trim()) || 0;
 
         console.log("discount", discount);
-        console.log("count", count);
+        console.log("installmentsInput", installmentsInput);
 
-        if (discount > count) {
+        if (discount > installments) {
             // รีเซตเป็น 0.00
-            discountInput.val("0.00");
+            //const count = countInput
+            countInput.val("0.00");
 
             // แจ้งเตือน
-            discountInput.after(`<small class="text-danger amount-error" style="font-size: 0.65rem;">ส่วนลดเกินยอดค้างชำระ</small>`);
+            discountInput.after(`<small class="text-danger amount-error" style="font-size: 0.65rem;">ส่วนลดเกินยอดขาย</small>`);
         }
     }, 100);
 }
@@ -1190,14 +1197,21 @@ function sweetAlertDelfile(id_file,id_order) {
 </script>
 <script>
     
-    function saveSingleTerm(termId) {
+    function saveSingleTerm(termId,x) {
         var container = $(`#term-form-${termId}`);  // เลือก form ตาม termId
         var paymentDate = container.find('input[name="payment_dates"]').val() || '';
         var amount = container.find('input[name="amount"]').val() || 0;
+        var total_pay = container.find('input[name="total_pay"]').val() || 0;
         var fileInput = container.find('input[name="formFile_payment"]')[0]; // [0] เพื่อเอา DOM element
 
         var rawAmount = container.find('input[name="amount"]').val() || '';
         var amount = rawAmount.replace(/,/g, '').trim();
+
+        var rawTotalPat = container.find('input[name="total_pay"]').val() || '';
+        var total_pay = rawTotalPat.replace(/,/g, '').trim();
+
+        const $btn = $(x);
+        $btn.prop("disabled", true);
 
         // ✅ ตรวจสอบค่าที่จำเป็น
         if (!paymentDate) {
@@ -1219,6 +1233,7 @@ function sweetAlertDelfile(id_file,id_order) {
         formData.append('term_ids', termId);
         formData.append('payment_date', paymentDate);
         formData.append('amount', amount);
+        formData.append('total_pay', total_pay);
 
         if (fileInput && fileInput.files && fileInput.files.length > 0) {
             formData.append('formFile_payment', fileInput.files[0]);
@@ -1239,6 +1254,7 @@ function sweetAlertDelfile(id_file,id_order) {
                 location.reload();
             } else {
                 check_fail("❌ " + data.error);
+                $btn.prop("disabled", false);
             }
         })
         .catch(err => {
