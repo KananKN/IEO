@@ -936,18 +936,22 @@ def save_single_term():
         sequence=term.sequence
     )
     db.session.add(newItem)
+    db.session.flush() 
    # ยังไม่ commit ตอนนี้
 
     # คำนวณยอดรวมโดยไม่รวม payment ใหม่ล่าสุด
     # (กรณีที่คุณต้องการดูยอดก่อนบันทึก)
     total_paid = db.session.query(db.func.sum(PaymentModel.amount))\
-        .filter(
-            PaymentModel.order_id == order_id,
-            PaymentModel.id != newItem.id  # หรือ filter โดยไม่รวม payment ล่าสุด
-        ).scalar() or 0
+            .filter(
+                PaymentModel.order_id == newItem.order_id,
+                PaymentModel.product_id == newItem.product_id,
+                PaymentModel.sequence == newItem.sequence,
+                PaymentModel.id != newItem.id  # ✅ ไม่รวมตัวใหม่
+            ).scalar() or 0
 
     # เพิ่มของใหม่เข้าไปเองถ้าต้องการ:
     total_paid += amount
+    
 
     net_price = term.net_price or 0
     outstanding_amount = round(float(net_price) - total_paid, 2)
