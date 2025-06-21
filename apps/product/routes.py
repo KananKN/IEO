@@ -7,6 +7,7 @@ from apps.organization.models import *
 from apps.product.models import *
 from apps.supplier.models import *
 from apps.employee.models import *
+from apps.lead.models import *
 from apps import db
 from flask import render_template, request, redirect, url_for, flash, Markup, jsonify, abort, send_file
 from flask_login import login_required, current_user, logout_user
@@ -104,16 +105,38 @@ def delete_productCategory():
     flash(' Deleted!', 'success')
     return redirect(url_for('product_blueprint.product_category'))
 
-@blueprint.route('/product/delete_productSale', methods=['POST'])
+@blueprint.route('/delete_productSale', methods=['POST'])
 @login_required
 def delete_productSale():
-    id_del = request.form["id"]
-    print( id_del)
-    # thisItem = ProductCategoryModel.query.filter_by(id=id_del).first()
-    db.session.query(ProductForSalesModel).filter(ProductForSalesModel.id == id_del).delete()
-    db.session.commit()
-    flash(' Deleted!', 'success')
-    return redirect(url_for('product_blueprint.productSales'))
+    product_id = request.form.get("id")
+
+    try:
+        # ตรวจสอบว่ามี lead อ้างอิงอยู่ไหม
+        linked = LeadProgram.query.filter_by(product_id=product_id).first()
+        if linked:
+            return jsonify({'status': 'error', 'message': 'มีข้อมูลเชื่อมโยงอยู่ ไม่สามารถลบได้'}), 400
+
+        # ลบ product
+        product = ProductForSalesModel.query.get(product_id)
+        if not product:
+            return jsonify({'status': 'error', 'message': 'ไม่พบข้อมูลสินค้านี้'}), 404
+
+        db.session.delete(product)
+        db.session.commit()
+        return jsonify({'status': 'success'})
+
+    except Exception as e:
+        db.session.rollback()
+        print("❌ Delete Error:", str(e))  # log error
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+@blueprint.route('/check_product_reference', methods=['POST'])
+@login_required
+def check_product_reference():
+    product_id = request.form.get("id")
+    has_ref = LeadProgram.query.filter_by(product_id=product_id).first() is not None
+    return jsonify({"has_reference": has_ref})
 
 
 
