@@ -1250,8 +1250,14 @@ function sweetAlertDelfile(id_file,id_order) {
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                check_fail("✅ บันทึกข้อมูลเรียบร้อยแล้ว");
-                location.reload();
+                swal({
+                    icon: 'success',
+                    title: '✅ บันทึกสำเร็จ',
+                    text: 'ข้อมูลถูกบันทึกเรียบร้อยแล้ว',
+                    confirmButtonText: 'ตกลง',
+                }).then(() => {
+                    location.reload(); // ✅ หากต้องการ reload หลังปิด modal
+                });
             } else {
                 check_fail("❌ " + data.error);
                 $btn.prop("disabled", false);
