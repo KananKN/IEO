@@ -171,27 +171,41 @@
                                     <h4>รายละเอียดโครงการ</h4>
                                     <div class="col-md-5">
                                         <div class="row mt-3"  >
-                                            <label class="form-label col-form-label col-md-3">ชื่อโครงการ</label>
+                                            <label class="form-label col-form-label col-md-4">ชื่อโครงการ</label>
                                             <div class="col-md-8">
                                                 <input type="text" class="form-control-plaintext" name="name_project" value="{{orderItem.product.name}}" placeholder="">
                                             </div>
                                         </div> 
                                         <div class="row"  >
-                                            <label class="form-label col-form-label col-md-3">เข้าร่วมปี</label>
+                                            <label class="form-label col-form-label col-md-4">เข้าร่วมปี</label>
                                             <div class="col-md-8">
                                                 <input type="text" class="form-control-plaintext" name="year" value="{{datas.year}}" placeholder="">
                                             </div>
                                         </div> 
                                         <div class="row"  >
-                                            <label class="form-label col-form-label col-md-3">ระยะเวลา</label>
+                                            <label class="form-label col-form-label col-md-4">ระยะเวลา</label>
                                             <div class="col-md-8">
                                                 <input type="text" class="form-control-plaintext" name="period" value="{{datas.product.period.name}}" placeholder="">
                                             </div>
                                         </div> 
                                         <div class="row "  >
-                                            <label class="form-label col-form-label col-md-3">ราคาค่าโครงการ</label>
+                                            <label class="form-label col-form-label col-md-4">ราคาค่าโครงการ</label>
                                             <div class="col-md-8">
                                                 <input type="text" class="form-control-plaintext" name="price" value="{{ datas.price | comma }}" placeholder="" onchange="formatInputNumberWithCommas(this)" >                                                
+                                            </div>
+                                        </div> 
+                                        <div class="row "  >
+                                            <label class="form-label col-form-label col-md-4">ส่วนลดค่าโครงการ</label>
+                                            <div class="col-md-8">
+                                                    <input type="text" class="form-control-plaintext " name="sum_discounts"
+                                                        value="{{ '{:,.2f}'.format(datas.discount)}}" onchange="formatNumberWithCommas(this)">
+                                            </div>
+                                        </div> 
+                                        <div class="row "  >
+                                            <label class="form-label col-form-label col-md-4">สรุปยอดค่าเข้าโครงการ</label>
+                                            <div class="col-md-8">
+                                                   <input type="text" class="form-control-plaintext" name="total_payments"
+                                                    value="" readonly placeholder="รวมทั้งหมด">
                                             </div>
                                         </div> 
 
@@ -214,11 +228,11 @@
                                     </div>
                                 </div>
                                 {% set show_index = 0 %}
-{% for term in orderTerms %}
-    {% if (term.outstanding_amount | float) > 0 and show_index == 0 %}
-        {% set show_index = loop.index %}
-    {% endif %}
-{% endfor %}
+                                    {% for term in orderTerms %}
+                                        {% if (term.outstanding_amount | float) > 0 and show_index == 0 %}
+                                            {% set show_index = loop.index %}
+                                        {% endif %}
+                                    {% endfor %}
                                   
 
 
@@ -401,7 +415,7 @@
                                             </div>                                          
                                         </div>
                                         <div class="col-md-8">
-                                            <div class="row g-2 align-items-center">
+                                            <div class="row g-2 align-items-center" hidden>
                                                 <label class="col-md-2 col-form-label fw-bold text-end me-4">ยอดรวม</label>
                                 
                                                 <div class="col-md-2 ms-3">
@@ -891,6 +905,9 @@ function calculateTotalDiscount() {
     if ($sumInputdiscount.length) {
             let formatted = formatNumberWithCommas(total_discount.toFixed(2));
             $sumInputdiscount.val(formatNumberWithCommas(total_discount.toFixed(2))).trigger('input');
+            $('input[name="sum_discounts"]').val(total_discount.toLocaleString('en-US', { minimumFractionDigits: 2 }));
+
+
     }
 }
 
@@ -902,6 +919,7 @@ function calculateTotalcount() {
         let installmentsInput = row.find('input[name="sum_installments"]');
         let discountInput = row.find('input[name="sum_discount"]');
         let totalInput = row.find('input[name="total_payment"]'); // ช่องสำหรับผลลัพธ์รวม
+        //let totalsInput = row.find('input[name="total_payments"]'); // ช่องสำหรับผลลัพธ์รวม
     
         let installments = parseFloat(installmentsInput.val().replace(/,/g, '')) || 0;
         let discount = parseFloat(discountInput.val().replace(/,/g, '')) || 0;
@@ -911,6 +929,8 @@ function calculateTotalcount() {
     
         if (totalInput.length > 0) {
             totalInput.val(total_payment.toLocaleString('en-US', { minimumFractionDigits: 2 }));
+            //totalsInput.val(total_payment.toLocaleString('en-US', { minimumFractionDigits: 2 }));
+            $('input[name="total_payments"]').val(total_payment.toLocaleString('en-US', { minimumFractionDigits: 2 }));
         }
 
     });
