@@ -498,7 +498,9 @@ def check_statusLead():
                         discount=0.00,
                         net_price=Decimal(plan.amount),
                         outstanding_amount=Decimal(plan.amount),
-                        created_at=datetime.utcnow()
+                        created_at=datetime.utcnow(),
+                        check_vat = plan.check_vat
+
                     )
                     db.session.add(term)
                 db.session.commit()

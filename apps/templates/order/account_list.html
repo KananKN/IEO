@@ -1,0 +1,506 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} รายการใบเสร็จรับเงิน (DEPOSIT) {% endblock %} 
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}
+<link href="{{ config.ASSETS_ROOT }}/plugins/datatables.net-bs5/css/dataTables.bootstrap5.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/datatables.net-responsive-bs5/css/responsive.bootstrap5.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/select2/dist/css/select2.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/tag-it/css/jquery.tagit.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/select-picker/dist/picker.min.css" rel="stylesheet" />
+<style>
+    .print-receipt-btn {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        display: flex;               /* ใช้ flexbox */
+        align-items: center;         /* จัดแนวตั้งกึ่งกลาง */
+        justify-content: center;     /* จัดแนวนอนกึ่งกลาง */
+      }
+      
+      .print-receipt-btn i.material-icons {
+        font-size: 18px;
+        line-height: 1;
+      }
+  </style>
+{% endblock stylesheets %}
+
+{% block content %}
+
+
+<div id="content" class="app-content">
+
+    <h1 class="page-header">รายการใบเสร็จรับเงิน (DEPOSIT)
+        {% if current_user.has_permission('write_order') %}
+            
+        {% endif %}
+    </h1>
+    
+    <div class="row">
+        <div class="col-xl-12">
+            <div class="panel panel-inverse">
+                <div class="panel-heading">
+                    <h4 class="panel-title">รายการใบเสร็จรับเงิน (DEPOSIT)</h4>
+                    <div class="panel-heading-btn">
+                        <a href="javascript:;" class="btn btn-xs btn-icon btn-default" data-toggle="panel-expand"><i class="fa fa-expand"></i></a>
+                        <a href="javascript:;" class="btn btn-xs btn-icon btn-success" data-toggle="panel-reload"><i class="fa fa-redo"></i></a>
+                        <a href="javascript:;" class="btn btn-xs btn-icon btn-warning" data-toggle="panel-collapse"><i class="fa fa-minus"></i></a>
+                        <a href="javascript:;" class="btn btn-xs btn-icon btn-danger" data-toggle="panel-remove"><i class="fa fa-times"></i></a>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for categorie, message in messages %}
+                                <div class="alert alert-{{categorie}} alert-dismissible fade show mb-2 mt-1">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}                    
+                        {% endif %}
+                    {% endwith %}
+                    <table id="data-table-responsive" width="100%" class="table table-striped table-bordered align-middle text-nowrap">
+                        <thead>
+                            <tr>
+                                <th width="1%">ลำดับ</th>
+                                <th class="text-nowrap ">เลขที่</th>
+                                <th class="text-nowrap">ชื่อลูกค้า</th>
+                                <th class="text-nowrap">โปรแกรม</th>
+                                <th class="text-nowrap">ส่วนลด</th>
+                                <th class="text-nowrap w-150px">จำนวนเงิน</th>
+                                <th class="text-nowrap">วันที่</th>
+                                <th class="text-nowrap">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<a href="javascript:;" class="btn btn-icon btn-circle btn-primary btn-scroll-to-top" data-toggle="scroll-to-top"><i class="fa fa-angle-up"></i></a>
+
+<iframe id="receipt-preview-frame" style="width: 100%; height: 1200px; border: 1px solid #ccc; margin-top: 20px;display:none;"></iframe>{% for term in orderTerms %}
+
+<!-- templates/receipt_partial.html -->
+{% set receipt_for_term = receipts | selectattr("terms_id", "equalto", term.id) | list %}
+{% if receipt_for_term %}
+  {% set r = receipt_for_term[0] %}
+<div id="receipt-content-{{ term.id }}" hidden>
+    <!-- ตัวอย่าง (ใช้ข้อมูลจาก backend เช่น data.customer_name) -->
+    <div style="text-align: right; line-height: 1.4; margin-bottom: 10px;">
+        <div>เลขที่ 80 อาคาร เค.เอ.เอ็น ห้องเลขที่ 104 ชั้น 1</div>
+        <div>ซอยนราธิวาสราชนครินทร์ 8 แขวงทุ่งวัดดอน</div>
+        <div>เขตสาทร กรุงเทพมหานคร 10120</div>
+        <div>Tel. (66) 26426131-2 Fax. (66) 26426133</div>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div style="border: 1px solid black; padding: 8px 0px; width: 150px; text-align: center;">
+          <div>ไม่ใช่ใบกำกับภาษี</div>
+          <hr style="margin: 4px 0;">
+          <div>เอกสารออกเป็นชุด</div>
+        </div>
+        <div style="text-align: center; flex: 1;">
+          <h2 style="margin: 0;">ใบรับฝากเงิน</h2>
+          <div>(DEPOSIT)</div>
+        </div>
+        <div style="border: 1px solid black; padding: 8px; width: 150px; text-align: center;">
+          <div>ต้นฉบับ / Original</div>
+          <div>ลูกค้า / Customer</div>
+        </div>
+    </div>
+  
+    <div style="border: 2px solid black; border-radius: 10px;  margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between;">
+          <div style="width: 75%;padding: 10px;">
+            <div style="margin-bottom: 12px;">
+              <strong style="margin-right:20px">ชื่อลูกค้า</strong> {{r.member.first_name}} {{r.member.last_name}}<br>
+              Customer
+            </div>
+            <div style="margin-bottom: 12px;">
+              <strong style="margin-right:42px">ที่อยู่</strong> {{r.member.address}}<br>
+              Address
+            </div>
+          </div>
+          <div style="width: 25%;border-left: 2px solid black;padding: 10px;">
+            
+              <strong style="margin-right: 20px;">เลขที่</strong> {{ r.receipt_no }}<br>No.<br><br>
+              <strong style="margin-right: 25px;">วันที่</strong> {{ r.created_at.strftime('%Y-%m-%d') }}<br>Date
+            
+            
+          </div>
+        </div>
+      </div>
+    
+      <!-- รายละเอียด -->
+      <div class="section">
+        <table style="border-collapse: collapse; border: 2px solid black; width: 100%;">
+          <thead style="border: 2px solid black;">
+            <tr>
+              <th style="text-align: center; vertical-align: middle;border: 2px solid black;">ลำดับ <br>No.</th>
+              <th style="text-align: center; vertical-align: middle;border: 2px solid black;width:400px">รายการ <br>Particulars</th>
+              <th style="text-align: center; vertical-align: middle;border: 2px solid black;">หน่วยละ <br>Unit Price</th>
+              <th style="text-align: center; vertical-align: middle;border: 2px solid black;">ส่วนลด <br>Discount</th>
+              <th style="text-align: center; vertical-align: middle;border: 2px solid black;">จำนวนเงิน <br>Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="height: 400px;vertical-align: top;">
+              <td style="text-align: center;border: 2px solid black;">1</td>
+              <td style="border: 2px solid black;">{{ r.order.product.name or '-' }} {{r.terms.term_detail}}</td>
+              <td style="text-align: center; border: 2px solid black;">1</td>
+              <td style="text-align: right; border: 2px solid black;">{{term.discount}}</td>
+              <td style="text-align: right; border: 2px solid black;">{{ '{:,.2f}'.format(term.net_price)}}</td>
+            </tr>
+            <tr>
+              <td colspan="4" class="right" style="border: 2px solid black;"><strong>รวม<br>Total</strong></td>
+              <td class="right" style="border: 2px solid black;"><strong>{{ '{:,.2f}'.format(term.net_price)}}</strong></td>
+            </tr>
+            <tr>
+              <td style="text-align: center;border: 2px solid black;"><strong>บาท<br>Bath</strong></td>
+              <td colspan="3" class="right" style="border: 2px solid black;"><strong>รวมทั้งสิ้น<br>Grand total</strong></td>
+              <td class="right" style="border: 2px solid black;"><strong>{{ '{:,.2f}'.format(term.net_price)}}</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    
+      <!-- กล่องการชำระ -->
+      <div class="receipt-box " style="margin-top: 30px; margin-bottom: 10px;">
+        <div class="row" style="margin-bottom:0px">
+          <div class="col col-15" style="display: flex; flex-direction: column; justify-content: space-between; height: 138px;">
+            <div>
+              ชำระโดย<br><span class="subtext" style="color:black;margin-top:3px">Paid by</span>
+            </div>
+            <div style="margin-top: 20px !important;">
+              ผู้รับเงิน<br><span class="subtext" style="color:black;margin-top:3px">Cashier</span>
+            </div>
+          </div>
+            
+          <div class="col col-15">
+              <div class="row">
+                  <div class="label" style="width:50px">เงินสด <br><span class="subtext" style="color:black"> Cash</span></div>
+                  <div class="value" style="font-size: 25px;">&#x2610;</div>
+              </div>
+          </div>
+          <div class="payment-print-block">
+              <div class="row" style="display: flex;margin-bottom: 15px !important;">
+                <div class="label">เงินโอน <br><span class="subtext" style="color:black;margin-top:3px"> Transfer bank</span></div>
+                <div class="value" style="font-size: 25px;">&#x2611;</div>
+              </div>
+            
+              <div class="row" style="display: flex;margin-bottom: 15px !important;">
+                <div class="label">วันที่โอน <br><span class="subtext" style="color:black;margin-top:3px"> Date transfer </span></div>
+                <div class="value">{{ r.created_at.strftime('%Y-%m-%d') }}</div>
+              </div>
+              <div class="subtext"></div>
+            
+              <div class="row" style="display: flex;">
+                <div class="label">วันที่ <br><span class="subtext" style="color:black;margin-top:3px"> Date</span></div>
+                <div class="value">{{ r.created_at.strftime('%Y-%m-%d') }}</div>
+              </div>
+            </div>
+            
+          <div class="col col-25">
+              <div class="row" style="display: flex;margin-bottom: 10px !important;">
+                  <div class="label">สาขา <br><span class="subtext"style="color:black;"> Branch</span></div>
+                  <div class="value">บริษัท ไอ.อี.โอ. จำกัด</div>
+                </div>
+             
+            <div class="row">
+              <div class="label">จำนวนเงิน<br><span class="subtext"style="color:black;">Amount</span></div>
+              <div class="value">{{ '{:,.2f}'.format(term.net_price)}}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <span style="margin-top: 30px;">หมายเหตุ: เอกสารฉบับนี้ไม่ใช่ของจริง โดยเอกสารฉบับนี้เป็นใบรับฝากเงินเพื่อที่ให้ทางสถาบันเป็นผู้ดำเนินการชำระเงินค่าโครงการของ<br>ผู้สมัครให้กับองค์กรต่างประเทศเท่านั้น</span><br>
+      <span>This document is only a deposit receipt. The programe fee will be paid by applicants. IEO will make remittance on behalf of applicant to US. designated sponsors</span>
+</div>
+{% endif %}
+{% endfor %}
+
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}
+
+<script src="{{ config.ASSETS_ROOT }}/plugins/datatables.net/js/dataTables.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/datatables.net-bs5/js/dataTables.bootstrap5.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/datatables.net-responsive/js/dataTables.responsive.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/datatables.net-responsive-bs5/js/responsive.bootstrap5.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/js/demo/table-manage-responsive.demo.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/moment/min/moment.min.js"></script>
+
+
+<script src="{{ config.ASSETS_ROOT }}/plugins/parsleyjs/dist/parsley.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/@highlightjs/cdn-assets/highlight.min.js"></script>
+
+<script src="{{ config.ASSETS_ROOT }}/plugins/select2/dist/js/select2.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/jquery-migrate/dist/jquery-migrate.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/tag-it/js/tag-it.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/select-picker/dist/picker.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/sweetalert/dist/sweetalert.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="{{ config.ASSETS_ROOT }}/js/order/main_orderList.js?v1.0"></script>
+<script>
+$(document).ready(function() {
+    loadDataTable();
+
+    
+});
+
+
+function loadDataTable() {
+    if ($.fn.DataTable.isDataTable('#data-table-responsive')) {
+        $('#data-table-responsive').DataTable().destroy(); // ลบ DataTable เดิมก่อน
+    }
+
+    const table = $('#data-table-responsive').DataTable({
+        responsive: true,
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: "/order/get_account",
+            type: "POST",
+            data: function(d) { 
+                return JSON.stringify(d); 
+            },
+            contentType: "application/json",
+            dataType: "json"
+        },
+        columns: [
+            { data: "id" },
+            { data: "receipt_no" },
+            { data: "customer_name" },
+            { data: "product_name" },
+            { data: "discount", render: data => parseFloat(data).toLocaleString("en-US", { minimumFractionDigits: 2 }) },
+            { data: "amount", render: data => parseFloat(data).toLocaleString("en-US", { minimumFractionDigits: 2 }) },
+            { data: "created_at", render: data => moment(data).format("DD/MM/YYYY") },
+            { 
+                data: null,  
+
+                orderable: false,  //ปิดการเรียงลำดับในคอลัมน์นี้
+                render: function(data, type, row) {
+                    const termId = row.term_id || '';
+                    let buttons = '';
+
+                    {% if current_user.has_permission('delete_order') %}
+                    buttons += `
+                        <a class="btn btn-danger btn-icon btn-circle" onclick="sweetAlertDel(${data.data_user.id})" hidden>
+                            <i class="fas fa-trash"></i>
+                        </a>
+                        <a href="#" class="btn btn-primary btn-icon btn-circle print-receipt-btn" data-term-id="${termId}">
+                            <i class="material-icons">print</i>
+                        </a>
+                    `;
+                    {% endif %}
+
+                    return buttons;
+                    
+                }
+            }
+        ],
+        order: [[0, "asc"]],  // เรียงลำดับจาก ID
+        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+        pageLength: 10
+    });
+
+    
+}
+
+</script>
+<script>
+    class ReceiptPrinter {
+        constructor(receiptElement = null, invoiceElement = null) {
+          this.receiptElement = receiptElement;
+          this.invoiceElement = invoiceElement;
+        }
+      
+        getPrintableHTML() {
+          let combinedHTML = '';
+          if (this.receiptElement) {
+            combinedHTML += `<div style="page-break-after: always;">${this.receiptElement.innerHTML}</div>`;
+          }
+          if (this.invoiceElement) {
+            combinedHTML += `<div>${this.invoiceElement.innerHTML}</div>`;
+          }
+      
+          return `
+            <html>
+            <head>
+
+              <title>Receipt Print</title>
+              <style>
+                
+                body {
+                  font-family: "TH SarabunPSK", sans-serif;
+                  width: 800px;
+                  margin: 0 auto;
+                  padding: 20px;
+                  font-size: 14px !important;
+                }
+                table {
+                  width: 100%;
+                  border-collapse: collapse;
+                  margin-top: 10px;
+                }
+                table, th, td {
+                  border: 1px solid black;
+                }
+                td, th {
+                  padding: 8px;
+                  text-align: left;
+                }
+                .right { text-align: right; }
+                .receipt-box {
+                  border: 2px solid #000;
+                  border-radius: 10px;
+                  padding: 20px;
+                  margin-top: 20px;
+                }
+                .row {
+                  display: flex;
+                  flex-wrap: wrap;
+                  gap: 10px;
+                  margin-bottom: 10px;
+                }
+                .col {
+                  line-height: 1.5;
+                }
+                .col-15 { flex: 1.5; min-width: 80px; }
+                .col-20 { flex: 2; min-width: 100px; }
+                .col-25 { flex: 2.5; min-width: 150px; }
+                .subtext {
+                  font-size: 12px;
+                  color: #666;
+                  display: block;
+                }
+                .label { width: 75px; }
+                .value { flex: 1; }
+                .payment-print-block .row {
+                  min-width: 225px;
+                  display: flex;
+                  gap: 10px;
+                  margin-top: 4px;
+                }
+                @media print {
+                    body {
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                    }
+
+                    div, table, td, th {
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                    }
+
+                    table, tr, td, th {
+                        page-break-inside: avoid !important;
+                        break-inside: avoid !important;
+                    }
+
+                    .receipt-box {
+                    border: 2px solid #000 !important;
+                    }
+
+                    /* บังคับให้แสดงสีพื้นหลัง */
+                    .black-bg {
+                    background-color: black !important;
+                    color: white !important;
+                    }
+
+                    /* หากต้องการลบ margin/padding บางส่วนเฉพาะตอนพิมพ์ */
+                    .no-print-margin {
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    }
+                    .row, .col {
+                    padding: 0 !important;
+                    margin: 0 !important;
+                    }
+                    .receipt-page {
+                        page-break-after: always;
+                        page-break-inside: avoid;
+                        break-inside: avoid-page;
+                    }
+                   
+                }
+
+              </style>
+            </head>
+            <body>${combinedHTML}</body>
+          </html>
+          `;
+        }
+      
+        preview(previewIframeId = 'receipt-preview-frame') {
+          const previewFrame = document.getElementById(previewIframeId);
+          if (!previewFrame) {
+            alert('ไม่พบ iframe สำหรับ preview');
+            return;
+          }
+          //previewFrame.style.display = 'none';
+      
+          const doc = previewFrame.contentDocument || previewFrame.contentWindow.document;
+          doc.open();
+          doc.write(this.getPrintableHTML());
+          doc.close();
+          previewFrame.style.display = 'none';
+
+        }
+      
+        print() {
+          const previewFrame = document.getElementById('receipt-preview-frame');
+          if (!previewFrame) {
+            alert('ไม่พบ iframe สำหรับพิมพ์');
+            return;
+          }
+      
+          const doc = previewFrame.contentDocument || previewFrame.contentWindow.document;
+          doc.open();
+          doc.write(this.getPrintableHTML());
+          doc.close();
+      
+          previewFrame.contentWindow.focus();
+          previewFrame.contentWindow.print();
+        }
+      }
+      
+  </script>
+  
+<script>
+
+    $(document).on('click', '.print-receipt-btn', function (e) {
+        e.preventDefault();
+    
+        const termId = $(this).data('term-id');
+    
+        // ✅ ใช้เฉพาะ invoice
+        const receiptEl = document.getElementById(`receipt-content-${termId}`);
+        console.log(receiptEl);
+
+        if (!receiptEl) {
+          alert(`❌ ไม่พบใบกำกับภาษี (receipt-content-${termId})`);
+          return;
+        }
+    
+        // ❌ อย่ามี receiptEl ตรงนี้ ถ้าไม่ได้ใช้
+        // const receiptEl = document.getElementById(...); ← ลบทิ้ง
+    
+        const printer = new ReceiptPrinter(null, receiptEl); // ✅ ถูกต้อง
+        printer.print(); // หรือ printer.print();
+    });
+    
+
+</script>
+
+{% endblock javascripts %}

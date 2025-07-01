@@ -26,6 +26,7 @@ from sqlalchemy import and_, func, case, asc, or_, cast, String
 from sqlalchemy.orm import aliased, joinedload
 from collections import defaultdict
 from datetime import datetime
+from decimal import Decimal, ROUND_HALF_UP
 
 # import logging
 
@@ -318,11 +319,20 @@ def order_update(id):
             "payment": related_payment
         })
     
-    print("term_payment_files_map")
-    print(term_payment_files_map)
+    receipts = ReceiptModel.query.filter_by(order_id=data.id).all()
+    tax = TaxInvoiceModel.query.filter_by(order_id=data.id).all()
+
+    for term in orderTerm:
+        print(term.id, term.check_vat, type(term.check_vat))
+
+    for t in tax:
+        print(t.id, t.terms_id)  
+
+
     
     
-    return render_template('order/order_update.html', segment='order' ,lead=lead, orderItem=orderItem, datas=data, payments=payments,product=product,members=member,orderTerms=orderTerm,term_payment_files_map=term_payment_files_map)
+    return render_template('order/order_update.html', segment='order' ,lead=lead, orderItem=orderItem, datas=data, payments=payments,product=product,members=member,orderTerms=orderTerm,term_payment_files_map=term_payment_files_map,
+                           receipts=receipts,tax=tax)
 
 @blueprint.route("/check_statusLead", methods=["POST"])
 @login_required
@@ -561,11 +571,32 @@ def delete_file():
         related_files = FilePaymentModel.query.filter_by(term_id=term.id).all()
         related_payment_ids = [f.payment_id for f in related_files if f.payment_id]
 
-        paid_total = db.session.query(db.func.sum(PaymentModel.amount))\
-            .filter(PaymentModel.id.in_(related_payment_ids)).scalar() or 0
+        print(f"related_payment_ids: {related_payment_ids}")  
 
-        term.outstanding_amount = max(0, float(term.amount or 0) - paid_total)
+        paid_total = db.session.query(db.func.sum(PaymentModel.amount))\
+                    .join(FilePaymentModel, PaymentModel.id == FilePaymentModel.payment_id)\
+                    .filter(FilePaymentModel.term_id == term.id)\
+                    .scalar() or 0
+
+        print(f"paid_total: {paid_total}") 
+
+        # paid_total = db.session.query(db.func.sum(PaymentModel.amount))\
+        #     .filter(PaymentModel.id.in_(related_payment_ids)).scalar() or 0
+
+        term.outstanding_amount = max(0, float(term.net_price or 0) - paid_total)
         db.session.commit()
+
+        if term.outstanding_amount > 0:
+            receipt_to_delete = ReceiptModel.query.filter_by(terms_id=term.id).all()
+            with db.session.no_autoflush:
+                for r in receipt_to_delete:
+                    db.session.delete(r)
+            db.session.commit()
+
+
+
+           
+
 
         # ✅ ตรวจสอบสถานะ order ใหม่
         all_terms = OrderTermModel.query.filter_by(order_id=term.order_id).order_by(OrderTermModel.sequence).all()
@@ -847,7 +878,9 @@ def create_order():
                     discount=0.00,
                     net_price=Decimal(plan.amount),
                     outstanding_amount=Decimal(plan.amount),
-                    created_at=datetime.utcnow()
+                    created_at=datetime.utcnow(),
+                    check_vat = plan.check_vat
+
                 )
                 db.session.add(term)
             db.session.commit()
@@ -965,6 +998,17 @@ def save_single_term():
 
     db.session.commit()
 
+    if term.outstanding_amount == 0:
+        order = OrderModel.query.get(term.order_id)
+
+        # ตรวจสอบว่าเคยมีใบเสร็จหรือยัง
+        existing_receipt = ReceiptModel.query.filter_by(terms_id=term.id).first()
+        if not existing_receipt:
+            create_receipt_and_invoice_for_term(term)
+        else:
+            print(f"📄 มีใบเสร็จแล้ว: {existing_receipt.receipt_no}")
+            # create_receipt_and_invoice_for_term(term)
+       
     
 
     # บันทึกไฟล์
@@ -1013,11 +1057,10 @@ def save_single_term():
         order.status = f"installment_{next_outstanding_term.sequence}"
     else:
         order.status = "completed"
-
     db.session.commit()
 
     # print(f"\u2705 บันทึกงวด {term.sequence} ยอดจ่ายรวม: {paid_total:.2f}, ค้าง: {term.outstanding_amount:.2f}")
-    # print(f"\u2705 อัปเดตสถานะออร์เดอร์: {term.order.status}")
+    print(f"\u2705 อัปเดตสถานะออร์เดอร์: {term.order.status}")
 
     try:
         db.session.commit()
@@ -1026,4 +1069,341 @@ def save_single_term():
         db.session.rollback()
         return jsonify(success=False, error=f"เกิดข้อผิดพลาด: {str(e)}")
     
+def generate_document_number(doc_type="DP"):  # doc_type: "DP" หรือ "BI"
+    # สมมุติใช้จาก ReceiptModel เป็นหลัก
+    latest_receipt = db.session.query(ReceiptModel.receipt_no)\
+        .filter(ReceiptModel.receipt_no.like(f"{doc_type}%"))\
+        .order_by(ReceiptModel.receipt_no.desc()).first()
+
+    if latest_receipt and latest_receipt[0]:
+        # ดึงเฉพาะเลขรันสุดท้าย
+        last_number = int(latest_receipt[0].split("-")[-1])
+        next_number = last_number + 1
+    else:
+        next_number = 1
+
+    # ใช้ prefix แบบมีปีเดือนเพื่อให้ดูเวลาออกเอกสารได้ง่าย (แต่ไม่ส่งผลต่อเลขรัน)
+    year_month = datetime.today().strftime("%Y%m")
+    prefix = f"{doc_type}{year_month}"
+    return prefix, str(next_number).zfill(5)
+
+def generate_receipt_number():
+    prefix, number = generate_document_number("DP")
+    return f"{prefix}-{number}" 
+
+def generate_tax_invoice_number():
+    prefix, number = generate_document_number("BI")
+    return f"{prefix}-{number}" 
+     
+
+def create_receipt_and_invoice_for_term(term: OrderTermModel):
+    try:
+        # เช็คก่อนว่า term นี้เคยออกใบเสร็จหรือยัง
+
+        existing_receipt = ReceiptModel.query.filter_by(terms_id=term.id).first()
+        print(f"[DEBUG] 🔢 Term ID: {term.id}, Sequence: {term.sequence}, Amount: {term.amount}, VAT: {term.check_vat}")
+        if existing_receipt:
+            print(f"⚠️ Term {term.id} มีใบเสร็จแล้ว: {existing_receipt.receipt_no}")
+            return
+
+        # สร้างใบเสร็จสำหรับงวดนี้
+        receipt = ReceiptModel(
+            order_id=term.order_id,
+            terms_id=term.id,
+            receipt_no=generate_receipt_number(),
+            amount=term.amount,
+            member_id=term.order.member_id,
+        )
+        db.session.add(receipt)
+        db.session.flush()
+
+        
+        # ตรวจสอบ VAT
+        if term.check_vat:
+            vat_rate = Decimal("1.07")
+            amount = term.net_price  # สมมุติว่าเป็น Decimal อยู่แล้ว
+
+            base_amount = (amount / vat_rate).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            vat_amount = (amount - base_amount).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            print(base_amount)
+            print(vat_amount)
+            tax_invoice = TaxInvoiceModel(
+                order_id=term.order_id,
+                receipt_id=receipt.id,
+                tax_invoice_no=receipt.receipt_no.replace("DP", "BI"),
+                member_id=term.order.member_id,
+                amount=term.outstanding_amount,
+                vat=vat_amount,  
+                amount_before_vat=base_amount,
+                terms_id=term.id,
+            )
+            db.session.add(tax_invoice)
+            db.session.commit()
+            print(f"✅ งวด {term.sequence}: สร้างใบเสร็จ {receipt.receipt_no} และใบกำกับ {tax_invoice.tax_invoice_no}")
+        else:
+            db.session.commit()
+            print(f"✅ งวด {term.sequence}: สร้างใบเสร็จ {receipt.receipt_no} (ไม่มี VAT)")
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ ERROR create_receipt_and_invoice_for_term: {e}")
+
+@blueprint.route('/account')
+@login_required
+@read_permission.require(http_exception=403)
+def account_list():
+    datas = ReceiptModel.query.all()
+
+    # ดึงข้อมูล tax invoice + terms + order + agency
+    receipt = ReceiptModel.query \
+        .options(
+            joinedload(ReceiptModel.terms)
+                .joinedload(OrderTermModel.order)
+                .joinedload(OrderModel.agency),
+            joinedload(ReceiptModel.member)
+        ).all()
+
+    # เอาเฉพาะ term ที่มีใบกำกับภาษี
+    orderTerms = [inv.terms for inv in receipt if inv.terms]
+
+    return render_template('order/account_list.html', 
+                           segment='account',
+                           receipts=receipt,  # <== ใบกำกับภาษีทั้งหมด
+                           orderTerms=orderTerms)
+
+
+    # print(datas)
+    return render_template('order/account_list.html', segment='account' ,datas=datas)
+
+@blueprint.route("/get_account", methods=["POST"])
+@login_required
+@read_permission.require(http_exception=403)
+def get_account():
+
+    request_data = request.get_json()
+    draw = request_data.get("draw", 1)
+    start = request_data.get("start", 0)
+    length = request_data.get("length", 10)
+    order = request_data.get("order", [])  # ✅ เพิ่มบรรทัดนี้
+    search_value = request_data.get("search", {}).get("value", "")
+
+    # Mapping คอลัมน์จาก DataTable ไปยัง Database
+    column_map = {
+        0: ReceiptModel.id,
+        1: ReceiptModel.receipt_no,
+        2: MemberModel.first_name,
+        3: ProductForSalesModel.name,
+        4: OrderTermModel.discount,       # ส่วนลดอยู่ที่ terms
+        5: ReceiptModel.amount,
+        6: ReceiptModel.created_at,
+    }
+
+
+    query = db.session.query(ReceiptModel) \
+    .join(ReceiptModel.member) \
+    .join(ReceiptModel.terms) \
+    .join(OrderTermModel.order) \
+    .join(OrderModel.product) \
+    .options(
+        joinedload(ReceiptModel.member),
+        joinedload(ReceiptModel.terms).joinedload(OrderTermModel.order).joinedload(OrderModel.product)
+    )
+
+
+
+    if search_value:
+        search = f"%{search_value}%"
+        query = query.filter(
+            or_(
+                ReceiptModel.receipt_no.ilike(search),
+                MemberModel.first_name.ilike(search),
+                MemberModel.last_name.ilike(search),
+                ProductForSalesModel.name.ilike(search),
+                func.to_char(ReceiptModel.created_at, 'DD-MM-YYYY').ilike(search)
+            )
+        )
+
+
+    # การจัดเรียง
+    if order:
+        column_index = int(order[0]["column"])
+        sort_direction = order[0]["dir"]
+        column_order = column_map.get(column_index, OrderModel.id)
+
+        if sort_direction == "desc":
+            column_order = column_order.desc()
+        else:
+            column_order = column_order.asc()
+    else:
+        column_order = OrderModel.id.asc()
+
+    total_records = query.count()
+
+    orders = query.order_by(column_order).offset(start).limit(length).all()
+    # print(orders)
+    data = []
+    for index, order in enumerate(orders):
+        member = order.member
+        term = order.terms
+        order_model = term.order if term else None
+        product = order_model.product if order_model else None
+
+        customer_name = f"{member.first_name or ''} {member.last_name or ''}".strip() if member else ''
+        product_name = product.name if product else ''
+        discount = term.discount if term else 0
+
+        data.append({
+            "id": start + index + 1,
+            "term_id": order.terms_id,
+            "receipt_no": order.receipt_no or '',
+            "customer_name": customer_name,
+            "product_name": product_name,
+            "discount": float(discount or 0),
+            "amount": float(order.amount or 0),
+            "created_at": int(order.created_at.timestamp() * 1000),
+            "data_user": safe_model_to_dict(order),
+        })
+
+
+    return Response(
+        json.dumps({
+            "draw": draw,
+            "recordsTotal": total_records,
+            "recordsFiltered": total_records,
+            "data": data
+        }, ensure_ascii=False, default=str),
+        content_type="application/json"
+    )  
+
+@blueprint.route('/invoice')
+@login_required
+@read_permission.require(http_exception=403)
+def invoice_list():
+    
+
+
+    # ดึงข้อมูล tax invoice + terms + order + agency
+    invoices = TaxInvoiceModel.query \
+        .options(
+            joinedload(TaxInvoiceModel.terms)
+                .joinedload(OrderTermModel.order)
+                .joinedload(OrderModel.agency),
+            joinedload(TaxInvoiceModel.member)
+        ).all()
+
+    # เอาเฉพาะ term ที่มีใบกำกับภาษี
+    orderTerms = [inv.terms for inv in invoices if inv.terms]
+
+    return render_template('order/invoice_list.html', 
+                           segment='invoice',
+                           tax=invoices,  # <== ใบกำกับภาษีทั้งหมด
+                           orderTerms=orderTerms)
+
+@blueprint.route("/get_invoice", methods=["POST"])
+@login_required
+@read_permission.require(http_exception=403)
+def get_invoice():
+    request_data = request.get_json()
+
+    # ───── ข้อมูลพื้นฐานจาก DataTables ─────
+    draw = request_data.get("draw", 1)
+    start = request_data.get("start", 0)
+    length = request_data.get("length", 10)
+    order = request_data.get("order", [])
+    search_value = request_data.get("search", {}).get("value", "")
+
+    # ───── Mapping คอลัมน์จาก DataTable ไปยัง Model ─────
+    column_map = {
+        0: TaxInvoiceModel.id,
+        1: TaxInvoiceModel.tax_invoice_no,
+        2: MemberModel.first_name,
+        3: ProductForSalesModel.name,
+        4: OrderTermModel.discount,
+        5: TaxInvoiceModel.amount,
+        6: TaxInvoiceModel.created_at,
+    }
+
+    # ───── Query หลัก ─────
+    query = db.session.query(TaxInvoiceModel)\
+        .join(TaxInvoiceModel.member)\
+        .join(TaxInvoiceModel.terms)\
+        .join(OrderTermModel.order)\
+        .join(OrderModel.product)\
+        .options(
+            joinedload(TaxInvoiceModel.member),
+            joinedload(TaxInvoiceModel.terms)
+                .joinedload(OrderTermModel.order)
+                .joinedload(OrderModel.product)
+        )
+
+    # ───── ค้นหาจากคำค้น (Search) ─────
+    if search_value:
+        search = f"%{search_value}%"
+        query = query.filter(
+            or_(
+                TaxInvoiceModel.tax_invoice_no.ilike(search),
+                MemberModel.first_name.ilike(search),
+                MemberModel.last_name.ilike(search),
+                ProductForSalesModel.name.ilike(search),
+                func.to_char(TaxInvoiceModel.created_at, 'DD-MM-YYYY').ilike(search)
+            )
+        )
+
+    # ───── จัดเรียงข้อมูล (Ordering) ─────
+    if order:
+        column_index = int(order[0]["column"])
+        sort_direction = order[0]["dir"]
+        column_order = column_map.get(column_index, TaxInvoiceModel.id)  # fallback
+        column_order = column_order.desc() if sort_direction == "desc" else column_order.asc()
+    else:
+        column_order = TaxInvoiceModel.id.asc()
+
+    total_records = query.count()
+
+    # ───── ดึงข้อมูลรายการตามช่วงที่ต้องการ ─────
+    invoices = query.order_by(column_order).offset(start).limit(length).all()
+
+    # ───── เตรียมข้อมูลสำหรับ DataTables ─────
+    data = []
+    for index, invoice in enumerate(invoices):
+        member = invoice.member
+        term = invoice.terms
+        order_model = term.order if term else None
+        product = order_model.product if order_model else None
+
+        customer_name = f"{member.first_name or ''} {member.last_name or ''}".strip() if member else ''
+        product_name = product.name if product else ''
+        discount = float(term.discount or 0) if term else 0
+        amount = float(term.amount or 0) if term else 0
+        net_price = float(term.net_price or 0) if term else 0
+        vat = float(invoice.vat or 0) if invoice else 0
+        amount_before_vat = float(invoice.amount_before_vat or 0) if invoice else 0
+
+        data.append({
+            "id": start + index + 1,
+            "term_id": invoice.terms_id,
+            "tax_invoice_no": invoice.tax_invoice_no or '',
+            "customer_name": customer_name,
+            "product_name": product_name,
+            "discount": discount,
+            "amount": amount,
+            "net_price": net_price,
+            "vat": vat,
+            "amount_before_vat": amount_before_vat,
+            "created_at": int(invoice.created_at.timestamp() * 1000),  # JS timestamp
+            "data_user": safe_model_to_dict(invoice),
+        })
+
+    # ───── ส่งผลลัพธ์กลับ DataTables ─────
+    return Response(
+        json.dumps({
+            "draw": draw,
+            "recordsTotal": total_records,
+            "recordsFiltered": total_records,
+            "data": data
+        }, ensure_ascii=False, default=str),
+        content_type="application/json"
+    )
+
+ 
     

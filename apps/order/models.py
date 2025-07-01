@@ -53,6 +53,7 @@ class OrderModel(db.Model):
 
     terms = db.relationship('OrderTermModel', backref='order', lazy='dynamic')
 
+
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
 
@@ -183,9 +184,64 @@ class OrderTermModel(db.Model):
     discount = db.Column(db.Numeric(precision=12, scale=2), nullable=False, server_default="0.00")
     net_price = db.Column(db.Numeric(precision=10, scale=2), nullable=True)
     outstanding_amount = db.Column(db.Numeric(precision=12, scale=2), nullable=True, server_default="0.00")
+    check_vat = db.Column(db.Boolean,  server_default="false", comment="1:vat, 0:no vat")
+
 
     payment_date = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime,  default=db.func.current_timestamp())
+
+# 💳 ใบเสร็จรับเงิน
+class ReceiptModel(db.Model):
+    __tablename__ = 'receipts'
+    id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey('order.id'), nullable=False)
+    member_id = db.Column(db.Integer, db.ForeignKey('member.id'), nullable=False)
+    terms_id = db.Column(db.Integer, db.ForeignKey('order_terms.id'), nullable=False)
+    receipt_no = db.Column(db.String, unique=True)
+    amount = db.Column(db.Numeric(precision=12, scale=2), nullable=False)
+    
+    order = db.relationship("OrderModel", backref="receipts")  # <== เพิ่มบรรทัดนี้
+
+    member = db.relationship("MemberModel", backref="receipts")
+    terms = db.relationship("OrderTermModel", backref="receipts")
+    tax_invoices = db.relationship(
+        "TaxInvoiceModel",
+        back_populates="receipt",
+        cascade="all, delete-orphan",
+        passive_deletes=True
+    )  
+    created_at = db.Column(db.DateTime,  default=db.func.current_timestamp())
+    updated_at = db.Column(db.DateTime,  default=db.func.current_timestamp(),
+                           onupdate=db.func.current_timestamp())
+# 🧾 ใบกำกับภาษี
+class TaxInvoiceModel(db.Model):
+    __tablename__ = 'tax_invoices'
+    id = db.Column(db.Integer, primary_key=True)
+    receipt_id = db.Column(db.Integer, db.ForeignKey('receipts.id', ondelete="CASCADE"), nullable=False)
+    tax_invoice_no = db.Column(db.String, unique=True)
+    amount = db.Column(db.Numeric(precision=12, scale=2), nullable=False)
+    vat = db.Column(db.Numeric(precision=12, scale=2), nullable=True)
+    amount_before_vat = db.Column(db.Numeric(precision=12, scale=2), nullable=True)
+    order_id = db.Column(db.Integer, db.ForeignKey('order.id'), nullable=False)
+    terms_id = db.Column(db.Integer, db.ForeignKey('order_terms.id'), nullable=False)
+
+
+    member_id = db.Column(db.Integer, db.ForeignKey("member.id", ondelete="CASCADE"))
+    terms = db.relationship("OrderTermModel", backref="tax_invoices")
+    order = db.relationship("OrderModel", backref="tax_invoices")  # <== เพิ่มบรรทัดนี้
+
+    # ฝั่งกลับของ relationship
+    receipt = db.relationship(
+        "ReceiptModel",
+        back_populates="tax_invoices"
+    )
+
+    member = db.relationship("MemberModel", backref="tax_invoices")
+    created_at = db.Column(db.DateTime,  default=db.func.current_timestamp())
+    updated_at = db.Column(db.DateTime,  default=db.func.current_timestamp(),
+                           onupdate=db.func.current_timestamp())
+
+
 
 
 
