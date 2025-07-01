@@ -1,0 +1,137 @@
+<!-- templates/receipt_partial.html -->
+{% set receipt_for_term = receipts | selectattr("terms_id", "equalto", term.id) | list %}
+{% if receipt_for_term %}
+  {% set r = receipt_for_term[0] %}
+<div id="receipt-content-{{ term.id }}" >
+    <!-- ตัวอย่าง (ใช้ข้อมูลจาก backend เช่น data.customer_name) -->
+    <div style="text-align: right; line-height: 1.4; margin-bottom: 10px;">
+        <div>เลขที่ 80 อาคาร เค.เอ.เอ็น ห้องเลขที่ 104 ชั้น 1</div>
+        <div>ซอยนราธิวาสราชนครินทร์ 8 แขวงทุ่งวัดดอน</div>
+        <div>เขตสาทร กรุงเทพมหานคร 10120</div>
+        <div>Tel. (66) 26426131-2 Fax. (66) 26426133</div>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div style="border: 1px solid black; padding: 8px 0px; width: 150px; text-align: center;">
+          <div>ไม่ใช่ใบกำกับภาษี</div>
+          <hr style="margin: 4px 0;">
+          <div>เอกสารออกเป็นชุด</div>
+        </div>
+        <div style="text-align: center; flex: 1;">
+          <h2 style="margin: 0;">ใบรับฝากเงิน</h2>
+          <div>(DEPOSIT)</div>
+        </div>
+        <div style="border: 1px solid black; padding: 8px; width: 150px; text-align: center;">
+          <div>ต้นฉบับ / Original</div>
+          <div>ลูกค้า / Customer</div>
+        </div>
+    </div>
+  
+    <div style="border: 2px solid black; border-radius: 10px;  margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between;">
+          <div style="width: 75%;padding: 10px;">
+            <div style="margin-bottom: 12px;">
+              <strong style="margin-right:20px">ชื่อลูกค้า</strong> {{members.first_name}} {{members.last_name}}<br>
+              Customer
+            </div>
+            <div style="margin-bottom: 12px;">
+              <strong style="margin-right:42px">ที่อยู่</strong> {{members.address}}<br>
+              Address
+            </div>
+          </div>
+          <div style="width: 25%;border-left: 2px solid black;padding: 10px;">
+            
+              <strong style="margin-right: 20px;">เลขที่</strong> {{ r.receipt_no }}<br>No.<br><br>
+              <strong style="margin-right: 25px;">วันที่</strong> {{ r.created_at.strftime('%Y-%m-%d') }}<br>Date
+            
+            
+          </div>
+        </div>
+      </div>
+    
+      <!-- รายละเอียด -->
+      <div class="section">
+        <table style="border-collapse: collapse; border: 2px solid black; width: 100%;">
+          <thead style="border: 2px solid black;">
+            <tr>
+              <th style="text-align: center; vertical-align: middle;border: 2px solid black;">ลำดับ <br>No.</th>
+              <th style="text-align: center; vertical-align: middle;border: 2px solid black;width:400px">รายการ <br>Particulars</th>
+              <th style="text-align: center; vertical-align: middle;border: 2px solid black;">หน่วยละ <br>Unit Price</th>
+              <th style="text-align: center; vertical-align: middle;border: 2px solid black;">ส่วนลด <br>Discount</th>
+              <th style="text-align: center; vertical-align: middle;border: 2px solid black;">จำนวนเงิน <br>Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="height: 400px;vertical-align: top;">
+              <td style="text-align: center;border: 2px solid black;">1</td>
+              <td style="border: 2px solid black;">{{ orderItem.product.name or '-' }} {{term.term_detail}}</td>
+              <td style="text-align: center; border: 2px solid black;">1</td>
+              <td style="text-align: right; border: 2px solid black;">{{term.discount}}</td>
+              <td style="text-align: right; border: 2px solid black;">{{ '{:,.2f}'.format(term.net_price)}}</td>
+            </tr>
+            <tr>
+              <td colspan="4" class="right" style="border: 2px solid black;"><strong>รวม<br>Total</strong></td>
+              <td class="right" style="border: 2px solid black;"><strong>{{ '{:,.2f}'.format(term.net_price)}}</strong></td>
+            </tr>
+            <tr>
+              <td style="text-align: center;border: 2px solid black;"><strong>บาท<br>Bath</strong></td>
+              <td colspan="3" class="right" style="border: 2px solid black;"><strong>รวมทั้งสิ้น<br>Grand total</strong></td>
+              <td class="right" style="border: 2px solid black;"><strong>{{ '{:,.2f}'.format(term.net_price)}}</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    
+      <!-- กล่องการชำระ -->
+      <div class="receipt-box " style="margin-top: 30px; margin-bottom: 10px;">
+        <div class="row" style="margin-bottom:0px">
+          <div class="col col-15" style="display: flex; flex-direction: column; justify-content: space-between; height: 138px;">
+            <div>
+              ชำระโดย<br><span class="subtext" style="color:black;margin-top:3px">Paid by</span>
+            </div>
+            <div style="margin-top: 20px !important;">
+              ผู้รับเงิน<br><span class="subtext" style="color:black;margin-top:3px">Cashier</span>
+            </div>
+          </div>
+            
+          <div class="col col-15">
+              <div class="row">
+                  <div class="label" style="width:50px">เงินสด <br><span class="subtext" style="color:black"> Cash</span></div>
+                  <div class="value" style="font-size: 25px;">&#x2610;</div>
+              </div>
+          </div>
+          <div class="payment-print-block">
+              <div class="row" style="display: flex;margin-bottom: 15px !important;">
+                <div class="label">เงินโอน <br><span class="subtext" style="color:black;margin-top:3px"> Transfer bank</span></div>
+                <div class="value" style="font-size: 25px;">&#x2611;</div>
+              </div>
+            
+              <div class="row" style="display: flex;margin-bottom: 15px !important;">
+                <div class="label">วันที่โอน <br><span class="subtext" style="color:black;margin-top:3px"> Date transfer </span></div>
+                <div class="value">{{ r.created_at.strftime('%Y-%m-%d') }}</div>
+              </div>
+              <div class="subtext"></div>
+            
+              <div class="row" style="display: flex;">
+                <div class="label">วันที่ <br><span class="subtext" style="color:black;margin-top:3px"> Date</span></div>
+                <div class="value">{{ r.created_at.strftime('%Y-%m-%d') }}</div>
+              </div>
+            </div>
+            
+          <div class="col col-25">
+              <div class="row" style="display: flex;margin-bottom: 10px !important;">
+                  <div class="label">สาขา <br><span class="subtext"style="color:black;"> Branch</span></div>
+                  <div class="value">บริษัท ไอ.อี.โอ. จำกัด</div>
+                </div>
+             
+            <div class="row">
+              <div class="label">จำนวนเงิน<br><span class="subtext"style="color:black;">Amount</span></div>
+              <div class="value">{{ '{:,.2f}'.format(term.net_price)}}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <span style="margin-top: 30px;">หมายเหตุ: เอกสารฉบับนี้ไม่ใช่ของจริง โดยเอกสารฉบับนี้เป็นใบรับฝากเงินเพื่อที่ให้ทางสถาบันเป็นผู้ดำเนินการชำระเงินค่าโครงการของ<br>ผู้สมัครให้กับองค์กรต่างประเทศเท่านั้น</span><br>
+      <span>This document is only a deposit receipt. The programe fee will be paid by applicants. IEO will make remittance on behalf of applicant to US. designated sponsors</span>
+    </div>
+    {% endif %}

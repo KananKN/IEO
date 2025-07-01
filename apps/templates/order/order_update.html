@@ -18,13 +18,24 @@
     input[type="file"] {
         height: 35px; /* หรือ 100% ถ้าใน flex */
         line-height: 1.5;
-}
-.amount-error {
-    font-size: 0.85rem;
-    margin-top: 4px;
-    display: block;
-}
+    }
+    .amount-error {
+        font-size: 0.85rem;
+        margin-top: 4px;
+        display: block;
+    }
+    div[id^="receipt-content-"], div[id^="invoice-content-"] {
+        position: absolute;
+        left: -9999px;
+        top: 0;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        visibility: hidden;
+      }
+    
 </style>
+
 {% endblock stylesheets %}
 
 {% block content %}
@@ -249,12 +260,14 @@
                                                     aria-controls="collapse-{{ loop.index }}">
                                                         <div class="d-flex w-100 align-items-center" style="flex-wrap: nowrap;" >
                                                             <!-- ซ้าย: ข้อมูลงวด -->
-                                                            <div class="left-section pe-2" style="width: 50%;" >
+                                                            <div class="left-section pe-2" style="width: 40%;" >
                                                                 <div class="d-flex flex-row align-items-center gap-2 ">
                                                                     <label class="col-form-label fw-bold">{{ term.term_detail }}</label>
+                                                                    
                                                                 </div>
+
                                                             </div>
-                                                            <div class="right-section ps-2" style="width: 50%;" >
+                                                            <div class="right-section ps-2" style="width: 60%;" >
                                                                 <div class="d-flex flex-row align-items-center gap-2">
                                                                     <div class="mx-1 mt-1">
                                                                         <input type="hidden" name="term_id" value="{{ term.id }}">
@@ -278,7 +291,17 @@
                                                                     <div class="mx-1">
                                                                         <input type="text" class="form-control text-end price-input" name="outstanding_amount" data-term-id="{{ term.id }}"
                                                                             value="{{ '{:,.2f}'.format(term.outstanding_amount or 0)}}" oninput="formatInputNumberWithCommas(this)" readonly placeholder="ยอดค้างชำระ">
+                                                                             
                                                                     </div>
+                                                                    {% if (term.outstanding_amount or 0) == 0 %}
+                                                                        <div class="mx-1 mt-1">
+                                                                            <a class="pt-2 pe-2 print-receipt-btn" data-term-id="{{ term.id }}">
+                                                                            <i class="material-icons">print</i>
+                                                                            </a>
+                                                                        </div>
+                                                                    {% endif %}
+                                                                    
+                                                                  
                                 
                                                                 </div>
                                                             </div>
@@ -468,6 +491,35 @@
     
 
 </form>
+<!-- <button class="print-btn" id="print-receipt-btn">🖨️ พิมพ์ใบเสร็จ</button> -->
+
+
+
+<iframe id="receipt-preview-frame" style="width: 100%; height: 1200px; border: 1px solid #ccc; margin-top: 20px;display:none;"></iframe>
+<!-- <iframe id="receipt-preview-frame" style="width: 100%; height: 1200px; border: 1px solid #ccc; margin-top: 20px;"></iframe> -->
+
+{% for term in orderTerms %}
+  <div id="receipt-content-{{ term.id }}" hidden>
+    {% include 'order/receipt_partial.html' with context %}
+  </div>
+
+
+  {% if term.check_vat %}
+    <div id="invoice-content-{{ term.id }}" hidden>
+      {% include 'order/invoice_partial.html' with context %}
+    </div>
+  {% endif %}
+{% endfor %}
+
+
+
+
+
+  <!-- ปุ่มปริ้น -->
+  
+  <!-- <button onclick="printTwoReceipts()">🖨️ พิมพ์ใบเสร็จ 2 ชุด</button> -->
+
+  
 <a href="javascript:;" class="btn btn-icon btn-circle btn-primary btn-scroll-to-top" data-toggle="scroll-to-top"><i class="fa fa-angle-up"></i></a>
 
 
@@ -507,6 +559,305 @@
 <script src="{{ config.ASSETS_ROOT }}/js/demo/render.highlight.js"></script>
 
 <script src="{{ config.ASSETS_ROOT }}/js/supplier/main_supplier.js?v1.0"></script>
+<script>
+    class ReceiptPrinter {
+        constructor(receiptElement, invoiceElement = null) {
+            this.receiptElement = receiptElement;
+            this.invoiceElement = invoiceElement;
+          }
+    
+      getPrintableHTML() {
+        let combinedHTML = this.receiptElement?.innerHTML || '';
+        if (this.invoiceElement) {
+        combinedHTML += this.invoiceElement.innerHTML;
+        }
+        return `
+          <html>
+            <head>
+
+              <title>Receipt Print</title>
+              <style>
+                
+                body {
+                  font-family: "TH SarabunPSK", sans-serif;
+                  width: 800px;
+                  margin: 0 auto;
+                  padding: 20px;
+                  font-size: 14px !important;
+                }
+                table {
+                  width: 100%;
+                  border-collapse: collapse;
+                  margin-top: 10px;
+                }
+                table, th, td {
+                  border: 1px solid black;
+                }
+                td, th {
+                  padding: 8px;
+                  text-align: left;
+                }
+                .right { text-align: right; }
+                .receipt-box {
+                  border: 2px solid #000;
+                  border-radius: 10px;
+                  padding: 20px;
+                  margin-top: 20px;
+                }
+                .row {
+                  display: flex;
+                  flex-wrap: wrap;
+                  gap: 10px;
+                  margin-bottom: 10px;
+                }
+                .col {
+                  line-height: 1.5;
+                }
+                .col-15 { flex: 1.5; min-width: 80px; }
+                .col-20 { flex: 2; min-width: 100px; }
+                .col-25 { flex: 2.5; min-width: 150px; }
+                .subtext {
+                  font-size: 12px;
+                  color: #666;
+                  display: block;
+                }
+                .label { width: 75px; }
+                .value { flex: 1; }
+                .payment-print-block .row {
+                  min-width: 225px;
+                  display: flex;
+                  gap: 10px;
+                  margin-top: 4px;
+                }
+                @media print {
+                    body {
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                    }
+
+                    div, table, td, th {
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                    }
+
+                    .receipt-box {
+                    border: 2px solid #000 !important;
+                    }
+
+                    /* บังคับให้แสดงสีพื้นหลัง */
+                    .black-bg {
+                    background-color: black !important;
+                    color: white !important;
+                    }
+
+                    /* หากต้องการลบ margin/padding บางส่วนเฉพาะตอนพิมพ์ */
+                    .no-print-margin {
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    }
+                    .row, .col {
+                    padding: 0 !important;
+                    margin: 0 !important;
+                    }
+                   
+                }
+
+              </style>
+            </head>
+            <body>${combinedHTML}</body>
+          </html>
+        `;
+      }
+      print() {
+        const htmlContent = this.getPrintableHTML();
+      
+        // หา iframe สำหรับพิมพ์ (สมมติมี <iframe id="print-frame" style="display:none;"></iframe> ใน HTML)
+        const printFrame = document.getElementById('receipt-preview-frame');
+        if (!printFrame) {
+          alert('ไม่พบ iframe สำหรับพิมพ์');
+          return;
+        }
+      
+        const doc = printFrame.contentDocument || printFrame.contentWindow.document;
+        doc.open();
+        doc.write(htmlContent);
+        doc.close();
+      
+        printFrame.contentWindow.focus();
+        printFrame.contentWindow.print();
+      }
+     /*
+      print() {
+        const htmlContent = this.getPrintableHTML();
+      
+        // ✅ เปิดหน้าต่างใหม่ (ต้องอยู่ใน user gesture เช่น event click)
+        const printWindow = window.open('', '_blank', 'width=800,height=900');
+      
+        if (!printWindow) {
+          alert("❗ Chrome บล็อกหน้าต่างพิมพ์ กรุณาอนุญาต popup (ดูตรง address bar ด้านบนขวา)");
+          return;
+        }
+      
+        printWindow.document.open();
+        printWindow.document.write(htmlContent);
+        printWindow.document.close();
+      
+        printWindow.focus();
+      
+        // ✅ รอ render เสร็จแล้วค่อย print (ไม่งั้นพิมพ์ว่าง)
+        setTimeout(() => {
+          printWindow.print();
+          // printWindow.close(); // ถ้าต้องการปิดหลังพิมพ์
+        }, 600);
+      }
+        */
+        
+      preview(previewIframeId = 'receipt-preview-frame') {
+        const previewFrame = document.getElementById(previewIframeId);
+        if (!previewFrame) {
+          alert('ไม่พบ iframe สำหรับ preview');
+          return;
+        }
+        const doc = previewFrame.contentDocument || previewFrame.contentWindow.document;
+        doc.open();
+        doc.write(this.getPrintableHTML());
+        doc.close();
+      }
+    }
+    
+    // ========== Binding Events ==========
+    
+    window.addEventListener('DOMContentLoaded', () => {
+       
+        const previewFrame = document.getElementById('receipt-preview-frame');
+        if (!previewFrame) return;
+      
+        let combinedHTML = '';
+      
+        document.querySelectorAll('[id^="receipt-content-"]').forEach(receiptEl => {
+            const termId = receiptEl.id.replace('receipt-content-', '');
+            const invoiceEl = document.getElementById(`invoice-content-${termId}`);
+          
+            
+          
+            combinedHTML += `<div style="page-break-after: always;">${receiptEl.innerHTML}</div>`;
+            if (invoiceEl) {
+              combinedHTML += `<div style="page-break-after: always;">${invoiceEl.innerHTML}</div>`;
+            }
+          });
+           const doc = previewFrame.contentDocument || previewFrame.contentWindow.document;
+        doc.open();
+        doc.write(`
+          <html>
+            <head>
+  
+              <style>
+                body {
+                  font-family: "TH SarabunPSK", sans-serif;
+                  padding: 20px;
+                  font-size: 14px !important;
+                }
+                table {
+                  width: 100%;
+                  border-collapse: collapse;
+                  margin-top: 10px;
+                }
+                table, th, td {
+                  border: 1px solid black;
+                }
+                td, th {
+                  padding: 8px;
+                  text-align: left;
+                }
+                .right { text-align: right; }
+                .receipt-box {
+                  border: 2px solid #000;
+                  border-radius: 10px;
+                  padding: 20px;
+                  margin-top: 20px;
+                }
+                .row {
+                  display: flex;
+                  flex-wrap: wrap;
+                  gap: 10px;
+                  margin-bottom: 10px;
+                }
+                .col { line-height: 1.5; }
+                .col-15 { flex: 1.5; min-width: 80px; }
+                .col-20 { flex: 2; min-width: 100px; }
+                .col-25 { flex: 2.5; min-width: 150px; }
+                .subtext { font-size: 12px; color: #666; display: block; }
+                .label { width: 75px; }
+                .value { flex: 1; }
+
+              </style>
+            </head>
+            <body>${combinedHTML}</body>
+          </html>
+        `);
+        doc.close();
+          /*
+        let combinedHTML = '';
+
+        document.querySelectorAll('[id^="receipt-content-"]').forEach(receiptEl => {
+        combinedHTML += `<div>${receiptEl.innerHTML}</div>`;
+        const termId = receiptEl.id.replace('receipt-content-', '');
+        const invoiceEl = document.getElementById(`invoice-content-${termId}`);
+        if(invoiceEl) combinedHTML += `<div>${invoiceEl.innerHTML}</div>`;
+        });
+
+        const previewFrame = document.getElementById('receipt-preview-frame');
+        const doc = previewFrame.contentDocument || previewFrame.contentWindow.document;
+        doc.open();
+        doc.write(`<html><body>${combinedHTML}</body></html>`);
+        doc.close();
+            */
+        // ใส่เข้า iframe
+       
+      });
+       /*
+      document.querySelectorAll('.print-receipt-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          const termId = this.dataset.termId;
+          const receiptEl = document.getElementById(`receipt-content-${termId}`);
+          const invoiceEl = document.getElementById(`invoice-content-${termId}`); // ถ้ามีใบกำกับ
+      
+          if (!receiptEl) {
+            alert('ไม่พบใบเสร็จสำหรับ term นี้');
+            return;
+          }
+      
+          const printer = new ReceiptPrinter(receiptEl, invoiceEl);
+          printer.print();
+        });
+      });
+      
+      */
+      // ผูกปุ่มพิมพ์แต่ละใบ
+      // ปุ่มพิมพ์ใบเสร็จเดี่ยว
+   
+    document.querySelectorAll('.print-receipt-btn').forEach(btn => {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                const termId = this.dataset.termId;
+                const receiptEl = document.getElementById(`receipt-content-${termId}`);
+                if (!receiptEl) {
+                    alert('ไม่พบใบเสร็จสำหรับ term นี้');
+                    return;
+                }
+                
+                const invoiceEl = document.getElementById(`invoice-content-${termId}`); // ถ้ามีใบกำกับภาษี
+                
+                const printer = new ReceiptPrinter(receiptEl, invoiceEl);
+                printer.print();
+            });
+    });
+    
+
+   
+</script>
+    
 <script>
     function checkExistingFiles(input, paymentId) {
         const existingFilesContainer = document.getElementById(`existing_files_${paymentId}`);
@@ -585,6 +936,7 @@ $(document).ready(function () {
     $collapse.addClass('show');
   }
     //--------- คำนวณ -----------------
+
     $(document).on('input', 'input[name="discount"]', function () {
         const termId = $(this).data('term-id');
 
@@ -629,6 +981,8 @@ $(document).ready(function () {
 
         calculateTotalcount();
     });
+
+    
     /*$('input[name="installments"], input[name="discount"]').on('input', function () {
         let row = $(this).closest('.row'); // ใช้ closest('.row') แทน tr
     

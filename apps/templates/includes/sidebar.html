@@ -266,7 +266,7 @@
                         <a href="/lead/create_lead" class="menu-link">
                        <div class="menu-text mt-1">เพิ่ม Lead ใหม่</div></a>
                     </div>
-                    <div class="menu-item {% if segment == 'follow_lead' %} active {% endif %}" hidden>
+                    <div class="menu-item {% if segment == 'follow_lead' %} active {% endif %}" >
                         <a href="/lead/follow_lead" class="menu-link">
                        <div class="menu-text mt-1">ติดตามสถานะ Lead</div></a>
                     </div>
@@ -280,7 +280,7 @@
             {% endif %}  
             {% if current_user.has_permission('read_order')  %}
             <div
-                class="menu-item has-sub {% if segment in ['order'] %} active {% endif %}"
+                class="menu-item has-sub {% if segment in ['order','account','invoice'] %} active {% endif %}"
             >
                 <a href="javascript:;" class="menu-link">
                     <div class="menu-icon">
@@ -294,8 +294,17 @@
                         <a href="/order" class="menu-link">
                        <div class="menu-text mt-1">Orders (ใบสั่งซื้อ)</div></a>
                     </div>
+                    <div class="menu-item {% if segment == 'account' %} active {% endif %}">
+                        <a href="/order/account" class="menu-link">
+                       <div class="menu-text mt-1">Account</div></a>
+                    </div>
+                    <div class="menu-item {% if segment == 'invoice' %} active {% endif %}">
+                        <a href="/order/invoice" class="menu-link">
+                       <div class="menu-text mt-1">Invoice</div></a>
+                    </div>
                     
                 </div>
+                
             </div>
 
             {% endif %}  

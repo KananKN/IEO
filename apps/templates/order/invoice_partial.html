@@ -1,0 +1,306 @@
+<!-- templates/receipt_partial.html -->
+{% set tax_for_term = tax | selectattr("terms_id", "equalto", term.id) | list %}
+{% if tax_for_term %}
+  {% for r in tax_for_term %}
+<div id="invoice-content-{{ term.id }}" >
+    <!-- ตัวอย่าง (ใช้ข้อมูลจาก backend เช่น data.customer_name) -->
+    <div style="display: table; width: 100%;">
+  
+      <!-- โลโก้ (ซ้าย) -->
+      <div style="display: table-cell; width: 125px; vertical-align: top;">
+        <img src="/static/assets/img/logo/logo-ieo.png"
+             alt="Logo"
+             style="width: 120px; height: auto;">
+      </div>
+    
+      <!-- ข้อมูลบริษัท (ขวา) -->
+      <div style="display: table-cell; text-align: right; padding-left: 20px; vertical-align: top;">
+        <div>บริษัท ไอ.อี.โอ. จำกัด</div>
+        <div>เลขที่ 80 อาคาร เค.เอ.เอ็น ห้องเลขที่ 104 ชั้น 1</div>
+        <div>ซอยนราธิวาสราชนครินทร์ 8 แขวงทุ่งวัดดอน</div>
+        <div>เขตสาทร กรุงเทพมหานคร 10120</div>
+        <div>Tel. (66) 26426131-2 Fax. (66) 26426133</div>
+        <div>เลขที่ผู้เสียภาษี 0-1055-42074-69-2 (สำนักงานใหญ่) </div>
+      </div>
+    
+    </div>
+    
+
+    <div style="display: flex; justify-content: end; align-items: center; margin-bottom: 20px;">
+        
+        <table style="width: 50%; table-layout: fixed;">
+          <tr>
+            <td style="border: 1px solid black; width: 250px; text-align: center; vertical-align: middle; padding: 8px;background-color: black; color: white;">
+              <h2 style="margin: 0;">Tax Invoice/Receipt</h2>
+              <div>ใบกำกับภาษี / ใบเสร็จ</div>
+            </td>
+            <td style="border: 1px solid black; width: 150px; text-align: center; vertical-align: middle; padding: 8px;">
+              <div>ต้นฉบับ / Original</div>
+              <hr style="margin: 4px 0;">
+              <h4 style="margin: 0 0;">{{ r.tax_invoice_no }}</h4>
+              <div>(เอกสารออกเป็นชุด)</div>
+            </td>
+          </tr>
+        </table>
+        
+    </div>
+    
+  
+    <div style="border: 2px solid black; margin-bottom: 10px;">
+        <div style="display: flex; justify-content: space-between;">
+          <div style="width: 50%;border-right: 2px solid black;">
+            <div class="row" style="margin-left: 10px;padding-top:10px">
+              <div class="col-4 ">
+                <div style="margin: 10px">
+                  <strong>ชื่อลูกค้า</strong> <br>
+                  Customer Name
+                </div>
+  
+              </div>
+              <div class="col-8" style="margin: 10px">
+                {{members.first_name}} {{members.last_name}}  
+              </div>
+
+            </div>
+            <div class="row" style="padding-left: 10px;">
+              <div class="col-4">
+                <div style="margin:10px">
+                  <strong>เลขที่ผู้เสียภาษี</strong> <br>
+                  Tax ID 
+                </div>
+  
+              </div>
+              <div class="col-8">
+                
+              </div>
+
+            </div>
+            <div class="row" style="padding-left: 10px;">
+              <div class="col-4">
+                <div style="margin: 10px;">
+                  <strong>ที่อยู่</strong> <br>
+                  Address
+                </div>
+  
+              </div>
+              <div style="flex: 1; word-break: break-word;margin-top: 10px;margin-left: 50px;">
+                {{members.address}} 
+              </div>
+
+            </div>
+          </div>
+          <div style="width: 50%;">
+            <!-- แถวบน: แบ่ง 2 ฝั่ง -->
+            <div style="display: flex; width: 100%;">
+              
+              <!-- คอลัมน์ซ้าย -->
+              <div style="display: table-cell; width: 50%; vertical-align: top; padding-right: 16px;border-right: 2px solid black;border-bottom: 2px solid black;">
+                <div style="margin-bottom: 12px;padding-left: 10px;padding-top: 10px;">
+                  <strong style="margin-right: 26px;">วันที่:</strong> {{ r.created_at.strftime('%Y-%m-%d') }}<br>
+                  <small>Issue Date</small>
+                </div>
+                <div style="margin-bottom: 12px;padding-left: 10px; padding-top: 10px;">
+                  <strong>ชำระโดย:</strong> โอนเงิน<br>
+                  <small>Payment</small>
+                </div>
+              </div>
+
+              <!-- คอลัมน์ขวา -->
+              <div style="display: table-cell; width: 50%; vertical-align: top; padding-left: 16px;padding-top: 10px;border-bottom: 2px solid black;">
+                <div style="margin-bottom: 12px;">
+                  <strong>พนักงานขาย:</strong> {{datas.agency.first_name}} {{datas.agency.last_name}}<br>
+                  <small>Salesman</small>
+                </div>
+                <div style="margin-bottom: 12px;padding-top: 10px;">
+                  <strong>ใบวางบิล:</strong> {{ r.invoice_no or '-' }}<br>
+                  <small>Invoice No</small>
+                </div>
+                <div style="margin-bottom: 12px;padding-top: 10px;">
+                  <strong>เอกสารอ้างอิง:</strong> {{ r.ref_doc or '-' }}<br>
+                  <small>Ref Document</small>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- แถวล่าง: Project Name -->
+            <div style="display: table-row;">
+              <div style="display: table-cell; padding-top: 12px;padding-left: 10px;padding-bottom:10px" colspan="2">
+                <strong style="margin-right: 15px;">ชื่อโปรเจค:</strong> {{ orderItem.product.name or '-' }}<br>
+                <small>Project Name</small>
+              </div>
+            </div>
+            
+              
+            
+            
+          </div>
+        </div>
+      </div>
+    
+      <!-- รายละเอียด -->
+      <div class="section">
+        <table>
+          <thead style="background-color: black; color: white;">
+            <tr>
+              <th style="text-align: center; vertical-align: middle;font-size: 14px">
+                ลำดับ <br>No.
+              </th>
+              <th style="text-align: center; vertical-align: middle;width: 325px;font-size: 14px">
+                รายการ <br> Description
+              </th>
+              <th style="text-align: center; vertical-align: middle;font-size: 14px">
+                จำนวน <br> Quatity
+              </th>
+              <th style="text-align: center; vertical-align: middle;font-size: 14px">
+                ราคา/หน่วยละ <br> Unit Price
+              </th>
+              <th style="text-align: center; vertical-align: middle;font-size: 14px">
+                ส่วนลด <br> Discount
+              </th>
+              <th style="text-align: center; vertical-align: middle;font-size: 14px">
+                จำนวนเงิน <br>(THB)
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="height: 225px;vertical-align: top;font-size: 14px">
+              <td style="text-align: center;font-weight: normal; ">1</td>
+              
+              <td style="white-space: normal; word-break: break-word;">
+                {{ orderItem.product.name }} 
+                {% set seq = term.sequence %}
+                {% set suffix = 'th' %}
+                {% if seq == 1 %}
+                  {% set suffix = 'st' %}
+                {% elif seq == 2 %}
+                  {% set suffix = 'nd' %}
+                {% elif seq == 3 %}
+                  {% set suffix = 'rd' %}
+                {% endif %}
+                {{ seq }}{{ suffix }} Payment{% if seq == 1 %} ( Non Refundable1 ){% endif %}
+              </td>
+              
+              <th style="text-align: center;font-weight: normal; ">
+                1</td>
+                <th class="right" style="font-weight: normal;">{{ '{:,.2f}'.format(term.amount)}}</td>
+              <td class="right">{{ '{:,.2f}'.format(term.discount)}}</td>
+              <td class="right">{{ '{:,.2f}'.format(term.net_price)}}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <!-- กรอบใหญ่ -->
+    <table style="width: 100%; border-collapse: separate; border-spacing: 0; border: none;">
+
+      <tr valign="top" style="border: none;">
+      <!-- ซ้าย: การชำระเงิน -->
+      <td style="width: 50%; padding-right: 16px;border: none;vertical-align: middle;">
+        <div style="margin-bottom: 8px;">
+          <strong>การชำระเงิน</strong> <span style="font-size: 12px;">(Conditions of Payment)</span>
+        </div>
+
+        <div style="margin-bottom: 12px; display: flex; gap: 24px;">
+          <div style="min-width: 120px; display: flex; align-items: center; gap: 8px;">
+            <div style="font-size: 22px;margin-right:20px">&#x2610;</div>
+            <div>เงินสด<br><span style="font-size: 12px; color: #666;">Cash</span></div>
+          </div>
+          <div style="min-width: 120px; display: flex; align-items: center; gap: 8px;">
+            <div style="font-size: 22px;margin-right:20px">&#x2611;</div>
+            <div>เงินโอน<br><span style="font-size: 12px; color: #666;">Bank Transfer </span></div>
+          </div>
+        </div>
+        
+        <div style="margin-bottom: 4px;display: flex; align-items: center; gap: 8px;">
+        <div>
+            รายละเอียด<br><span style="font-size: 12px; color: #666;">Payment Detail</span>
+          </div>
+          <div style="white-space: normal; word-break: break-word;font-size: 13px;">
+            โอนเข้า บริษัท ไอ.อี.โอ. จำกัด (INT) วันที่ {{r.created_at.strftime('%Y-%m-%d') or '-' }}
+          </div>
+        </div>
+        
+      </td>
+
+      <!-- ขวา: รวมเป็นเงิน -->
+      <td style="width: 35%; padding-left: 16px;border: none;">
+        <div style="margin-bottom: 10px;line-height: 1.6;">
+          <span >รวมเป็นเงิน</span><br>
+          <span style="font-size: 12px; color: #666;">Subtotal</span><br>
+          
+        </div>
+        <div style="margin-bottom: 10px">
+          <span>หักส่วนลดพิเศษ</span><br>
+          <span style="font-size: 12px; color: #666;">Special Discount</span><br>
+          
+        </div>
+        <div style="margin-bottom: 10px">
+          <span>จำนวนเงินรวมทั้งสิ้น</span><br>
+          <span style="font-size: 12px; color: #666;">Total</span><br>
+          
+        </div>
+        <div style="margin-bottom: 10px">
+          <span>จำนวนภาษีมูลค่าเพิ่ม 7%</span><br>
+          <span style="font-size: 12px; color: #666;">Value Added Tax</span><br>
+          
+        </div>
+        <div style="margin-bottom: 10px">
+          <span>รวมมูลค่าสินค้า</span><br>
+          <span style="font-size: 12px; color: #666;">Subtotal</span><br>
+          
+        </div>
+      </td>
+      
+      <td style="width: 15%; padding: 8px; font-size: 14px; text-align: right;border: none;">
+
+        <div style="border: 1px solid #000; padding: 4px; font-size: 14px; height: 30px; line-height: 20px;">
+          {{ '{:,.2f}'.format(term.amount) }}
+        </div>  
+        <div style="border: 1px solid #000; padding: 4px; font-size: 14px; height: 30px; line-height: 20px;">
+          {{ '{:,.2f}'.format(term.discount)}} 
+        </div>      
+        <div class="black-bg" style="border: 1px solid #000; padding: 6px;font-size: 14px;background-color: black; color: white;height: 30px; line-height: 20px;">
+          {{ '{:,.2f}'.format(term.net_price)}} 
+        </div>      
+        <div style="font-size: 14px; margin-top: 20px;height: 30px; line-height: 20px;">
+          {{ '{:,.2f}'.format(r.vat)}} 
+        </div>     
+        <div style="font-size: 14px; margin-top: 20px;height: 30px; line-height: 20px;">
+          {{ '{:,.2f}'.format(r.amount_before_vat)}} 
+        </div>      
+        </div>      
+      </td>
+    </tr>
+  </table>
+
+  <table style="width: 100%; table-layout: fixed;">
+    <tr>
+      <td style="width: 33.33%; text-align: center; vertical-align: top;">
+        <div style="margin-top: 35px;">
+          <div style="border-bottom: 1px dashed #000; width: 80%; margin: 80px auto 0;"></div>
+          <div style="font-size: 14px; margin-top: 4px;">ผู้รับเงิน / Bill Receiver Signature</div>
+          <div style="font-size: 14px; margin-top: 15px;">วันที่ / Date .........................</div>
+        </div>
+      </td>
+  
+      <td style="width: 33.33%;"></td>
+  
+      <td style="width: 33.33%; text-align: center; vertical-align: top;">
+        <div style="margin-top: 35px;">
+          <div style="border-bottom: 1px dashed #000; width: 80%; margin: 80px auto 0;"></div>
+          <div style="font-size: 14px; margin-top: 4px;">ผู้มีอำนาจลงนาม / Authorized Signature</div>
+          <div style="font-size: 14px; margin-top: 15px;">วันที่ / Date .........................</div>
+        </div>
+      </td>
+    </tr>
+  </table>
+
+
+
+      
+    </div>
+    {% endfor %}
+    {% else %}
+      <h4>ไม่มีใบกำกับภาษี</h4>
+    {% endif %}
