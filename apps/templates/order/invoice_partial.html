@@ -2,7 +2,7 @@
 {% set tax_for_term = tax | selectattr("terms_id", "equalto", term.id) | list %}
 {% if tax_for_term %}
   {% for r in tax_for_term %}
-<div id="invoice-content-{{ term.id }}" >
+<div id="invoice-content-{{ term.id }}" style="page-break-inside: avoid; break-inside: avoid;">
     <!-- ตัวอย่าง (ใช้ข้อมูลจาก backend เช่น data.customer_name) -->
     <div style="display: table; width: 100%;">
   
@@ -26,7 +26,7 @@
     </div>
     
 
-    <div style="display: flex; justify-content: end; align-items: center; margin-bottom: 20px;">
+    <div style="display: flex; justify-content: end; align-items: center; margin-bottom: 10px;">
         
         <table style="width: 50%; table-layout: fixed;">
           <tr>
@@ -46,7 +46,7 @@
     </div>
     
   
-    <div style="border: 2px solid black; margin-bottom: 10px;">
+    <div style="border: 2px solid black; margin-bottom: 5px;">
         <div style="display: flex; justify-content: space-between;">
           <div style="width: 50%;border-right: 2px solid black;">
             <div class="row" style="margin-left: 10px;padding-top:10px">
@@ -107,15 +107,28 @@
 
               <!-- คอลัมน์ขวา -->
               <div style="display: table-cell; width: 50%; vertical-align: top; padding-left: 16px;padding-top: 10px;border-bottom: 2px solid black;">
+                <div style="display: flex; gap: 8px; align-items: flex-start; margin-bottom: 5px;">
+                  <!-- ด้านซ้าย: พนักงานขาย + Salesman -->
+                  <div style="white-space: nowrap;">
+                    <strong>พนักงานขาย:</strong><br>
+                    <small>Salesman</small>
+                  </div>
+                
+                  <!-- ด้านขวา: ชื่อพนักงาน -->
+                  <div style="flex: 1; word-break: break-word;font-size: 14px">
+                    {{datas.agency.first_name}} {{datas.agency.last_name}}
+                  </div>
+                </div>
+                <!-- 
                 <div style="margin-bottom: 12px;">
                   <strong>พนักงานขาย:</strong> {{datas.agency.first_name}} {{datas.agency.last_name}}<br>
                   <small>Salesman</small>
-                </div>
-                <div style="margin-bottom: 12px;padding-top: 10px;">
+                </div>-->
+                <div style="margin-bottom: 5px;padding-top: 10px;">
                   <strong>ใบวางบิล:</strong> {{ r.invoice_no or '-' }}<br>
                   <small>Invoice No</small>
                 </div>
-                <div style="margin-bottom: 12px;padding-top: 10px;">
+                <div style="margin-bottom: 5px;padding-top: 10px;">
                   <strong>เอกสารอ้างอิง:</strong> {{ r.ref_doc or '-' }}<br>
                   <small>Ref Document</small>
                 </div>
@@ -277,7 +290,7 @@
   <table style="width: 100%; table-layout: fixed;">
     <tr>
       <td style="width: 33.33%; text-align: center; vertical-align: top;">
-        <div style="margin-top: 35px;">
+        <div style="margin-top: 30px;">
           <div style="border-bottom: 1px dashed #000; width: 80%; margin: 80px auto 0;"></div>
           <div style="font-size: 14px; margin-top: 4px;">ผู้รับเงิน / Bill Receiver Signature</div>
           <div style="font-size: 14px; margin-top: 15px;">วันที่ / Date .........................</div>
