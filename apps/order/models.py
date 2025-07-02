@@ -197,7 +197,7 @@ class ReceiptModel(db.Model):
     order_id = db.Column(db.Integer, db.ForeignKey('order.id'), nullable=False)
     member_id = db.Column(db.Integer, db.ForeignKey('member.id'), nullable=False)
     terms_id = db.Column(db.Integer, db.ForeignKey('order_terms.id'), nullable=False)
-    receipt_no = db.Column(db.String, unique=True)
+    receipt_no = db.Column(db.String)
     amount = db.Column(db.Numeric(precision=12, scale=2), nullable=False)
     
     order = db.relationship("OrderModel", backref="receipts")  # <== เพิ่มบรรทัดนี้
@@ -218,7 +218,7 @@ class TaxInvoiceModel(db.Model):
     __tablename__ = 'tax_invoices'
     id = db.Column(db.Integer, primary_key=True)
     receipt_id = db.Column(db.Integer, db.ForeignKey('receipts.id', ondelete="CASCADE"), nullable=False)
-    tax_invoice_no = db.Column(db.String, unique=True)
+    tax_invoice_no = db.Column(db.String)
     amount = db.Column(db.Numeric(precision=12, scale=2), nullable=False)
     vat = db.Column(db.Numeric(precision=12, scale=2), nullable=True)
     amount_before_vat = db.Column(db.Numeric(precision=12, scale=2), nullable=True)

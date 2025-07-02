@@ -603,17 +603,39 @@ def delete_file():
         order_status = db.session.query(OrderModel).filter(OrderModel.id == term.order_id).first()
 
 
-        completed = True
-        for t in all_terms:
-            if t.outstanding_amount and float(t.outstanding_amount) > 0.01:
-                completed = False
-                term.order.status = f"installment_{t.sequence}"
-                order_status.status = f"installment_{t.sequence}"
-                break
+        # completed = True
+        # for t in all_terms:
+        #     if t.outstanding_amount and float(t.outstanding_amount) > 0.01:
+        #         completed = False
+        #         term.order.status = f"installment_{t.sequence}"
+        #         order_status.status = f"installment_{t.sequence}"
+        #         break
 
-        if completed:
-            term.order.status = "completed"
-            order_status.status = "completed"
+        any_payment = db.session.query(PaymentModel)\
+        .join(FilePaymentModel, PaymentModel.id == FilePaymentModel.payment_id)\
+        .join(OrderTermModel, FilePaymentModel.term_id == OrderTermModel.id)\
+        .filter(OrderTermModel.order_id == term.order_id)\
+        .count()
+
+        if any_payment == 0:
+            term.order.status = "pending"
+            order_status.status = "pending"
+            print("📭 ไม่มี payment ใดหลงเหลือ → เปลี่ยนสถานะเป็น pending")
+
+        else:
+            completed = True
+            for t in all_terms:
+                if t.outstanding_amount and float(t.outstanding_amount) > 0.01:
+                    completed = False
+                    term.order.status = f"installment_{t.sequence}"
+                    order_status.status = f"installment_{t.sequence}"
+                    break
+
+            if completed:
+                term.order.status = "completed"
+                order_status.status = "completed"
+                print("✅ ชำระครบ → สถานะเป็น completed")
+
  
         db.session.commit()
 
