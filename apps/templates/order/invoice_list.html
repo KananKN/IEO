@@ -9,6 +9,8 @@
 <link href="{{ config.ASSETS_ROOT }}/plugins/select2/dist/css/select2.min.css" rel="stylesheet" />
 <link href="{{ config.ASSETS_ROOT }}/plugins/tag-it/css/jquery.tagit.css" rel="stylesheet" />
 <link href="{{ config.ASSETS_ROOT }}/plugins/select-picker/dist/picker.min.css" rel="stylesheet" />
+<link rel="preload" as="image" href="/static/assets/img/logo/logo-ieo.png">
+
 <style>
     .print-receipt-btn {
         width: 32px;
@@ -88,7 +90,7 @@
 
 <a href="javascript:;" class="btn btn-icon btn-circle btn-primary btn-scroll-to-top" data-toggle="scroll-to-top"><i class="fa fa-angle-up"></i></a>
 
-<iframe id="receipt-preview-frame" style="width: 100%; height: 1200px; border: 1px solid #ccc; margin-top: 20px;display:none;"></iframe>{% for term in orderTerms %}
+<iframe id="receipt-preview-frame" style="width: 100%; height: 1200px; border: 1px solid #ccc; margin-top: 20px;display:none;" hidden></iframe>{% for term in orderTerms %}
     <!-- templates/receipt_partial.html -->
 {% set tax_for_term = tax | selectattr("terms_id", "equalto", term.id) | list %}
 {% if tax_for_term %}
@@ -210,7 +212,7 @@
                       {{ r.order.agency.first_name }} {{ r.order.agency.last_name }}
                     </div>
                   </div>
-                <div style="margin-bottom: 5px;padding-top: 5px;">
+                <div style="margin-bottom: 5px;">
                   <strong>ใบวางบิล:</strong> {{ r.invoice_no or '-' }}<br>
                   <small>Invoice No</small>
                 </div>
@@ -263,7 +265,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr style="height: 225px;vertical-align: top;font-size: 14px">
+            <tr style="height: 185px;vertical-align: top;font-size: 14px">
               <td style="text-align: center;font-weight: normal; ">1</td>
               
               <td style="white-space: normal; word-break: break-word;">
@@ -291,7 +293,7 @@
       </div>
       
       <!-- กรอบใหญ่ -->
-    <table style="width: 100%; border-collapse: separate; border-spacing: 0; border: none;">
+    <table style="width: 100%; border-collapse: separate; border-spacing: 0; border: none;margin-top:5px;">
 
       <tr valign="top" style="border: none;">
       <!-- ซ้าย: การชำระเงิน -->
@@ -351,16 +353,16 @@
         </div>
       </td>
       
-      <td style="width: 15%; padding: 8px; font-size: 14px; text-align: right;border: none;">
+      <td style="width: 15%; margin-top: 5px; padding-right: 0px; font-size: 14px; text-align: right;border: none;">
 
-        <div style="border: 1px solid #000; padding: 4px; font-size: 14px; height: 20px; line-height: 20px;">
-          {{ '{:,.2f}'.format(term.amount) }}
+        <div style="border: 1px solid #000; padding: 10px; font-size: 14px; height: 25px; line-height: 20px;width:75px; margin-left: auto;">
+            {{ '{:,.2f}'.format(term.amount) }}
         </div>  
-        <div style="border: 1px solid #000; padding: 4px; font-size: 14px; height: 20px; line-height: 20px;">
-          {{ '{:,.2f}'.format(term.discount)}} 
+        <div style="border: 1px solid #000; padding: 10px; font-size: 14px; height: 25px; line-height: 20px;width:75px; margin-left: auto;">
+            {{ '{:,.2f}'.format(term.discount)}} 
         </div>      
-        <div class="black-bg" style="border: 1px solid #000; padding: 6px;font-size: 14px;background-color: black; color: white;height: 20px; line-height: 20px;">
-          {{ '{:,.2f}'.format(term.net_price)}} 
+        <div class="black-bg" style="border: 1px solid #000; padding: 10px;font-size: 14px;background-color: black; color: white;height: 25px; line-height: 20px;width:75px; margin-left: auto;">
+            {{ '{:,.2f}'.format(term.net_price)}} 
         </div>      
         <div style="font-size: 14px; margin-top: 20px;height: 20px; line-height: 20px;">
           {{ '{:,.2f}'.format(r.vat)}} 
@@ -518,17 +520,17 @@ function loadDataTable() {
           return `
             <html>
             <head>
-
-              <title>Receipt Print</title>
+               <link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet"> 
+               <link rel="preload" as="image" href="/static/assets/img/logo/logo-ieo.png">
+              <title>Invoice Print</title>
               <style>
                 @font-face {
-                font-family: 'THSarabun';
-                src: url('/static/fonts/THSarabunNew.ttf') format('truetype');
-                font-weight: normal;
-                font-style: normal;
+                    font-family: "Kanit";
+                    font-weight: normal;
+                    font-style: normal;
                  }
                 body {
-                  font-family: "TH SarabunPSK", sans-serif;
+                  font-family: "Kanit", sans-serif;
                   width: 800px;
                   margin: 0 auto;
                   padding: 20px;
@@ -573,16 +575,17 @@ function loadDataTable() {
                 .label { width: 75px; }
                 .value { flex: 1; }
                 .payment-print-block .row {
-                  min-width: 220px;
+                  min-width: 225px;
                   display: flex;
                   gap: 10px;
                   margin-top: 4px;
                 }
                 @media print {
                     body {
+                    font-family: 'Kanit', sans-serif !important;
                     -webkit-print-color-adjust: exact !important;
                     print-color-adjust: exact !important;
-                    font-size: 16px !important;
+                    font-size: 14px !important;
                     }
 
                     div, table, td, th {
@@ -614,11 +617,7 @@ function loadDataTable() {
                     padding: 0 !important;
                     margin: 0 !important;
                     }
-                    .invoice-page {
-                        page-break-after: always;
-                        page-break-inside: avoid;
-                        break-inside: avoid-page;
-                    }
+                    
                    
                 }
 
@@ -641,6 +640,38 @@ function loadDataTable() {
           doc.open();
           doc.write(this.getPrintableHTML());
           doc.close();
+          // ✅ รอจน DOM โหลดเสร็จ
+  previewFrame.onload = () => {
+    const iframeDoc = previewFrame.contentDocument || previewFrame.contentWindow.document;
+    const images = iframeDoc.images;
+
+    if (images.length === 0) {
+      previewFrame.contentWindow.focus();
+      previewFrame.contentWindow.print();
+      return;
+    }
+
+    let loaded = 0;
+    for (let img of images) {
+      if (img.complete) {
+        loaded++;
+      } else {
+        img.onload = img.onerror = () => {
+          loaded++;
+          if (loaded === images.length) {
+            previewFrame.contentWindow.focus();
+            previewFrame.contentWindow.print();
+          }
+        };
+      }
+    }
+
+    // กรณีรูปโหลดครบแล้วตั้งแต่แรก
+    if (loaded === images.length) {
+      previewFrame.contentWindow.focus();
+      previewFrame.contentWindow.print();
+    }
+  };
         }
       
         print() {
@@ -655,8 +686,34 @@ function loadDataTable() {
           doc.write(this.getPrintableHTML());
           doc.close();
       
-          previewFrame.contentWindow.focus();
-          previewFrame.contentWindow.print();
+          previewFrame.onload = () => {
+            const images = previewFrame.contentDocument.images;
+            if (images.length === 0) {
+              previewFrame.contentWindow.focus();
+              previewFrame.contentWindow.print();
+              return;
+            }
+        
+            let loaded = 0;
+            for (let img of images) {
+              if (img.complete) {
+                loaded++;
+              } else {
+                img.onload = img.onerror = () => {
+                  loaded++;
+                  if (loaded === images.length) {
+                    previewFrame.contentWindow.focus();
+                    previewFrame.contentWindow.print();
+                  }
+                };
+              }
+            }
+        
+            if (loaded === images.length) {
+              previewFrame.contentWindow.focus();
+              previewFrame.contentWindow.print();
+            }
+          };
         }
       }
       
@@ -682,7 +739,8 @@ function loadDataTable() {
         // const receiptEl = document.getElementById(...); ← ลบทิ้ง
     
         const printer = new ReceiptPrinter(null, invoiceEl); // ✅ ถูกต้อง
-        printer.print(); // หรือ printer.print();
+        printer.print(); // แล้วค่อย print ภายหลัง
+        
     });
     
 
