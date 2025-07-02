@@ -574,21 +574,22 @@
         return `
           <html>
             <head>
+               <link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet"> 
+               <link rel="preload" as="image" href="/static/assets/img/logo/logo-ieo.png">
 
               <title>Receipt Print</title>
               <style>
                 @font-face {
-                font-family: 'THSarabun';
-                src: url('/static/assets/webfonts/THSarabunNew.ttf') format('truetype');
+                font-family: 'Kanit';
                 font-weight: normal;
                 font-style: normal;
                 }
                 body {
-                  font-family: "TH SarabunPSK", sans-serif;
+                  font-family: "Kanit", sans-serif;
                   width: 800px;
                   margin: 0 auto;
                   padding: 20px;
-                  font-size: 16px !important;
+                  font-size: 14px !important;
                 }
                 table {
                   width: 100%;
@@ -636,7 +637,8 @@
                 }
                 @media print {
                     body {
-                    font-size: 16px !important;
+                    font-family: 'Kanit', sans-serif !important;
+                    font-size: 14px !important;
                     -webkit-print-color-adjust: exact !important;
                     print-color-adjust: exact !important;
                     }
@@ -759,9 +761,9 @@
   
               <style>
                 body {
-                  font-family: "TH SarabunPSK", sans-serif;
+                  font-family: 'Kanit', sans-serif;
                   padding: 20px;
-                  font-size: 14px !important;
+                  font-size: 16px !important;
                 }
                 table {
                   width: 100%;

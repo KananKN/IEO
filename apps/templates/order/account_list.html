@@ -142,7 +142,8 @@
                 <div style="flex: 1; word-break: break-word;font-size: 14px">
                   {{ r.receipt_no }}
                 </div>
-              </div>              <strong style="margin-right: 25px;">วันที่</strong> {{ r.created_at.strftime('%Y-%m-%d') }}<br>Date
+              </div>              
+              <strong style="margin-right: 25px;">วันที่</strong> {{ r.created_at.strftime('%Y-%m-%d') }}<br>Date
             
             
           </div>
@@ -162,7 +163,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr style="height: 300px;vertical-align: top;">
+            <tr style="height: 375px;vertical-align: top;">
               <td style="text-align: center;border: 2px solid black;">1</td>
               <td style="border: 2px solid black;">{{ r.order.product.name or '-' }} {{r.terms.term_detail}}</td>
               <td style="text-align: center; border: 2px solid black;">1</td>
@@ -231,8 +232,8 @@
           </div>
         </div>
       </div>
-      <span style="margin-top: 30px;">หมายเหตุ: เอกสารฉบับนี้ไม่ใช่ของจริง โดยเอกสารฉบับนี้เป็นใบรับฝากเงินเพื่อที่ให้ทางสถาบันเป็นผู้ดำเนินการชำระเงินค่าโครงการของผู้สมัครให้กับองค์กรต่างประเทศเท่านั้น</span><br>
-      <span>This document is only a deposit receipt. The programe fee will be paid by applicants. IEO will make remittance on behalf of applicant to US. designated sponsors</span>
+      <span style="margin-top: 30px;">หมายเหตุ: เอกสารฉบับนี้ไม่ใช่ของจริง โดยเอกสารฉบับนี้เป็นใบรับฝากเงินเพื่อที่ให้ทางสถาบันเป็นผู้ดำเนินการชำระเงินค่าโครงการของ <br> ผู้สมัครให้กับองค์กรต่างประเทศเท่านั้น</span><br>
+      <span style="margin-left: 60px;">This document is only a deposit receipt. The programe fee will be paid by applicants. IEO will make remittance on behalf of applicant to US. designated sponsors</span>
 </div>
 {% endif %}
 {% endfor %}
@@ -351,13 +352,12 @@ function loadDataTable() {
               <title>Receipt Print</title>
               <style>
                 @font-face {
-                    font-family: 'THSarabun';
-                    src: url('/static/fonts/THSarabunNew.ttf') format('truetype');
+                    font-family: 'Kanit';
                     font-weight: normal;
                     font-style: normal;
                     }
                 body {
-                  font-family: "TH SarabunPSK", sans-serif;
+                  font-family: "Kanit", sans-serif;
                   width: 800px;
                   margin: 0 auto;
                   padding: 20px;
@@ -411,7 +411,7 @@ function loadDataTable() {
                     body {
                     -webkit-print-color-adjust: exact !important;
                     print-color-adjust: exact !important;
-                    font-size: 16px !important;
+                    font-size: 14px !important;
                     }
 
                     div, table, td, th {

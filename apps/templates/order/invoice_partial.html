@@ -124,7 +124,7 @@
                   <strong>พนักงานขาย:</strong> {{datas.agency.first_name}} {{datas.agency.last_name}}<br>
                   <small>Salesman</small>
                 </div>-->
-                <div style="margin-bottom: 5px;padding-top: 10px;">
+                <div style="margin-bottom: 5px;padding-top: 5px;">
                   <strong>ใบวางบิล:</strong> {{ r.invoice_no or '-' }}<br>
                   <small>Invoice No</small>
                 </div>
@@ -177,7 +177,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr style="height: 225px;vertical-align: top;font-size: 14px">
+            <tr style="height: 185px;vertical-align: top;font-size: 14px">
               <td style="text-align: center;font-weight: normal; ">1</td>
               
               <td style="white-space: normal; word-break: break-word;">
@@ -205,7 +205,7 @@
       </div>
       
       <!-- กรอบใหญ่ -->
-    <table style="width: 100%; border-collapse: separate; border-spacing: 0; border: none;">
+    <table style="width: 100%; border-collapse: separate; border-spacing: 0; border: none;margin-top:5px;">
 
       <tr valign="top" style="border: none;">
       <!-- ซ้าย: การชำระเงิน -->
@@ -265,15 +265,15 @@
         </div>
       </td>
       
-      <td style="width: 15%; padding: 8px; font-size: 14px; text-align: right;border: none;">
+      <td style="width: 15%; margin-top: 5px; padding-right: 0px;  font-size: 14px; text-align: right;border: none;">
 
-        <div style="border: 1px solid #000; padding: 4px; font-size: 14px; height: 30px; line-height: 20px;">
+        <div style="border: 1px solid #000; padding: 10px; font-size: 14px; height: 30px; line-height: 20px;width:75px; margin-left: auto;">
           {{ '{:,.2f}'.format(term.amount) }}
         </div>  
-        <div style="border: 1px solid #000; padding: 4px; font-size: 14px; height: 30px; line-height: 20px;">
+        <div style="border: 1px solid #000; padding: 10px; font-size: 14px; height: 30px; line-height: 20px;width:75px; margin-left: auto;">
           {{ '{:,.2f}'.format(term.discount)}} 
         </div>      
-        <div class="black-bg" style="border: 1px solid #000; padding: 6px;font-size: 14px;background-color: black; color: white;height: 30px; line-height: 20px;">
+        <div class="black-bg" style="border: 1px solid #000; padding: 10px;font-size: 14px;background-color: black; color: white;height: 30px; line-height: 20px;width:75px; margin-left: auto;">
           {{ '{:,.2f}'.format(term.net_price)}} 
         </div>      
         <div style="font-size: 14px; margin-top: 20px;height: 30px; line-height: 20px;">
@@ -293,7 +293,7 @@
         <div style="margin-top: 30px;">
           <div style="border-bottom: 1px dashed #000; width: 80%; margin: 80px auto 0;"></div>
           <div style="font-size: 14px; margin-top: 4px;">ผู้รับเงิน / Bill Receiver Signature</div>
-          <div style="font-size: 14px; margin-top: 15px;">วันที่ / Date .........................</div>
+          <div style="font-size: 14px; margin-top: 5px;">วันที่ / Date .........................</div>
         </div>
       </td>
   
@@ -303,7 +303,7 @@
         <div style="margin-top: 30px;">
           <div style="border-bottom: 1px dashed #000; width: 80%; margin: 80px auto 0;"></div>
           <div style="font-size: 14px; margin-top: 4px;">ผู้มีอำนาจลงนาม / Authorized Signature</div>
-          <div style="font-size: 14px; margin-top: 15px;">วันที่ / Date .........................</div>
+          <div style="font-size: 14px; margin-top: 5px;">วันที่ / Date .........................</div>
         </div>
       </td>
     </tr>
