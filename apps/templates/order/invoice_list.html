@@ -304,18 +304,18 @@
 
         <div style="margin-bottom: 12px; display: flex; gap: 24px;">
           <div style="min-width: 120px; display: flex; align-items: center; gap: 8px;">
-            <div style="font-size: 22px;margin-right:20px">&#x2610;</div>
+            <div style="font-size: 30px;margin-right:20px">&#x2610;</div>
             <div>เงินสด<br><span style="font-size: 12px; color: #666;">Cash</span></div>
           </div>
           <div style="min-width: 120px; display: flex; align-items: center; gap: 8px;">
-            <div style="font-size: 22px;margin-right:20px">&#x2611;</div>
+            <div style="font-size: 30px;margin-right:20px">&#x2611;</div>
             <div>เงินโอน<br><span style="font-size: 12px; color: #666;">Bank Transfer </span></div>
           </div>
         </div>
         
         <div style="margin-bottom: 4px;display: flex; align-items: center; gap: 8px;">
         <div>
-            รายละเอียด<br><span style="font-size: 16px; color: #666;">Payment Detail</span>
+            รายละเอียด<br><span style="font-size: 12px; color: #666;">Payment Detail</span>
           </div>
           <div style="white-space: normal; word-break: break-word;font-size: 13px;">
             โอนเข้า บริษัท ไอ.อี.โอ. จำกัด (INT) วันที่ {{r.created_at.strftime('%Y-%m-%d') or '-' }}
@@ -364,10 +364,10 @@
         <div class="black-bg" style="border: 1px solid #000; padding: 10px;font-size: 14px;background-color: black; color: white;height: 25px; line-height: 20px;width:75px; margin-left: auto;">
             {{ '{:,.2f}'.format(term.net_price)}} 
         </div>      
-        <div style="font-size: 14px; margin-top: 20px;height: 20px; line-height: 20px;">
+        <div style="font-size: 14px; margin-top: 25px;height: 20px; line-height: 20px;">
           {{ '{:,.2f}'.format(r.vat)}} 
         </div>     
-        <div style="font-size: 14px; margin-top: 20px;height: 20px; line-height: 20px;">
+        <div style="font-size: 14px; margin-top: 25px;height: 20px; line-height: 20px;">
           {{ '{:,.2f}'.format(r.amount_before_vat)}} 
         </div>      
         </div>      
