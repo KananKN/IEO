@@ -131,8 +131,18 @@
           </div>
           <div style="width: 25%;border-left: 2px solid black;padding: 10px;">
             
-              <strong style="margin-right: 20px;">เลขที่</strong> {{ r.receipt_no }}<br>No.<br><br>
-              <strong style="margin-right: 25px;">วันที่</strong> {{ r.created_at.strftime('%Y-%m-%d') }}<br>Date
+            <div style="display: flex; gap: 8px; align-items: flex-start; margin-bottom: 10px;">
+                <!-- ด้านซ้าย: พนักงานขาย + Salesman -->
+                <div style="white-space: nowrap;">
+                  <strong>เลขที่:</strong><br>
+                  <small>Salesman</small>
+                </div>
+              
+                <!-- ด้านขวา: ชื่อพนักงาน -->
+                <div style="flex: 1; word-break: break-word;font-size: 14px">
+                  {{ r.receipt_no }}
+                </div>
+              </div>              <strong style="margin-right: 25px;">วันที่</strong> {{ r.created_at.strftime('%Y-%m-%d') }}<br>Date
             
             
           </div>
@@ -221,7 +231,7 @@
           </div>
         </div>
       </div>
-      <span style="margin-top: 30px;">หมายเหตุ: เอกสารฉบับนี้ไม่ใช่ของจริง โดยเอกสารฉบับนี้เป็นใบรับฝากเงินเพื่อที่ให้ทางสถาบันเป็นผู้ดำเนินการชำระเงินค่าโครงการของ<br>ผู้สมัครให้กับองค์กรต่างประเทศเท่านั้น</span><br>
+      <span style="margin-top: 30px;">หมายเหตุ: เอกสารฉบับนี้ไม่ใช่ของจริง โดยเอกสารฉบับนี้เป็นใบรับฝากเงินเพื่อที่ให้ทางสถาบันเป็นผู้ดำเนินการชำระเงินค่าโครงการของผู้สมัครให้กับองค์กรต่างประเทศเท่านั้น</span><br>
       <span>This document is only a deposit receipt. The programe fee will be paid by applicants. IEO will make remittance on behalf of applicant to US. designated sponsors</span>
 </div>
 {% endif %}
@@ -340,13 +350,18 @@ function loadDataTable() {
 
               <title>Receipt Print</title>
               <style>
-                
+                @font-face {
+                    font-family: 'THSarabun';
+                    src: url('/static/fonts/THSarabunNew.ttf') format('truetype');
+                    font-weight: normal;
+                    font-style: normal;
+                    }
                 body {
                   font-family: "TH SarabunPSK", sans-serif;
                   width: 800px;
                   margin: 0 auto;
                   padding: 20px;
-                  font-size: 14px !important;
+                  font-size: 16px !important;
                 }
                 table {
                   width: 100%;
