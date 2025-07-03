@@ -596,8 +596,6 @@ def delete_file():
 
 
 
-           
-
 
         # ✅ ตรวจสอบสถานะ order ใหม่
         all_terms = OrderTermModel.query.filter_by(order_id=term.order_id).order_by(OrderTermModel.sequence).all()
@@ -648,25 +646,52 @@ def delete_file():
 @blueprint.route('/delete_order_list', methods=['POST'])
 @login_required
 def delete_order_list():
-    id_del = int(request.form["id"])  # แปลงให้ชัวร์ว่าเป็น int
+    id_del = int(request.form["id"])
+    print("🧾 ลบออเดอร์ ID:", id_del)
 
-    print(id_del)
-    # ตรวจสอบว่า query เจอ
-    target = db.session.query(OrderModel).filter(OrderModel.id == id_del).first()
-    print("Target Order:", target)
+    try:
+        target = OrderModel.query.get(id_del)
+        if not target:
+            flash('ไม่พบข้อมูลออเดอร์', 'warning')
+            return redirect(url_for('order_blueprint.order_list'))
 
-    if target:
-        # ลบ OrderTermModel ที่อ้างถึง order_id นี้ก่อน
-        OrderTermModel.query.filter_by(order_id=id_del).delete()
+        order_terms = OrderTermModel.query.filter_by(order_id=id_del).all()
+
+        for term in order_terms:
+            receipts = ReceiptModel.query.filter_by(terms_id=term.id).all()
+            for r in receipts:
+                db.session.delete(r)
+
+        file_payments = FilePaymentModel.query.filter_by(order_id=id_del).all()
+        for fp in file_payments:
+            try:
+                if fp.filename:
+                    path = os.path.join("apps", "static", "assets", "files", "payment", fp.filename)
+                    print("📂 Delete file:", path)
+                    os.remove(path)
+            except FileNotFoundError:
+                print(f"⚠️ ไม่พบไฟล์: {path}")
+            except Exception as e:
+                print(f"❌ Error deleting file: {e}")
+
+            db.session.delete(fp)
+
+            if fp.payment_id:
+                payment = PaymentModel.query.get(fp.payment_id)
+                if payment and FilePaymentModel.query.filter_by(payment_id=payment.id).count() <= 1:
+                    db.session.delete(payment)
+
+        for term in order_terms:
+            db.session.delete(term)
+
+        db.session.delete(target)
+
         db.session.commit()
-
-        # แล้วค่อยลบ OrderModel
-        db.session.query(OrderModel).filter(OrderModel.id == id_del).delete(synchronize_session=False)
-        db.session.commit()
-
-        flash('Deleted Order!', 'success')
-    else:
-        flash('No Order found for that ID', 'warning')
+        flash('ลบออเดอร์และข้อมูลที่เกี่ยวข้องเรียบร้อย', 'success')
+    except Exception as e:
+        db.session.rollback()
+        print("❌ Commit Error:", e)
+        flash('เกิดข้อผิดพลาดระหว่างลบข้อมูล', 'danger')
 
     return redirect(url_for('order_blueprint.order_list'))
 
