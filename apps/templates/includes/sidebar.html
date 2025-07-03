@@ -370,32 +370,12 @@
             </div>
             {% endif %}
            
-            <div class="menu-header">Settings</div>
-            {% if current_user.has_permission('read_thip') %}
-            <div
-                class="menu-item has-sub {% if segment in ['thip_topic'] %} active {% endif %}"
-            >
-                <a href="javascript:;" class="menu-link">
-                    <div class="menu-icon">
-                        <i class="material-icons">fact_check</i>
-                    </div>
-                    <div class="menu-text">THIP Dashboard</div>
-                    <div class="menu-caret"></div>
-                </a>
-                <div class="menu-submenu">
-                    <div
-                        class="menu-item {% if segment == 'thip_topic' %} active {% endif %}"
-                    >
-                        <a href="/thip/topic" class="menu-link"
-                            ><div class="menu-text">Indicator Manage</div></a
-                        >
-                    </div>
-                </div>
-            </div>
-            {% endif %} {% if current_user.has_permission('read_resource') or
+            
+            {% if current_user.has_permission('read_resource') or
             current_user.has_permission('read_permission') or
             current_user.has_permission('read_role') or
             current_user.has_permission('read_user') %}
+            <div class="menu-header">Settings</div>
             <div
                 class="menu-item has-sub {% if segment in ['resource','permission','role','user'] %} active {% endif %}"
             >
