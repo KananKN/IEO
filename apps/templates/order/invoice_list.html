@@ -189,7 +189,11 @@
               <!-- คอลัมน์ซ้าย -->
               <div style="display: table-cell; width: 50%; vertical-align: top; padding-right: 16px;border-right: 2px solid black;border-bottom: 2px solid black;">
                 <div style="margin-bottom: 12px;padding-left: 10px;padding-top: 10px;">
-                  <strong style="margin-right: 26px;">วันที่:</strong> {{ r.created_at.strftime('%Y-%m-%d') }}<br>
+                  <strong style="margin-right: 26px;">วันที่:</strong> {% if r.transfer_date %}
+                  {{ r.transfer_date.strftime('%Y-%m-%d') }}
+                {% else %}
+                  -
+                {% endif %}<br>
                   <small>Issue Date</small>
                 </div>
                 <div style="margin-bottom: 12px;padding-left: 10px; padding-top: 10px;">
@@ -318,7 +322,11 @@
             รายละเอียด<br><span style="font-size: 12px; color: #666;">Payment Detail</span>
           </div>
           <div style="white-space: normal; word-break: break-word;font-size: 13px;">
-            โอนเข้า บริษัท ไอ.อี.โอ. จำกัด (INT) วันที่ {{r.created_at.strftime('%Y-%m-%d') or '-' }}
+            โอนเข้า บริษัท ไอ.อี.โอ. จำกัด (INT) วันที่ {% if r.transfer_date %}
+            {{ r.transfer_date.strftime('%Y-%m-%d') }}
+          {% else %}
+            -
+          {% endif %}
           </div>
         </div>
         

@@ -143,7 +143,11 @@
                   {{ r.receipt_no }}
                 </div>
               </div>              
-              <strong style="margin-right: 25px;">วันที่</strong> {{ r.created_at.strftime('%Y-%m-%d') }}<br>Date
+              <strong style="margin-right: 25px;">วันที่</strong> {% if r.transfer_date %}
+              {{ r.transfer_date.strftime('%Y-%m-%d') }}
+            {% else %}
+              -
+            {% endif %}<br>Date
             
             
           </div>
@@ -209,13 +213,21 @@
             
               <div class="row" style="display: flex;margin-bottom: 15px !important;">
                 <div class="label">วันที่โอน <br><span class="subtext" style="color:black;margin-top:3px"> Date transfer </span></div>
-                <div class="value">{{ r.created_at.strftime('%Y-%m-%d') }}</div>
+                <div class="value">{% if r.transfer_date %}
+                    {{ r.transfer_date.strftime('%Y-%m-%d') }}
+                  {% else %}
+                    -
+                  {% endif %}</div>
               </div>
               <div class="subtext"></div>
             
               <div class="row" style="display: flex;">
                 <div class="label">วันที่ <br><span class="subtext" style="color:black;margin-top:3px"> Date</span></div>
-                <div class="value">{{ r.created_at.strftime('%Y-%m-%d') }}</div>
+                <div class="value">{% if r.transfer_date %}
+                    {{ r.transfer_date.strftime('%Y-%m-%d') }}
+                  {% else %}
+                    -
+                  {% endif %}</div>
               </div>
             </div>
             

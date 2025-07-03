@@ -22,11 +22,12 @@ import json
 import os
 from datetime import datetime
 import uuid
-from sqlalchemy import and_, func, case, asc, or_, cast, String
+from sqlalchemy import and_, func, case, asc, or_, cast, String, desc
 from sqlalchemy.orm import aliased, joinedload
 from collections import defaultdict
 from datetime import datetime
 from decimal import Decimal, ROUND_HALF_UP
+
 
 # import logging
 
@@ -1026,7 +1027,7 @@ def save_single_term():
         # ตรวจสอบว่าเคยมีใบเสร็จหรือยัง
         existing_receipt = ReceiptModel.query.filter_by(terms_id=term.id).first()
         if not existing_receipt:
-            create_receipt_and_invoice_for_term(term)
+            create_receipt_and_invoice_for_term(term,transfer_date=newItem.payment_date)
         else:
             print(f"📄 มีใบเสร็จแล้ว: {existing_receipt.receipt_no}")
             # create_receipt_and_invoice_for_term(term)
@@ -1118,7 +1119,7 @@ def generate_tax_invoice_number():
     return f"{prefix}-{number}" 
      
 
-def create_receipt_and_invoice_for_term(term: OrderTermModel):
+def create_receipt_and_invoice_for_term(term: OrderTermModel, transfer_date=None):
     try:
         # เช็คก่อนว่า term นี้เคยออกใบเสร็จหรือยัง
 
@@ -1128,16 +1129,20 @@ def create_receipt_and_invoice_for_term(term: OrderTermModel):
             print(f"⚠️ Term {term.id} มีใบเสร็จแล้ว: {existing_receipt.receipt_no}")
             return
 
-        # สร้างใบเสร็จสำหรับงวดนี้
+        used_transfer_date = transfer_date or term.updated_at or term.created_at
+
+            # สร้างใบเสร็จสำหรับงวดนี้
         receipt = ReceiptModel(
             order_id=term.order_id,
             terms_id=term.id,
             receipt_no=generate_receipt_number(),
             amount=term.amount,
             member_id=term.order.member_id,
+            transfer_date=used_transfer_date
         )
         db.session.add(receipt)
         db.session.flush()
+        
 
         
         # ตรวจสอบ VAT
@@ -1158,6 +1163,7 @@ def create_receipt_and_invoice_for_term(term: OrderTermModel):
                 vat=vat_amount,  
                 amount_before_vat=base_amount,
                 terms_id=term.id,
+                transfer_date=used_transfer_date
             )
             db.session.add(tax_invoice)
             db.session.commit()
