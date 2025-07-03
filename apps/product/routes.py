@@ -31,9 +31,9 @@ from decimal import Decimal
 
 
 
-read_permission = Permission(RoleNeed("read_permission"))
-write_permission = Permission(RoleNeed("write_permission"))
-delete_permission = Permission(RoleNeed("delete_permission"))
+read_permission = Permission(RoleNeed("read_product"))
+write_permission = Permission(RoleNeed("write_product"))
+delete_permission = Permission(RoleNeed("delete_product"))
 
 @blueprint.route('/')
 @login_required
