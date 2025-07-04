@@ -169,27 +169,37 @@ def get_order():
         6: OrderModel.created_at,
     }
 
-    query = db.session.query(OrderModel) \
-    .options(
-        joinedload(OrderModel.lead),
-        joinedload(OrderModel.product).joinedload(ProductForSalesModel.term_of_payment),
-        joinedload(OrderModel.product).joinedload(ProductForSalesModel.installments)
-    )
+    # ✅ Base query with joins for filtering and eager loading
+    base_query = db.session.query(OrderModel)\
+        .join(leadModel, OrderModel.lead_id == leadModel.id)\
+        .join(ProductForSalesModel, OrderModel.product_id == ProductForSalesModel.id)\
+        .options(
+            joinedload(OrderModel.lead),
+            joinedload(OrderModel.product).joinedload(ProductForSalesModel.term_of_payment),
+            joinedload(OrderModel.product).joinedload(ProductForSalesModel.installments)
+        )
 
+    # ✅ Count all records (before search)
+    total_records = base_query.count()
+
+    # ✅ Apply search filter (ถ้ามี)
     if search_value:
         search = f"%{search_value}%"
-        query = query.filter(
+        base_query = base_query.filter(
             or_(
                 OrderModel.order_number.ilike(search),
                 leadModel.first_name.ilike(search),
                 ProductForSalesModel.name.ilike(search),
-                ProductForSalesModel.price.ilike(search),
+                cast(ProductForSalesModel.price, String).ilike(search),
                 func.to_char(OrderModel.created_at, 'DD-MM-YYYY').ilike(search),
                 OrderModel.status.ilike(search),
             )
         )
 
-    # การจัดเรียง
+    # ✅ Count records after filter
+    filtered_records = base_query.count()
+
+    # ✅ Sorting
     if order:
         column_index = int(order[0]["column"])
         sort_direction = order[0]["dir"]
@@ -202,29 +212,27 @@ def get_order():
     else:
         column_order = OrderModel.id.asc()
 
-    total_records = query.count()
+    # ✅ Pagination
+    orders = base_query.order_by(column_order).offset(start).limit(length).all()
 
-    orders = query.order_by(column_order).offset(start).limit(length).all()
-    # print(orders)
+    # ✅ Format response data
     data = []
     for index, order in enumerate(orders):
         customer_name = f"{order.lead.first_name or ''} {order.lead.last_name or ''}".strip() if order.lead else ''
-
         agency_name = (
             "IEO" if not order.lead or not order.lead.agency
             else f"{order.lead.agency.first_name or ''} {order.lead.agency.last_name or ''}".strip()
         )
-
         installment_list = [safe_model_to_dict(i) for i in order.product.installments] if order.product and order.product.installments else []
 
         data.append({
-            "id": start + index + 1, 
+            "id": start + index + 1,
             "order_number": order.order_number or '',
             "customer_name": customer_name,
             "product_name": order.product.name if order.product else '',
             "term": order.product.term_of_payment.name if order.product and order.product.term_of_payment else '',
             "email": order.lead.email if order.lead else '',
-            "price": order.net_price ,
+            "price": order.net_price,
             "created_at": int(order.created_at.timestamp() * 1000),
             "data_user": safe_model_to_dict(order),
             "lead": safe_model_to_dict(order.lead),
@@ -233,15 +241,16 @@ def get_order():
             "installments": installment_list,
         })
 
+    # ✅ ส่งผลลัพธ์กลับ
     return Response(
         json.dumps({
             "draw": draw,
             "recordsTotal": total_records,
-            "recordsFiltered": total_records,
+            "recordsFiltered": filtered_records,
             "data": data
         }, ensure_ascii=False, default=str),
         content_type="application/json"
-    )   
+    )
 
 @blueprint.route('/order_create')
 @login_required

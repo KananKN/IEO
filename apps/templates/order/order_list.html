@@ -368,6 +368,7 @@ function loadDataTable() {
             url: "/order/get_order1",
             type: "POST",
             data: function(d) { 
+                console.log(d); 
                 return JSON.stringify(d); 
             },
             contentType: "application/json",
@@ -375,16 +376,12 @@ function loadDataTable() {
         },
         columns: [
             { data: "id", className: "text-center" },
-            { data: null,
+            {
+                data: 'order_number',
                 render: function(data, type, row) {
-                    const rowData = JSON.stringify(row).replace(/"/g, '&quot;'); 
-                    return `
-                    <a href="/order/order_update/${data.data_user.id}"  >
-                    ${data.order_number}</a>
-                    </a> `;
+                    return `<a href="/order/order_update/${row.data_user.id}">${data}</a>`;
                 }
-            
-            } ,
+            },
             { data: "customer_name"} ,
             { data: "product_name" },
             { data: "price",
