@@ -33,7 +33,7 @@
 <div id="content" class="app-content">
 
     <h1 class="page-header">รายการใบกำกับภาษี / ใบเสร็จ 
-        {% if current_user.has_permission('write_order') %}
+        {% if current_user.has_permission('write_account') %}
             
         {% endif %}
     </h1>
@@ -484,7 +484,7 @@ function loadDataTable() {
 
                     let buttons = '';
                 
-                    {% if current_user.has_permission('delete_order') %}
+                    {% if current_user.has_permission('write_account') %}
                     buttons += `
                         <a class="btn btn-danger btn-icon btn-circle" onclick="sweetAlertDel(${row.data_user.id})" hidden>
                             <i class="fas fa-trash"></i>
