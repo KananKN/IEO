@@ -32,7 +32,7 @@
 <div id="content" class="app-content">
 
     <h1 class="page-header">รายการใบเสร็จรับเงิน (DEPOSIT)
-        {% if current_user.has_permission('write_order') %}
+        {% if current_user.has_permission('write_account') %}
             
         {% endif %}
     </h1>
@@ -316,7 +316,7 @@ function loadDataTable() {
                     const termId = row.term_id || '';
                     let buttons = '';
 
-                    {% if current_user.has_permission('delete_order') %}
+                    {% if current_user.has_permission('write_account') %}
                     buttons += `
                         <a class="btn btn-danger btn-icon btn-circle" onclick="sweetAlertDel(${data.data_user.id})" hidden>
                             <i class="fas fa-trash"></i>

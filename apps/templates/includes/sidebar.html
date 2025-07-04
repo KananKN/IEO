@@ -280,7 +280,7 @@
             {% endif %}  
             {% if current_user.has_permission('read_order')  %}
             <div
-                class="menu-item has-sub {% if segment in ['order','account','invoice'] %} active {% endif %}"
+                class="menu-item has-sub {% if segment in ['order'] %} active {% endif %}"
             >
                 <a href="javascript:;" class="menu-link">
                     <div class="menu-icon">
@@ -294,6 +294,25 @@
                         <a href="/order" class="menu-link">
                        <div class="menu-text mt-1">Orders (ใบสั่งซื้อ)</div></a>
                     </div>
+                    
+                    
+                </div>
+                
+            </div>
+
+            {% endif %}  
+            {% if current_user.has_permission('read_account')  %}
+            <div
+                class="menu-item has-sub {% if segment in ['account','invoice'] %} active {% endif %}"
+            >
+                <a href="javascript:;" class="menu-link">
+                    <div class="menu-icon">
+                        <i class="material-icons">description</i>
+                    </div>
+                    <div class="menu-text">Account</div>
+                    <div class="menu-caret"></div>
+                </a>
+                <div class="menu-submenu">
                     <div class="menu-item {% if segment == 'account' %} active {% endif %}">
                         <a href="/order/account" class="menu-link">
                        <div class="menu-text mt-1">Account</div></a>
@@ -302,6 +321,7 @@
                         <a href="/order/invoice" class="menu-link">
                        <div class="menu-text mt-1">Invoice</div></a>
                     </div>
+                    
                     
                 </div>
                 
