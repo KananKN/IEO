@@ -402,28 +402,28 @@ function loadDataTable() {
                 }
             },
             {
-                data: null,
-                render: function(data, type, row) {
-                    let status = data.data_user.status;
+                data: "status_label",
+                visible: false // ให้ filter ได้ แต่ไม่ต้องแสดง
+            },
+            {
+                data: "status_label",
+                render: function(status_label, type, row) {
+                    let status = row.status;
                     let color_text = '';
-                    if (status.startsWith('installment_')) {
-                        const installmentNumber = status.split('_')[1];  // ดึงตัวเลขงวดจาก 'installment_1'
+            
+                    if (status && status.startsWith('installment_')) {
                         color_text = 'danger';
-                        text = `ค้างชำระเงินงวดที่ ${installmentNumber}`;
                     } else if (status === 'completed') {
                         color_text = 'success';
-                        text = 'จบโครงการ';
-                    }  else if (status === 'pending') {
+                    } else if (status === 'pending') {
                         color_text = 'info';
-                        text = 'รอการชำระเงิน';
                     } else if (status === 'cancelled') {
                         color_text = 'secondary';
-                        text = 'ยกเลิก';
                     } else {
                         color_text = 'secondary';
-                        text = 'สถานะไม่ทราบแน่ชัด';
                     }
-                    return `<span class=" text-${color_text} mb-1">${text}</span>`;
+            
+                    return `<span class="text-${color_text} mb-1">${status_label}</span>`;
                 }
             },
             { 

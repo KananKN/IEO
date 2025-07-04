@@ -528,29 +528,18 @@ function loadDataTable() {
             {
                 data: null,
                 render: function(data, type, row) {
-                    let status = row.data_list.status;
+                    let status = row.status;
                     let color_text = '';
-                    let text= '';
-                    if (status === 'new') {
-                        color_text = 'warning';
-                        text = 'ใหม่';
-                    } else if (status === 'contacted') {
-                        color_text = 'info';
-                        text = 'ติดต่อแล้ว';
-                    } else if (status === 'pending') {
-                        color_text = 'secondary';
-                        text = 'รอการติดสินใจ';
-                    } else if (status === 'converted') {
-                        color_text = 'success';
-                        text = 'ปิดการขาย';
-                    } else if (status === 'lost') {
-                        color_text = 'danger';
-                        text = 'ไม่สนใจ';
-                    } else {
-                        color_text = 'dark'; // default case
-                    }
+                    let text = row.status_label || '';
             
-                    return `<span class="text-${color_text}  mb-1">${text}</span>`;
+                    if (text === 'ใหม่') color_text = 'warning';
+                    else if (text === 'ติดต่อแล้ว') color_text = 'info';
+                    else if (text === 'รอการติดสินใจ') color_text = 'secondary';
+                    else if (text === 'ปิดการขาย') color_text = 'success';
+                    else if (text === 'ไม่สนใจ') color_text = 'danger';
+                    else color_text = 'dark';
+            
+                    return `<span class="text-${color_text} mb-1">${text}</span>`;
                 }
             },
             { 

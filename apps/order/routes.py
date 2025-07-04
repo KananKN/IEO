@@ -22,7 +22,7 @@ import json
 import os
 from datetime import datetime
 import uuid
-from sqlalchemy import and_, func, case, asc, or_, cast, String, desc
+from sqlalchemy import and_, func, case, asc, or_, cast, String, desc,text
 from sqlalchemy.orm import aliased, joinedload
 from collections import defaultdict
 from datetime import datetime
@@ -147,6 +147,31 @@ def convert_thai_to_date(thai_date_str):
     # สร้างเป็นวันที่ในรูปแบบ datetime
     return datetime(year, int(month), int(day))
 
+# ดึงสถานะภาษาไทย
+def get_status_label(status):
+    if status and status.startswith("installment_"):
+        seq = status.split("_")[1]
+        return f"ค้างชำระเงินงวดที่ {seq}"
+    if status == "completed":
+        return "จบโครงการ"
+    if status == "pending":
+        return "รอการชำระเงิน"
+    if status == "cancelled":
+        return "ยกเลิก"
+    return "สถานะไม่ทราบแน่ชัด"
+
+status_label_expr = case(
+    [
+        (OrderModel.status.like("installment_%"),
+         func.concat("ค้างชำระเงินงวดที่ ", func.split_part(OrderModel.status, "_", 2))),
+        (OrderModel.status == "completed", "จบโครงการ"),
+        (OrderModel.status == "pending", "รอการชำระเงิน"),
+        (OrderModel.status == "cancelled", "ยกเลิก"),
+    ],
+    else_="สถานะไม่ทราบแน่ชัด"
+)
+
+
 @blueprint.route("/get_order1", methods=["POST"])
 @login_required
 @read_permission.require(http_exception=403)
@@ -190,9 +215,9 @@ def get_order():
                 OrderModel.order_number.ilike(search),
                 leadModel.first_name.ilike(search),
                 ProductForSalesModel.name.ilike(search),
-                cast(ProductForSalesModel.price, String).ilike(search),
-                func.to_char(OrderModel.created_at, 'DD-MM-YYYY').ilike(search),
-                OrderModel.status.ilike(search),
+                func.to_char(OrderModel.net_price, 'FM999999999.00').ilike(search),
+                func.to_char(OrderModel.created_at, 'DD/MM/YYYY').ilike(search),
+                status_label_expr.ilike(search),  # ✅ เพิ่มตรงนี้
             )
         )
 
@@ -239,6 +264,8 @@ def get_order():
             "product": safe_model_to_dict(order.product),
             "agency_name": agency_name,
             "installments": installment_list,
+            "status": order.status,
+            "status_label": get_status_label(order.status),
         })
 
     # ✅ ส่งผลลัพธ์กลับ
@@ -1281,7 +1308,9 @@ def get_account():
                 MemberModel.first_name.ilike(search),
                 MemberModel.last_name.ilike(search),
                 ProductForSalesModel.name.ilike(search),
-                func.to_char(ReceiptModel.created_at, 'DD-MM-YYYY').ilike(search)
+                func.to_char(ReceiptModel.created_at, 'DD/MM/YYYY').ilike(search),
+                func.to_char(OrderTermModel.discount, 'FM999999999.00').ilike(search),
+                func.to_char(OrderTermModel.amount, 'FM999999999.00').ilike(search),
             )
         )
 
@@ -1407,7 +1436,12 @@ def get_invoice():
                 MemberModel.first_name.ilike(search),
                 MemberModel.last_name.ilike(search),
                 ProductForSalesModel.name.ilike(search),
-                func.to_char(TaxInvoiceModel.created_at, 'DD-MM-YYYY').ilike(search)
+                func.to_char(TaxInvoiceModel.created_at, 'DD/MM/YYYY').ilike(search),
+                func.to_char(TaxInvoiceModel.vat, 'FM999999999.00').ilike(search),
+                func.to_char(TaxInvoiceModel.amount_before_vat, 'FM999999999.00').ilike(search),
+                func.to_char(OrderTermModel.amount, 'FM999999999.00').ilike(search),
+                func.to_char(OrderTermModel.net_price, 'FM999999999.00').ilike(search),
+
             )
         )
 

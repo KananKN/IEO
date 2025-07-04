@@ -166,6 +166,26 @@ def convert_thai_to_date(thai_date_str):
     # สร้างเป็นวันที่ในรูปแบบ datetime
     return datetime(year, int(month), int(day))
 
+def get_status_label(status):
+    return {
+        'new': 'ใหม่',
+        'contacted': 'ติดต่อแล้ว',
+        'pending': 'รอการติดสินใจ',
+        'converted': 'ปิดการขาย',
+        'lost': 'ไม่สนใจ'
+    }.get(status, 'สถานะไม่ทราบแน่ชัด')
+
+status_label_expr = case(
+    [
+        (LeadProgram.status == 'new', 'ใหม่'),
+        (LeadProgram.status == 'contacted', 'ติดต่อแล้ว'),
+        (LeadProgram.status == 'pending', 'รอการติดสินใจ'),
+        (LeadProgram.status == 'converted', 'ปิดการขาย'),
+        (LeadProgram.status == 'lost', 'ไม่สนใจ'),
+    ],
+    else_='สถานะไม่ทราบแน่ชัด'
+)
+
 @blueprint.route("/get_userRequest", methods=["POST"])
 @login_required
 @read_permission.require(http_exception=403)
@@ -189,7 +209,7 @@ def get_userRequest():
         5: LeadProgram.year,
         6: AgencyModel.first_name,
         7: LeadProgram.created_at,
-        8: leadModel.status,
+        8: LeadProgram.status,
     }
 
     query = db.session.query(LeadProgram) \
@@ -210,8 +230,8 @@ def get_userRequest():
                 leadModel.email.ilike(search),
                 ProductForSalesModel.name.ilike(search),
                 AgencyModel.first_name.ilike(search),
-                func.to_char(leadModel.created_at, 'DD-MM-YYYY').ilike(search),
-                leadModel.status.ilike(search),
+                func.to_char(leadModel.created_at, 'DD/MM/YYYY').ilike(search),
+                status_label_expr.ilike(search),  # ✅ เพิ่มตรงนี้
             )
         )   
 
@@ -237,6 +257,7 @@ def get_userRequest():
         lead = program.lead
         product = program.product
         agency = program.agency
+        status = program.status
         agency_name = "IEO" if agency is None else f"{agency.first_name or ''} {agency.last_name or ''}".strip()
 
         data_list = safe_model_to_dict(program)
@@ -256,7 +277,9 @@ def get_userRequest():
             "product": safe_model_to_dict(product) if product else {},
             "lead": safe_model_to_dict(lead) if lead else {},
             "created_at": int(program.created_at.timestamp() * 1000),
-            "data_list": data_list
+            "data_list": data_list,
+            "status": status,
+            "status_label": get_status_label(status),
         })
 
     return Response(
