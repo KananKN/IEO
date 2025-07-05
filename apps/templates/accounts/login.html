@@ -66,6 +66,9 @@
                         >Password</label
                     >
                 </div>
+                {% if msg %}
+                <div class="alert alert-danger">{{ msg }}</div>
+                {% endif %}
                 <div class="form-check mb-30px">
                     <input
                         class="form-check-input"
