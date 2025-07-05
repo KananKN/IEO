@@ -17,6 +17,8 @@ from io import BytesIO
 from PIL import Image
 from flask_principal import Permission, RoleNeed
 import json
+from sqlalchemy import not_
+
 
 read_permission = Permission(RoleNeed("read_user"))
 write_permission = Permission(RoleNeed("write_user"))
@@ -26,9 +28,13 @@ delete_permission = Permission(RoleNeed("delete_user"))
 @login_required
 @read_permission.require(http_exception=403)
 def index():
-    datas = UserModel.query.all()
+    datas = UserModel.query.join(RoleModel).filter(
+        not_(RoleModel.name.in_(['agency', 'university']))
+    ).all()
     print(datas)
-    roles = RoleModel.query.all()
+    roles = RoleModel.query.filter(
+            not_(RoleModel.name.in_(['agency', 'university']))
+        ).all()
     # print(datas)
     return render_template('usermanage/user.html', segment='user' ,datas=datas, roles=roles)
 

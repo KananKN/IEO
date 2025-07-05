@@ -6,11 +6,11 @@ from flask_login import (
     logout_user
 )
 
-from flask import Flask, current_app, request, session, jsonify
+from flask import Flask, current_app, request, session, jsonify, abort
 
-from flask_dance.contrib.github import github
+# from flask_dance.contrib.github import github
 
-from flask_dance.contrib.google import make_google_blueprint, google
+# from flask_dance.contrib.google import make_google_blueprint, google
 
 
 from apps import db, login_manager
@@ -19,6 +19,7 @@ from apps.authentication.forms import LoginForm, CreateAccountForm
 from apps.authentication.models import *
 from apps.product.models import *
 from apps.lead.models import *
+from apps.order.models import *
 
 from apps.authentication.util import verify_pass
 import base64
@@ -75,8 +76,9 @@ def login():
             return redirect(url_for('authentication_blueprint.route_default'))
 
         # Something (user or pass) is not ok
-        flash("Wrong user or password!", 'danger')
-        return redirect(url_for('authentication_blueprint.login'))
+        return render_template('accounts/login.html',
+                               msg='❌ ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง',
+                               form=login_form)
         # return render_template('accounts/login.html',
         #                        msg='Wrong user or password',
         #                        form=login_form)
@@ -666,6 +668,17 @@ def register_api():
     session['waiting_user_type'] = 'user'
 
     return jsonify({'status': 'success', 'message': 'ลงทะเบียนสำเร็จ รอการอนุมัติจากแอดมิน'}), 201
+
+
+@blueprint.route('/editProfile/<id>')
+def editProfile(id):
+
+    print("------")
+    print(id)
+    datas = AgencyModel.query.filter_by(id=id).first()
+    countrylist = CountryModel.query.all()
+    # file_data = FileOrganizationModel.query.filter_by(organization_id  = datas.id).all()
+    return render_template('accounts/editProfile.html' ,datas=datas,countrylist=countrylist)    
 
 
 # @login_manager.unauthorized_handler
