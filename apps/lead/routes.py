@@ -220,6 +220,19 @@ def get_userRequest():
     
     if product_id:
         query = query.filter(LeadProgram.product_id == product_id)
+    
+    # ✅ กรองตาม agency ถ้าไม่ใช่ admin
+    role = RoleModel.query.get(current_user.role_id)
+    if role and role.name.lower() != 'admin':
+        if current_user.agency:
+            query = query.filter(LeadProgram.agency_id == current_user.agency.id)
+        else:
+            return Response(json.dumps({
+                "draw": draw,
+                "recordsTotal": 0,
+                "recordsFiltered": 0,
+                "data": []
+            }), content_type="application/json")
         
     if search_value:
         search = f"%{search_value}%"
