@@ -416,17 +416,17 @@ def check_statusLead():
                 thisProgram.status = status
             else:
                 print("⚠️ มีออร์เดอร์ปีเดียวกันที่ยังไม่จบ -> ไม่เปลี่ยนสถานะ LeadProgram")
-        else:
-            # สร้างใหม่
-            new_program = LeadProgram(
-                lead_id=lead.id,
-                product_id=product.id,
-                agency_id=agency_id,
-                status=status if not existing_order else 'new',
-                remask=remask,
-                year=year
-            )
-            db.session.add(new_program)
+        # else:
+        #     # สร้างใหม่
+        #     new_program = LeadProgram(
+        #         lead_id=lead.id,
+        #         product_id=product.id,
+        #         agency_id=agency_id,
+        #         status=status if not existing_order else 'new',
+        #         remask=remask,
+        #         year=year
+        #     )
+        #     db.session.add(new_program)
 
         # Commit การเปลี่ยนแปลงของ LeadProgram
         db.session.commit()
