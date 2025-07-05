@@ -338,16 +338,7 @@ def check_statusLead():
     if agency_id == 'None' or agency_id == '':
         agency_id = None
         
-    # birth_date_raw = json_data.get('birth_date')
-    # if birth_date_raw:
-    #     try:
-    #         # ลองแปลงก่อนทั้งแบบมี '/' และ '-'
-    #         birth_date_str = birth_date_raw.replace('/', '-')
-    #         birth_date = datetime.strptime(birth_date_str, "%d-%m-%Y")
-    #     except ValueError:
-    #         birth_date = None  # หาก format ผิด
-    # else:
-    #     birth_date = None
+   
 
    
   
@@ -388,12 +379,11 @@ def check_statusLead():
         
         thisProgram = LeadProgram.query.filter_by(
                         lead_id=int(id_lead),
-                        product_id=int(id_pd)
+                        product_id=int(product_id_value)
                     ).first()
         
 
         existing_order = None
-        current_year = datetime.utcnow().year
         # print("current_year", current_year)
         if status == 'converted':
             existing_order = db.session.query(OrderModel).filter(
@@ -416,19 +406,7 @@ def check_statusLead():
                 thisProgram.status = status
             else:
                 print("⚠️ มีออร์เดอร์ปีเดียวกันที่ยังไม่จบ -> ไม่เปลี่ยนสถานะ LeadProgram")
-        # else:
-        #     # สร้างใหม่
-        #     new_program = LeadProgram(
-        #         lead_id=lead.id,
-        #         product_id=product.id,
-        #         agency_id=agency_id,
-        #         status=status if not existing_order else 'new',
-        #         remask=remask,
-        #         year=year
-        #     )
-        #     db.session.add(new_program)
-
-        # Commit การเปลี่ยนแปลงของ LeadProgram
+        
         db.session.commit()
 
         # ถ้ามีออร์เดอร์ค้างปีเดียวกัน และสถานะเป็น 'converted' => ห้ามสร้างใหม่
