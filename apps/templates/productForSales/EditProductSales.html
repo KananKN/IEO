@@ -232,7 +232,7 @@
                 </div>
                                 
             </div>
-            <input type="" id="defaultProductYear" hidden  value="{{ datas.year }}">
+            <input type="" id="defaultProductYear"  hidden value="{{ datas.year }}">
 
 
             <hr class="my-3">
@@ -491,16 +491,36 @@ $(document).ready(function () {
         return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     }
 
+    let yearDataStore = {};
+    //let yearPriceMap = {};
+    //let datas = {};
     function updatePriceByYear(selectedYear) {
-        let priceStr = yearPriceMap[selectedYear]
-        || yearDataStore[selectedYear]?.price
-        || datas.price
-        || '0.00';
-        let price = parseFloat(priceStr);
-        //if (isNaN(price)) price = 0;
-        //console.log("ปีที่เลือก:", selectedYear, "ราคา:", price); 
+        selectedYear = selectedYear?.trim?.() || null;
 
-        $('#i_prices').val(formatNumberWithCommas(price.toFixed(2)));
+        console.log("🟡 ปีที่ส่งเข้า updatePriceByYear:", selectedYear);
+
+        if (!selectedYear) {
+            console.warn('❌ ไม่ได้ส่งปีที่ถูกต้องเข้ามา');
+            return;
+        }
+
+        let priceStr =
+            (yearPriceMap?.[selectedYear]) ??
+            (yearDataStore?.[selectedYear]?.price) ??
+            (datas?.price) ??
+            '0.00';
+
+        let price = parseFloat(priceStr);
+        if (isNaN(price)) price = 0;
+
+        console.log("✅ ปีที่เลือก:", selectedYear, "ราคา:", price);
+
+        $('#i_prices').val(
+            price.toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            })
+        );
     }
 
     // ✅ 1. ตั้งค่าตอนโหลดหน้า
@@ -545,10 +565,12 @@ $(document).ready(function () {
     }); 
 
 //-----------------------------------------------------//
-    let yearDataStore = {};
+    //let yearDataStore = {};
     // เก็บข้อมูลปีทั้งหมด
 
     function renderVerticalTable(yearDataStore) {
+
+        
 
         $('#priceTable').find('colgroup').remove();
 
@@ -588,7 +610,9 @@ $(document).ready(function () {
 
         // 🔸 แถวเลือกปี (radio)
         let selectRow = '<tr><td><strong>เลือก</strong></td>';
-            const defaultYear = $('#defaultProductYear').val();  // ปีที่ควรเลือก
+            //const defaultYear = $('#defaultProductYear').val();  // ปีที่ควรเลือก
+            //let defaultYear = $('#defaultProductYear').val() || $('#inputYear').val();
+            const defaultYear = sessionStorage.getItem('selectedYear') || $('#defaultProductYear').val();
 
             console.log("years",years)
         years.forEach(y => {
@@ -695,7 +719,7 @@ $(document).ready(function () {
                             <input type="text" class="form-control" name="term_detail[]" value="${defaultDetail}" placeholder="รายละเอียด">
                         </div>
                         <div class="col-md-3 px-0">
-                            <input type="text" class="form-control price-input" name="installments" value="${formattedAmount}" oninput="formatNumberWithCommas(this)" placeholder="จำนวนงวด ${i + 1}">
+                            <input type="text" class="form-control price-input" name="installments[]" value="${formattedAmount}" oninput="formatNumberWithCommas(this)" placeholder="จำนวนงวด ${i + 1}">
                         </div>
                         <div class="col-md-1" >
                             <input type="hidden" name="check_vat_${usedYear}[${i}]" value="0" />
@@ -715,7 +739,7 @@ $(document).ready(function () {
 
         let payments = [];
         $('#extra-inputs .row').each(function () {
-            let amount = $(this).find('input[name="installments"]').val().replace(/,/g, '');
+            let amount = $(this).find('input[name="installments[]"]').val().replace(/,/g, '');
             let term_detail = $(this).find(`input[name="term_detail[]"]`).val() || '';
             let term_id = $(this).find('input[name="term_id[]"]').val() || '';
             let check_vat = $(this).find('input[type="checkbox"]').is(':checked') ? 1 : 0;
@@ -726,6 +750,8 @@ $(document).ready(function () {
                 id: term_id,  // เก็บ id ลงใน array ด้วย
                 check_vat: check_vat  // เก็บ id ลงใน array ด้วย
             });
+
+            console.log(payments)
         });
 
         return {
@@ -742,18 +768,29 @@ $(document).ready(function () {
         $('#extra-inputs .row').each(function () {
             let id = $(this).find('input[name="term_id[]"]').val();
             let detail = $(this).find(`input[name="term_detail[]"]`).val();
-            let amount = $(this).find('input[name="installments"]').val();
+            let amount = $(this).find('input[name="installments[]"]').val();
             let check_vat = $(this).find('input[type="checkbox"]').is(':checked') ? 1 : 0;
             payments.push({ id: id, term_detail: detail, amount: amount, check_vat:check_vat });
 
-            //console.log(payments)
+            console.log(payments)
         });
         return payments;
     }
 
     // ฟังก์ชันแสดงข้อมูลลงฟอร์ม
     function populateForm(data) {
-        $('#i_price').val(data.price || '');
+        if (typeof data.price !== 'undefined') {
+            $('#i_prices').val(
+                (parseFloat(data.price || 0)).toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                })
+            );
+        } else {
+            $('#i_prices').val('');
+        }
+        //$('#i_prices').val(formatNumberWithCommas((data.price || 0).toFixed(2)));
+
         $('#i_term').val(data.term || '').trigger('change'); // สร้าง input งวดใหม่
         $('#paymentData').val(JSON.stringify(data.payments || []));
 
@@ -858,10 +895,15 @@ $(document).ready(function () {
         let termIDs = [];
         let termVat = [];
         $('#extra-inputs .row').each(function () {
-            let amount = $(this).find('input[name="installments"]').val().replace(/,/g, '');
-            let detail = $(this).find(`input[name="term_detail[]"]`).val() || '';
+            let amount = ($(this).find('input[name="installments[]"]').val() || '').replace(/,/g, '');
+            let detail = $(this).find('input[name="term_detail[]"]').val() || '';
             let id = $(this).find('input[name="term_id[]"]').val() || '';
-            let check_vat = $(this).find('input[type="checkbox"]').is(':checked') ? 1 : 0;
+            let check_vat = $(this).find('input[name="check_vat[]"]').is(':checked') ? 1 : 0;
+
+            //let amount = $(this).find('input[name="installments"]').val().replace(/,/g, '');
+            //let detail = $(this).find(`input[name="term_detail[]"]`).val() || '';
+            //let id = $(this).find('input[name="term_id[]"]').val() || '';
+            //let check_vat = $(this).find('input[type="checkbox"]').is(':checked') ? 1 : 0;
             //let check_vat = $(this).find(`input[name="check_vat_${year}[]"]`).is(':checked') ? 1 : 0;
 
             if (amount && parseFloat(amount) !== 0) {
@@ -894,10 +936,24 @@ $(document).ready(function () {
         renderVerticalTable(yearDataStore);
         
 
+        // สมมุติเก็บปีที่เลือกก่อนกดเพิ่ม
+        let prevSelectedYear = sessionStorage.getItem('selectedYear') || $('#inputYear').val();
 
+        if (yearDataStore.hasOwnProperty(prevSelectedYear)) {
+            // ถ้าปีที่เลือกก่อนหน้านี้มีข้อมูลเดิม เลือกปีเดิมไว้
+            sessionStorage.setItem('selectedYear', prevSelectedYear);
+            $(`input[name="selectedYear"][value="${prevSelectedYear}"]`).prop('checked', true);
+            $('#inputYear').val(prevSelectedYear).trigger('change');
+        } else {
+            // ถ้าไม่มีข้อมูลเดิมในปีที่เลือกก่อนหน้า ให้เลือกปีที่เพิ่มเข้ามาใหม่
+            sessionStorage.setItem('selectedYear', year);
+            $(`input[name="selectedYear"][value="${year}"]`).prop('checked', true);
+            $('#inputYear').val(year).trigger('change');
+        }
         //$('#tableBody').append(newRow);
         sortTableByYear(true);
         
+        /*
         /// 🟩 บันทึกข้อมูลปีปัจจุบัน
         yearDataStore[year] = gatherFormData();
 
@@ -911,6 +967,7 @@ $(document).ready(function () {
         } else {
             clearForm();
         }
+            */
 
         
     });

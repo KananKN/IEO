@@ -428,6 +428,7 @@ def save_payment():
     print("save_payment",request.form)
 
     # print(request.form.get('id'))
+    item_order = None
     try:
         id_order = request.form.get('id')
         id_member = request.form.get('id_member')
@@ -548,7 +549,13 @@ def save_payment():
         # logging.error(f"เกิดข้อผิดพลาด: {e}", exc_info=True)
         db.session.rollback() 
 
-    return redirect(url_for('order_blueprint.order_update',id=item_order.id))
+    # ✅ redirect อย่างปลอดภัย
+    if item_order:
+        return redirect(url_for('order_blueprint.order_update', id=item_order.id))
+    else:
+        return redirect(url_for('order_blueprint.order_update', id=id_order))
+
+        # //return redirect(url_for('order_blueprint.get_order'))  # หรือหน้า fallback
 
 @blueprint.route('/downloadPayment/<filename>')
 def downloadPayment(filename):
