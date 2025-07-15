@@ -511,7 +511,7 @@ def save_payment():
             item_member.last_nameEN = last_nameEN
             item_member.last_name = last_name       
             item_member.email = email
-            item_member.nickname = nickname
+            item_member.nick_name = nickname
             item_member.phone = phone   
             item_member.address = address
             item_member.status = payment_no
