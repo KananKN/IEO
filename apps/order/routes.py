@@ -331,6 +331,29 @@ def order_update(id):
                     OrderTermModel.order_id == data.id,
                 ).order_by(OrderTermModel.sequence).all()
     
+    print("orderTerm", orderTerm)
+    # ✅ ถ้าไม่มีงวดผ่อนเลย
+    if not orderTerm:
+        for i, plan in enumerate(payment, start=1):
+                term = OrderTermModel(
+                    order_id=id,
+                    term_detail=plan.term_detail,
+                    amount=Decimal(plan.amount),
+                    sequence=i,
+                    discount=0.00,
+                    net_price=Decimal(plan.amount),
+                    outstanding_amount=Decimal(plan.amount),
+                    check_vat=plan.check_vat
+                )
+                db.session.add(term)
+        db.session.commit()
+        print("✅ เพิ่ม OrderTerm สำเร็จ")
+    
+    # ✅ โหลดข้อมูลใหม่ เพื่อส่งไป render template
+    orderTerm = OrderTermModel.query.filter(
+        OrderTermModel.order_id == data.id,
+    ).order_by(OrderTermModel.sequence).all()
+    
     # 1. ดึงข้อมูล payments
     payments = PaymentModel.query.filter_by(order_id=data.id).all()
 
@@ -551,7 +574,7 @@ def save_payment():
 
     # ✅ redirect อย่างปลอดภัย
     if item_order:
-        return redirect(url_for('order_blueprint.order_update', id=item_order.id))
+        return redirect(url_for('order_blueprint.order_update', id=id_order))
     else:
         return redirect(url_for('order_blueprint.order_update', id=id_order))
 
