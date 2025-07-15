@@ -204,6 +204,19 @@ def get_order():
             joinedload(OrderModel.product).joinedload(ProductForSalesModel.installments)
         )
 
+    # 🔐 กรอง agency ถ้าไม่ใช่ admin
+    role = RoleModel.query.get(current_user.role_id)
+    if role and role.name.lower() != 'admin':
+        if current_user.agency:
+            base_query = base_query.filter(OrderModel.agency_id == current_user.agency.id)
+        else:
+            return Response(json.dumps({
+                "draw": draw,
+                "recordsTotal": 0,
+                "recordsFiltered": 0,
+                "data": []
+            }), content_type="application/json")
+
     # ✅ Count all records (before search)
     total_records = base_query.count()
 
