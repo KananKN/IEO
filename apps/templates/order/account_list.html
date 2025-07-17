@@ -70,7 +70,7 @@
                                 <th class="text-nowrap">โปรแกรม</th>
                                 <th class="text-nowrap">ส่วนลด</th>
                                 <th class="text-nowrap w-150px">จำนวนเงิน</th>
-                                <th class="text-nowrap">วันที่</th>
+                                <th class="text-nowrap">วันเวลา ที่รับเงิน</th>
                                 <th class="text-nowrap">Action</th>
                             </tr>
                         </thead>
@@ -307,7 +307,7 @@ function loadDataTable() {
             { data: "product_name" },
             { data: "discount", render: data => parseFloat(data).toLocaleString("en-US", { minimumFractionDigits: 2 }) },
             { data: "amount", render: data => parseFloat(data).toLocaleString("en-US", { minimumFractionDigits: 2 }) },
-            { data: "created_at", render: data => moment(data).format("DD/MM/YYYY") },
+            { data: "created_at", render: data => moment(data).format("DD/MM/YYYY HH:mm") },
             { 
                 data: null,  
 

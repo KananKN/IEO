@@ -215,16 +215,16 @@
                   <div class="menu-icon">
                         <i class="fas fa-file-invoice fs-18px mx-1 mt-1"></i>
                     </div>
-                 <div class="menu-text mt-1">Organization</div></a>
+                 <div class="menu-text mt-1">Sponsor/Organization</div></a>
             </div>
              {% endif %}   
-            {% if current_user.has_permission('read_sponsor')%}
+            {% if current_user.has_permission('read_Employee')%}
             <div class="menu-item  {% if segment == 'sponsor' %} active {% endif %}" >
                  <a href="/sponsor" class="menu-link">
                   <div class="menu-icon">
                         <i class="fas fa-file-invoice fs-18px mx-1 mt-1"></i>
                     </div>
-                 <div class="menu-text mt-1">Sponsor</div></a>
+                 <div class="menu-text mt-1">Employee</div></a>
             </div>     
             {% endif %}  
             {% if current_user.has_permission('read_university')%}
@@ -374,7 +374,7 @@
                         <a
                             href="/organization/list_Productorganization"
                             class="menu-link"
-                            ><div class="menu-text">รายการโครงการ Organization</div></a
+                            ><div class="menu-text">รายการโครงการ Sponsor/Organization</div></a
                         >
                     </div>
                     <div

@@ -1,6 +1,6 @@
 {% extends "layouts/base.html" %}
 
-{% block title %} Organization {% endblock %} 
+{% block title %} Sponsor/Organization {% endblock %} 
 
 <!-- Specific Page CSS goes HERE  -->
 {% block stylesheets %}
@@ -25,7 +25,7 @@
         <div class="d-flex justify-content-between align-items-center mb-3">
             <!-- ฝั่งซ้าย: รายการอุปกรณ์ + ปุ่มบวก -->
             <div class="d-flex align-items-center">
-                <h6 class="page-header m-0">Organization</h6>
+                <h6 class="page-header m-0">Sponsor/Organization</h6>
                 {% if current_user.has_permission('write_organization') %}
                     
                      <a href="/organization/organization_create" class="btn btn-success ms-3 shadow-sm  bg-gradient">
@@ -42,7 +42,7 @@
         <div class="col-xl-12">
             <div class="panel panel-inverse">
                 <div class="panel-heading">
-                    <h4 class="panel-title">Organization</h4>
+                    <h4 class="panel-title">Sponsor/Organization</h4>
                     <div class="panel-heading-btn">
                         <a href="javascript:;" class="btn btn-xs btn-icon btn-default" data-toggle="panel-expand"><i class="fa fa-expand"></i></a>
                         <a href="javascript:;" class="btn btn-xs btn-icon btn-success" data-toggle="panel-reload"><i class="fa fa-redo"></i></a>

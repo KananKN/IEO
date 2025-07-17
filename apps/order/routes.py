@@ -25,7 +25,7 @@ import uuid
 from sqlalchemy import and_, func, case, asc, or_, cast, String, desc,text
 from sqlalchemy.orm import aliased, joinedload
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, date, time
 from decimal import Decimal, ROUND_HALF_UP
 
 
@@ -47,11 +47,12 @@ def model_to_dict(model):
         data[c.name] = value
     return data
 
-def convert_timestamp_to_date(dt):
+def to_datetime(dt):
     if isinstance(dt, datetime):
-        print(dt)
-        return dt.strftime('%d/%m/%Y')
-    return ''
+        return dt
+    elif isinstance(dt, date):
+        return datetime.combine(dt, datetime.min.time())
+    return None
 
 def safe_model_to_dict(model):
     result = {}
@@ -206,7 +207,8 @@ def get_order():
 
     # 🔐 กรอง agency ถ้าไม่ใช่ admin
     role = RoleModel.query.get(current_user.role_id)
-    if role and role.name.lower() != 'admin':
+    # if role and role.name.lower() != 'admin':
+    if role and role.name.lower() not in ['admin', 'STAFF']:
         if current_user.agency:
             base_query = base_query.filter(OrderModel.agency_id == current_user.agency.id)
         else:
@@ -1304,8 +1306,7 @@ def account_list():
                            orderTerms=orderTerms)
 
 
-    # print(datas)
-    return render_template('order/account_list.html', segment='account' ,datas=datas)
+    
 
 @blueprint.route("/get_account", methods=["POST"])
 @login_required
@@ -1331,7 +1332,7 @@ def get_account():
     }
 
 
-    query = db.session.query(ReceiptModel) \
+    query = db.session.query(ReceiptModel,PaymentModel) \
     .join(ReceiptModel.member) \
     .join(ReceiptModel.terms) \
     .join(OrderTermModel.order) \
@@ -1339,6 +1340,8 @@ def get_account():
     .options(
         joinedload(ReceiptModel.member),
         joinedload(ReceiptModel.terms).joinedload(OrderTermModel.order).joinedload(OrderModel.product)
+    ).outerjoin(
+        PaymentModel, PaymentModel.order_id == OrderModel.id
     )
 
 
@@ -1354,6 +1357,7 @@ def get_account():
                 func.to_char(ReceiptModel.created_at, 'DD/MM/YYYY').ilike(search),
                 func.to_char(OrderTermModel.discount, 'FM999999999.00').ilike(search),
                 func.to_char(OrderTermModel.amount, 'FM999999999.00').ilike(search),
+                func.to_char(PaymentModel.payment_date, 'DD/MM/YYYY HH24:MI:SS').ilike(search),
             )
         )
 
@@ -1376,7 +1380,7 @@ def get_account():
     orders = query.order_by(column_order).offset(start).limit(length).all()
     # print(orders)
     data = []
-    for index, order in enumerate(orders):
+    for index, (order, payment) in enumerate(orders):
         member = order.member
         term = order.terms
         order_model = term.order if term else None
@@ -1386,6 +1390,8 @@ def get_account():
         product_name = product.name if product else ''
         discount = term.discount if term else 0
 
+        payment_date = to_datetime(payment.payment_date) if payment and payment.payment_date else None
+
         data.append({
             "id": start + index + 1,
             "term_id": order.terms_id,
@@ -1394,7 +1400,7 @@ def get_account():
             "product_name": product_name,
             "discount": float(discount or 0),
             "amount": float(order.amount or 0),
-            "created_at": int(order.created_at.timestamp() * 1000),
+            "created_at": int(payment_date.timestamp() * 1000) if payment_date else None,
             "data_user": safe_model_to_dict(order),
         })
 
@@ -1458,7 +1464,7 @@ def get_invoice():
     }
 
     # ───── Query หลัก ─────
-    query = db.session.query(TaxInvoiceModel)\
+    query = db.session.query(TaxInvoiceModel,PaymentModel)\
         .join(TaxInvoiceModel.member)\
         .join(TaxInvoiceModel.terms)\
         .join(OrderTermModel.order)\
@@ -1468,7 +1474,9 @@ def get_invoice():
             joinedload(TaxInvoiceModel.terms)
                 .joinedload(OrderTermModel.order)
                 .joinedload(OrderModel.product)
-        )
+        ).outerjoin(
+        PaymentModel, PaymentModel.order_id == OrderModel.id
+    )
 
     # ───── ค้นหาจากคำค้น (Search) ─────
     if search_value:
@@ -1484,7 +1492,7 @@ def get_invoice():
                 func.to_char(TaxInvoiceModel.amount_before_vat, 'FM999999999.00').ilike(search),
                 func.to_char(OrderTermModel.amount, 'FM999999999.00').ilike(search),
                 func.to_char(OrderTermModel.net_price, 'FM999999999.00').ilike(search),
-
+                func.to_char(PaymentModel.payment_date, 'DD/MM/YYYY HH24:MI:SS').ilike(search),
             )
         )
 
@@ -1504,7 +1512,7 @@ def get_invoice():
 
     # ───── เตรียมข้อมูลสำหรับ DataTables ─────
     data = []
-    for index, invoice in enumerate(invoices):
+    for index, (invoice, payment) in enumerate(invoices):
         member = invoice.member
         term = invoice.terms
         order_model = term.order if term else None
@@ -1517,6 +1525,8 @@ def get_invoice():
         net_price = float(term.net_price or 0) if term else 0
         vat = float(invoice.vat or 0) if invoice else 0
         amount_before_vat = float(invoice.amount_before_vat or 0) if invoice else 0
+        payment_date = to_datetime(payment.payment_date) if payment and payment.payment_date else None
+
 
         data.append({
             "id": start + index + 1,
@@ -1529,7 +1539,7 @@ def get_invoice():
             "net_price": net_price,
             "vat": vat,
             "amount_before_vat": amount_before_vat,
-            "created_at": int(invoice.created_at.timestamp() * 1000),  # JS timestamp
+            "created_at": int(payment_date.timestamp() * 1000) if payment_date else None,
             "data_user": safe_model_to_dict(invoice),
         })
 
