@@ -29,9 +29,9 @@ from collections import defaultdict
 
 # logging.basicConfig(filename='error.log', level=logging.ERROR)
 
-read_permission = Permission(RoleNeed("read_sponsor"))
-write_permission = Permission(RoleNeed("write_sponsor"))
-delete_permission = Permission(RoleNeed("delete_sponsor"))
+read_permission = Permission(RoleNeed("read_Employee"))
+write_permission = Permission(RoleNeed("write_Employee"))
+delete_permission = Permission(RoleNeed("delete_Employee"))
 
 
 # ---------- Fees ------------------------s

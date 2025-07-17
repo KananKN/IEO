@@ -74,7 +74,7 @@
                                 <th class="text-nowrap w-150px">จำนวนเงินรวมทั้งสิ้น</th>
                                 <th class="text-nowrap w-150px">VAT</th>
                                 <th class="text-nowrap w-150px">รวมมูลค่าสินค้า</th>
-                                <th class="text-nowrap">วันที่</th>
+                                <th class="text-nowrap">วันเวลา ที่รับเงิน</th>
                                 <th class="text-nowrap">Action</th>
                             </tr>
                         </thead>
@@ -474,7 +474,7 @@ function loadDataTable() {
             { data: "net_price", className: "text-end", render: data => parseFloat(data).toLocaleString("en-US", { minimumFractionDigits: 2 }) },
             { data: "vat", className: "text-end", render: data => parseFloat(data).toLocaleString("en-US", { minimumFractionDigits: 2 }) },
             { data: "amount_before_vat", className: "text-end", render: data => parseFloat(data).toLocaleString("en-US", { minimumFractionDigits: 2 }) },
-            { data: "created_at", render: data => moment(data).format("DD/MM/YYYY") },
+            { data: "created_at", render: data => moment(data).format("DD/MM/YYYY HH:mm") },
             { 
                 data: null,  
 

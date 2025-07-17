@@ -223,7 +223,7 @@ def get_userRequest():
     
     # ✅ กรองตาม agency ถ้าไม่ใช่ admin
     role = RoleModel.query.get(current_user.role_id)
-    if role and role.name.lower() != 'admin':
+    if role and role.name not in ['Admin', 'STAFF']:
         if current_user.agency:
             query = query.filter(LeadProgram.agency_id == current_user.agency.id)
         else:
