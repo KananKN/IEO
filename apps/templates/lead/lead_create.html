@@ -211,7 +211,7 @@
                                                       <label for="email" class="form-label col-form-label">ปีที่สนใจเข้าร่วมโครงการ<span class="text-danger form-label">*</span></label>
                                                     <select name="inputYear" id="inputYear" class="default-select2 form-control">
                                                       {% set this_year = this_year or 2025 %}
-                                                      {% for year in range(this_year - 5, this_year + 6) %}
+                                                      {% for year in range(this_year, this_year + 6) %}
                                                           <option value="{{ year }}" {% if year == this_year %}selected{% endif %}>{{ year }}</option>
                                                       {% endfor %}
                                                     </select>
