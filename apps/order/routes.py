@@ -185,6 +185,8 @@ def get_order():
     order = request_data.get("order", [])
     search_value = request_data.get("search", {}).get("value", "")
 
+    
+
     # Mapping คอลัมน์จาก DataTable ไปยัง Database
     column_map = {
         0: OrderModel.id,
@@ -218,7 +220,8 @@ def get_order():
                 "recordsFiltered": 0,
                 "data": []
             }), content_type="application/json")
-
+        
+        
     # ✅ Count all records (before search)
     total_records = base_query.count()
 
@@ -1314,6 +1317,7 @@ def account_list():
 def get_account():
 
     request_data = request.get_json()
+    print("📥 Received JSON:", request_data) 
     draw = request_data.get("draw", 1)
     start = request_data.get("start", 0)
     length = request_data.get("length", 10)
@@ -1361,7 +1365,31 @@ def get_account():
             )
         )
 
+    product_id = request_data.get("product_id")  # ✅ รับค่ามาจาก select
 
+    print("Received product_id:", product_id)
+        
+    if product_id:
+        query = query.filter(OrderModel.product_id == product_id)
+
+    # ... (รับ product_id ไปแล้ว)
+    start_datetime = request_data.get("start_datetime")
+    end_datetime = request_data.get("end_datetime")
+
+    print("✅ start_datetime:", start_datetime)
+    print("✅ end_datetime:", end_datetime)
+    if start_datetime and end_datetime:
+        try:
+            start_dt = datetime.strptime(start_datetime, "%d-%m-%Y %H:%M:%S")
+            end_dt = datetime.strptime(end_datetime, "%d-%m-%Y %H:%M:%S")
+
+            # filter เฉพาะรายการที่อยู่ในช่วงเวลา
+            query = query.filter(PaymentModel.payment_date != None)
+            query = query.filter(PaymentModel.payment_date.between(start_dt, end_dt))
+        except ValueError:
+            print("❌ Invalid datetime format")
+
+    print("Count:", query.count())
     # การจัดเรียง
     if order:
         column_index = int(order[0]["column"])
@@ -1495,6 +1523,30 @@ def get_invoice():
                 func.to_char(PaymentModel.payment_date, 'DD/MM/YYYY HH24:MI:SS').ilike(search),
             )
         )
+    
+    product_id = request_data.get("product_id")  # ✅ รับค่ามาจาก select
+
+    print("Received product_id:", product_id)
+        
+    if product_id:
+        query = query.filter(OrderModel.product_id == product_id)
+    
+    # ... (รับ product_id ไปแล้ว)
+    start_datetime = request_data.get("start_datetime")
+    end_datetime = request_data.get("end_datetime")
+
+    print("✅ start_datetime:", start_datetime)
+    print("✅ end_datetime:", end_datetime)
+    if start_datetime and end_datetime:
+        try:
+            start_dt = datetime.strptime(start_datetime, "%d-%m-%Y %H:%M:%S")
+            end_dt = datetime.strptime(end_datetime, "%d-%m-%Y %H:%M:%S")
+
+            # filter เฉพาะรายการที่อยู่ในช่วงเวลา
+            query = query.filter(PaymentModel.payment_date != None)
+            query = query.filter(PaymentModel.payment_date.between(start_dt, end_dt))
+        except ValueError:
+            print("❌ Invalid datetime format")
 
     # ───── จัดเรียงข้อมูล (Ordering) ─────
     if order:
@@ -1554,5 +1606,9 @@ def get_invoice():
         content_type="application/json"
     )
 
- 
+@blueprint.route("/get_product_list")
+def get_product_list():
+    products = ProductForSalesModel.query.all()
+    result = [{"id": p.id, "name": p.name} for p in products]
+    return jsonify(result)
     
