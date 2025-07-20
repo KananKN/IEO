@@ -397,7 +397,14 @@ function loadDataTable() {
             { data: "product_name" },
             { data: "discount", render: data => parseFloat(data).toLocaleString("en-US", { minimumFractionDigits: 2 }) },
             { data: "amount", render: data => parseFloat(data).toLocaleString("en-US", { minimumFractionDigits: 2 }) },
-            { data: "created_at", render: data => moment(data).format("DD/MM/YYYY HH:mm") },
+            {
+              data: "created_at",
+              type: "num",
+              render: {
+                display: data => data ? moment(data).format("DD/MM/YYYY HH:mm") : "-",
+                sort: data => data // ใช้ timestamp สำหรับเรียง
+              }
+            },     
             { 
                 data: null,  
 

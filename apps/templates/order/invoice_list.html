@@ -557,6 +557,7 @@ function loadDataTable() {
             { data: "amount_before_vat", className: "text-end", render: data => parseFloat(data).toLocaleString("en-US", { minimumFractionDigits: 2 }) },
             {
               data: "created_at",
+              type: "num",
               render: {
                 display: data => data ? moment(data).format("DD/MM/YYYY HH:mm") : "-",
                 sort: data => data // ใช้ timestamp สำหรับเรียง
