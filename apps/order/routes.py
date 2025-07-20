@@ -1332,7 +1332,7 @@ def get_account():
         3: ProductForSalesModel.name,
         4: OrderTermModel.discount,       # ส่วนลดอยู่ที่ terms
         5: ReceiptModel.amount,
-        6: ReceiptModel.created_at,
+        6: PaymentModel.payment_date,
     }
 
 
@@ -1489,6 +1489,7 @@ def get_invoice():
         4: OrderTermModel.discount,
         5: TaxInvoiceModel.amount,
         6: TaxInvoiceModel.created_at,
+        7: PaymentModel.payment_date,
     }
 
     # ───── Query หลัก ─────
