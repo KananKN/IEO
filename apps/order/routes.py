@@ -371,6 +371,8 @@ def order_update(id):
     orderTerm = OrderTermModel.query.filter(
         OrderTermModel.order_id == data.id,
     ).order_by(OrderTermModel.sequence).all()
+
+    print("orderTerm after reload", orderTerm)
     
     # 1. ดึงข้อมูล payments
     payments = PaymentModel.query.filter_by(order_id=data.id).all()
@@ -396,7 +398,7 @@ def order_update(id):
             "file": file,
             "payment": related_payment
         })
-    
+    print("term_payment_files_map:", term_payment_files_map)
     receipts = ReceiptModel.query.filter_by(order_id=data.id).all()
     tax = TaxInvoiceModel.query.filter_by(order_id=data.id).all()
 
@@ -1201,8 +1203,9 @@ def save_single_term():
         db.session.rollback()
         return jsonify(success=False, error=f"เกิดข้อผิดพลาด: {str(e)}")
     
-def generate_document_number(doc_type="DP"):  # doc_type: "DP" หรือ "BI"
-    # สมมุติใช้จาก ReceiptModel เป็นหลัก
+def generate_document_number(doc_type="DP", use_date=None):
+    if use_date is None:
+        use_date = datetime.today()    # สมมุติใช้จาก ReceiptModel เป็นหลัก
     latest_receipt = db.session.query(ReceiptModel.receipt_no)\
         .filter(ReceiptModel.receipt_no.like(f"{doc_type}%"))\
         .order_by(ReceiptModel.receipt_no.desc()).first()
@@ -1215,16 +1218,16 @@ def generate_document_number(doc_type="DP"):  # doc_type: "DP" หรือ "BI"
         next_number = 1
 
     # ใช้ prefix แบบมีปีเดือนเพื่อให้ดูเวลาออกเอกสารได้ง่าย (แต่ไม่ส่งผลต่อเลขรัน)
-    year_month = datetime.today().strftime("%Y%m")
+    year_month = use_date.strftime("%Y%m")
     prefix = f"{doc_type}{year_month}"
     return prefix, str(next_number).zfill(5)
 
-def generate_receipt_number():
-    prefix, number = generate_document_number("DP")
+def generate_receipt_number(use_date=None):
+    prefix, number = generate_document_number("DP", use_date)
     return f"{prefix}-{number}" 
 
-def generate_tax_invoice_number():
-    prefix, number = generate_document_number("BI")
+def generate_tax_invoice_number(use_date=None):
+    prefix, number = generate_document_number("BI", use_date)
     return f"{prefix}-{number}" 
      
 
@@ -1244,7 +1247,7 @@ def create_receipt_and_invoice_for_term(term: OrderTermModel, transfer_date=None
         receipt = ReceiptModel(
             order_id=term.order_id,
             terms_id=term.id,
-            receipt_no=generate_receipt_number(),
+            receipt_no=generate_receipt_number(use_date=used_transfer_date  ),
             amount=term.amount,
             member_id=term.order.member_id,
             transfer_date=used_transfer_date
@@ -1324,6 +1327,18 @@ def get_account():
     order = request_data.get("order", [])  # ✅ เพิ่มบรรทัดนี้
     search_value = request_data.get("search", {}).get("value", "")
 
+    # ถ้า length = -1 หมายถึงเอาทั้งหมด
+    if length == -1:
+        # ดึงจำนวนแถวทั้งหมดจากฐานข้อมูลก่อน
+        total_query = db.session.query(func.count(ReceiptModel.id))
+        total_records = total_query.scalar()
+
+        # กำหนด limit = จำนวนทั้งหมด
+        length = total_records
+    else:
+        # ไม่ต้องใช้ .limit()
+        pass
+
     # Mapping คอลัมน์จาก DataTable ไปยัง Database
     column_map = {
         0: ReceiptModel.id,
@@ -1336,7 +1351,7 @@ def get_account():
     }
 
 
-    query = db.session.query(ReceiptModel,PaymentModel) \
+    query = db.session.query(ReceiptModel) \
     .join(ReceiptModel.member) \
     .join(ReceiptModel.terms) \
     .join(OrderTermModel.order) \
@@ -1346,7 +1361,7 @@ def get_account():
         joinedload(ReceiptModel.terms).joinedload(OrderTermModel.order).joinedload(OrderModel.product)
     ).outerjoin(
         PaymentModel, PaymentModel.order_id == OrderModel.id
-    )
+    ).distinct()
 
 
 
@@ -1407,8 +1422,15 @@ def get_account():
 
     orders = query.order_by(column_order).offset(start).limit(length).all()
     # print(orders)
+
     data = []
-    for index, (order, payment) in enumerate(orders):
+    for index, order in enumerate(orders):
+        payment = (
+            db.session.query(PaymentModel)
+            .filter(PaymentModel.order_id == order.terms.order_id)
+            .order_by(PaymentModel.payment_date.desc())
+            .first()
+        )
         member = order.member
         term = order.terms
         order_model = term.order if term else None
@@ -1431,7 +1453,6 @@ def get_account():
             "created_at": int(payment_date.timestamp() * 1000) if payment_date else None,
             "data_user": safe_model_to_dict(order),
         })
-
 
     return Response(
         json.dumps({
@@ -1480,6 +1501,18 @@ def get_invoice():
     order = request_data.get("order", [])
     search_value = request_data.get("search", {}).get("value", "")
 
+    # ถ้า length = -1 หมายถึงเอาทั้งหมด
+    if length == -1:
+        # ดึงจำนวนแถวทั้งหมดจากฐานข้อมูลก่อน
+        total_query = db.session.query(func.count(ReceiptModel.id))
+        total_records = total_query.scalar()
+
+        # กำหนด limit = จำนวนทั้งหมด
+        length = total_records
+    else:
+        # ไม่ต้องใช้ .limit()
+        pass
+
     # ───── Mapping คอลัมน์จาก DataTable ไปยัง Model ─────
     column_map = {
         0: TaxInvoiceModel.id,
@@ -1493,7 +1526,7 @@ def get_invoice():
     }
 
     # ───── Query หลัก ─────
-    query = db.session.query(TaxInvoiceModel,PaymentModel)\
+    query = db.session.query(TaxInvoiceModel)\
         .join(TaxInvoiceModel.member)\
         .join(TaxInvoiceModel.terms)\
         .join(OrderTermModel.order)\
@@ -1505,7 +1538,7 @@ def get_invoice():
                 .joinedload(OrderModel.product)
         ).outerjoin(
         PaymentModel, PaymentModel.order_id == OrderModel.id
-    )
+    ).distinct()
 
     # ───── ค้นหาจากคำค้น (Search) ─────
     if search_value:
@@ -1565,10 +1598,19 @@ def get_invoice():
 
     # ───── เตรียมข้อมูลสำหรับ DataTables ─────
     data = []
-    for index, (invoice, payment) in enumerate(invoices):
+    for index, invoice in enumerate(invoices):
+        
         member = invoice.member
         term = invoice.terms
         order_model = term.order if term else None
+        payment = None
+        if order_model:
+            payment = (
+                db.session.query(PaymentModel)
+                .filter(PaymentModel.order_id == order_model.id)
+                .order_by(PaymentModel.payment_date.desc())
+                .first()
+            )
         product = order_model.product if order_model else None
 
         customer_name = f"{member.first_name or ''} {member.last_name or ''}".strip() if member else ''
