@@ -185,8 +185,9 @@
               <td style="text-align: center;font-weight: normal; ">1</td>
               
               <td style="white-space: normal; word-break: break-word;">
-                {{ orderItem.product.name }} 
-                {% set seq = term.sequence %}
+                {{ orderItem.product.name }} {{term.term_detail}} {{orderItem.order.year}}
+
+                <!-- {% set seq = term.sequence %}
                 {% set suffix = 'th' %}
                 {% if seq == 1 %}
                   {% set suffix = 'st' %}
@@ -195,7 +196,7 @@
                 {% elif seq == 3 %}
                   {% set suffix = 'rd' %}
                 {% endif %}
-                {{ seq }}{{ suffix }} Payment{% if seq == 1 %} ( Non Refundable1 ){% endif %}
+                {{ seq }}{{ suffix }} Payment{% if seq == 1 %} ( Non Refundable1 ){% endif %} -->
               </td>
               
               <th style="text-align: center;font-weight: normal; ">

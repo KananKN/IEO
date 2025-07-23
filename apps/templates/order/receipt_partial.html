@@ -78,7 +78,7 @@
           <tbody>
             <tr style="height: 350px;vertical-align: top;">
               <td style="text-align: center;border: 2px solid black;">1</td>
-              <td style="border: 2px solid black;">{{ orderItem.product.name or '-' }} {{term.term_detail}}</td>
+              <td style="border: 2px solid black;">{{ orderItem.product.name or '-' }} {{term.term_detail}} {{orderItem.order.year}}</td>
               <td style="text-align: center; border: 2px solid black;">1</td>
               <td style="text-align: right; border: 2px solid black;">{{term.discount}}</td>
               <td style="text-align: right; border: 2px solid black;">{{ '{:,.2f}'.format(term.net_price)}}</td>

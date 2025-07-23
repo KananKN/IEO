@@ -1445,6 +1445,8 @@ def get_account():
         data.append({
             "id": start + index + 1,
             "term_id": order.terms_id,
+            "order_number": order.order.order_number,
+            "order_id": order.order_id,
             "receipt_no": order.receipt_no or '',
             "customer_name": customer_name,
             "product_name": product_name,
@@ -1627,6 +1629,8 @@ def get_invoice():
             "id": start + index + 1,
             "term_id": invoice.terms_id,
             "tax_invoice_no": invoice.tax_invoice_no or '',
+            "order_number": invoice.order.order_number,
+            "order_id": invoice.order_id,
             "customer_name": customer_name,
             "product_name": product_name,
             "discount": discount,
