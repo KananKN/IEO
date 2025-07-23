@@ -1343,11 +1343,12 @@ def get_account():
     column_map = {
         0: ReceiptModel.id,
         1: ReceiptModel.receipt_no,
-        2: MemberModel.first_name,
-        3: ProductForSalesModel.name,
-        4: OrderTermModel.discount,       # ส่วนลดอยู่ที่ terms
-        5: ReceiptModel.amount,
-        6: PaymentModel.payment_date,
+        2: OrderModel.order_number,
+        3: MemberModel.first_name,
+        4: ProductForSalesModel.name,
+        5: OrderTermModel.discount,       # ส่วนลดอยู่ที่ terms
+        6: ReceiptModel.amount,
+        7: PaymentModel.payment_date,
     }
 
 
@@ -1370,6 +1371,7 @@ def get_account():
         query = query.filter(
             or_(
                 ReceiptModel.receipt_no.ilike(search),
+                OrderModel.order_number.ilike(search),
                 MemberModel.first_name.ilike(search),
                 MemberModel.last_name.ilike(search),
                 ProductForSalesModel.name.ilike(search),
@@ -1519,12 +1521,13 @@ def get_invoice():
     column_map = {
         0: TaxInvoiceModel.id,
         1: TaxInvoiceModel.tax_invoice_no,
-        2: MemberModel.first_name,
-        3: ProductForSalesModel.name,
-        4: OrderTermModel.discount,
-        5: TaxInvoiceModel.amount,
-        6: TaxInvoiceModel.created_at,
-        7: PaymentModel.payment_date,
+        2: OrderModel.order_number,
+        3: MemberModel.first_name,
+        4: ProductForSalesModel.name,
+        5: OrderTermModel.discount,
+        6: TaxInvoiceModel.amount,
+        7: TaxInvoiceModel.created_at,
+        8: PaymentModel.payment_date,
     }
 
     # ───── Query หลัก ─────
@@ -1548,6 +1551,7 @@ def get_invoice():
         query = query.filter(
             or_(
                 TaxInvoiceModel.tax_invoice_no.ilike(search),
+                OrderModel.order_number.ilike(search),
                 MemberModel.first_name.ilike(search),
                 MemberModel.last_name.ilike(search),
                 ProductForSalesModel.name.ilike(search),
