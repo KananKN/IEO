@@ -94,6 +94,7 @@
                             <tr>
                                 <th width="1%">ลำดับ</th>
                                 <th class="text-nowrap ">เลขที่</th>
+                                <th class="text-nowrap ">รหัส Order</th>
                                 <th class="text-nowrap">ชื่อลูกค้า</th>
                                 <th class="text-nowrap">โปรแกรม</th>
                                 <th class="text-nowrap">ส่วนลด</th>
@@ -197,7 +198,7 @@
           <tbody>
             <tr style="height: 375px;vertical-align: top;">
               <td style="text-align: center;border: 2px solid black;">1</td>
-              <td style="border: 2px solid black;">{{ r.order.product.name or '-' }} {{r.terms.term_detail}}</td>
+              <td style="border: 2px solid black;">{{ r.order.product.name or '-' }} {{r.terms.term_detail}} {{r.order.year}}</td>
               <td style="text-align: center; border: 2px solid black;">1</td>
               <td style="text-align: right; border: 2px solid black;">{{term.discount}}</td>
               <td style="text-align: right; border: 2px solid black;">{{ '{:,.2f}'.format(term.net_price)}}</td>
@@ -318,12 +319,35 @@ let datatable; // <-- ต้องประกาศตัวแปรไว้�
 
 $(document).ready(function() {
 
-  flatpickr(".datetimepicker", {
+  flatpickr("#startDateTime", {
     enableTime: true,
     dateFormat: "d-m-Y H:i:S",
-    time_24hr: true
+    time_24hr: true,
+    defaultHour: 0,
+    defaultMinute: 0,
+    onChange: function(selectedDates, dateStr, instance) {
+      if (selectedDates.length > 0) {
+        selectedDates[0].setHours(0, 0, 0); // ตั้งเวลาเป็น 00:00:00
+        instance.setDate(selectedDates[0], false); // ไม่ trigger change อีกรอบ
+      }
+    }
   });
- 
+  
+  flatpickr("#endDateTime", {
+    enableTime: true,
+    dateFormat: "d-m-Y H:i:S",
+    time_24hr: true,
+    defaultHour: 23,
+    defaultMinute: 59,
+    onChange: function(selectedDates, dateStr, instance) {
+      if (selectedDates.length > 0) {
+        selectedDates[0].setHours(23, 59, 0); // ตั้งเวลาเป็น 23:59:00
+        instance.setDate(selectedDates[0], false);
+      }
+    }
+  });
+  
+  
   
   $('#btnFilter').on('click', function(e) {
     e.preventDefault();
@@ -373,8 +397,9 @@ function loadDataTable() {
                 const start_datetime = $('#startDateTime').val();
                 const end_datetime = $('#endDateTime').val();
 
-                console.log("📤 start_datetime:", start_datetime);
-                console.log("📤 end_datetime:", end_datetime);
+                //console.log(d)
+                //console.log("📤 start_datetime:", start_datetime);
+                //console.log("📤 end_datetime:", end_datetime);
                 
                 return JSON.stringify({
                   draw: d.draw,
@@ -393,6 +418,11 @@ function loadDataTable() {
         columns: [
             { data: "id" },
             { data: "receipt_no" },
+            { data: "order_number",
+              render: function(data, type, row) {
+                return `<a href="/order/order_update/${row.order_id}">${data}</a>`;
+              } 
+            },
             { data: "customer_name" },
             { data: "product_name" },
             { data: "discount", render: data => parseFloat(data).toLocaleString("en-US", { minimumFractionDigits: 2 }) },

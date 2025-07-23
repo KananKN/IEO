@@ -92,6 +92,7 @@
                             <tr>
                                 <th width="1%">ลำดับ</th>
                                 <th class="text-nowrap ">เลขที่</th>
+                                <th class="text-nowrap ">รหัส Order</th>
                                 <th class="text-nowrap">ชื่อลูกค้า</th>
                                 <th class="text-nowrap">โปรแกรม</th>
                                 <!-- <th class="text-nowrap w-150px">รวมเป็นเงิน</th>
@@ -298,8 +299,8 @@
               <td style="text-align: center;font-weight: normal; ">1</td>
               
               <td style="white-space: normal; word-break: break-word;">
-                {{ r.order.product.name }} 
-                {% set seq = term.sequence %}
+                {{ r.order.product.name }} {{r.terms.term_detail}} {{r.order.year}}
+                <!-- {% set seq = term.sequence %}
                 {% set suffix = 'th' %}
                 {% if seq == 1 %}
                   {% set suffix = 'st' %}
@@ -308,7 +309,7 @@
                 {% elif seq == 3 %}
                   {% set suffix = 'rd' %}
                 {% endif %}
-                {{ seq }}{{ suffix }} Payment{% if seq == 1 %} ( Non Refundable1 ){% endif %}
+                {{ seq }}{{ suffix }} Payment{% if seq == 1 %} ( Non Refundable1 ){% endif %} -->
               </td>
               
               <th style="text-align: center;font-weight: normal; ">
@@ -469,11 +470,35 @@
   let datatable; // <-- ต้องประกาศตัวแปรไว้ข้างนอก เพื่อให้ access ได้ในทุกฟังก์ชัน
 
 $(document).ready(function() {
-  flatpickr(".datetimepicker", {
+  flatpickr("#startDateTime", {
     enableTime: true,
     dateFormat: "d-m-Y H:i:S",
-    time_24hr: true
+    time_24hr: true,
+    defaultHour: 0,
+    defaultMinute: 0,
+    onChange: function(selectedDates, dateStr, instance) {
+      if (selectedDates.length > 0) {
+        selectedDates[0].setHours(0, 0, 0); // ตั้งเวลาเป็น 00:00:00
+        instance.setDate(selectedDates[0], false); // ไม่ trigger change อีกรอบ
+      }
+    }
   });
+  
+  flatpickr("#endDateTime", {
+    enableTime: true,
+    dateFormat: "d-m-Y H:i:S",
+    time_24hr: true,
+    defaultHour: 23,
+    defaultMinute: 59,
+    onChange: function(selectedDates, dateStr, instance) {
+      if (selectedDates.length > 0) {
+        selectedDates[0].setHours(23, 59, 0); // ตั้งเวลาเป็น 23:59:00
+        instance.setDate(selectedDates[0], false);
+      }
+    }
+  });
+  
+  
  
   
   $('#btnFilter').on('click', function(e) {
@@ -548,6 +573,11 @@ function loadDataTable() {
         columns: [
             { data: "id" },
             { data: "tax_invoice_no" },
+            { data: "order_number",
+              render: function(data, type, row) {
+                return `<a href="/order/order_update/${row.order_id}">${data}</a>`;
+              } 
+            },
             { data: "customer_name" },
             { data: "product_name" },
             //{ data: "amount", className: "text-end", render: data => parseFloat(data).toLocaleString("en-US", { minimumFractionDigits: 2 }) },
@@ -588,7 +618,7 @@ function loadDataTable() {
                 
             }
         ],
-        order: [[7, "asc"]],  // เรียงลำดับจาก ID
+        order: [[0, "asc"]],  // เรียงลำดับจาก ID
         lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
         pageLength: 10
     });
