@@ -68,7 +68,7 @@
                         {% endif %}
                     {% endwith %}
                     <div class="row mb-3 align-items-center">
-                      <div class="col-md-3 ">
+                      <div class="col-md-2 ">
                         <label for="productFilter" class="col-form-label py-0">ค้นหาสินค้า:</label>
 
                           <select id="productFilter" class="form-select">
@@ -76,15 +76,22 @@
                               <!-- จะเติม option จาก backend -->
                           </select>
                       </div>
-                      <div class="col-md-3">
+                      <div class="col-md-2">
+                        <label for="bank" class="col-form-label py-0">ชื่อธนาคาร:</label>
+                          <select id="bank" class="form-select">
+                              <option value="">ทั้งหมด</option>
+                              <!-- จะเติม option จาก backend -->
+                          </select>
+                      </div>
+                      <div class="col-md-2">
                         <label>เริ่มวันที่/เวลา</label>
                         <input type="text" id="startDateTime" class="form-control datetimepicker" placeholder="DD-MM-YYYY HH:mm:ss">
                       </div>
-                      <div class="col-md-3">
+                      <div class="col-md-2">
                         <label>ถึงวันที่/เวลา</label>
                         <input type="text" id="endDateTime" class="form-control datetimepicker" placeholder="DD-MM-YYYY HH:mm:ss">
                       </div>
-                      <div class="col-md-3">
+                      <div class="col-md-2">
                         <label>&nbsp;</label><br>
                         <button id="btnFilter" class="btn btn-primary">🔍 ค้นหา</button>
                       </div>
@@ -97,6 +104,7 @@
                                 <th class="text-nowrap ">รหัส Order</th>
                                 <th class="text-nowrap">ชื่อลูกค้า</th>
                                 <th class="text-nowrap">โปรแกรม</th>
+                                <th class="text-nowrap">ธนาคาร</th>
                                 <th class="text-nowrap">ส่วนลด</th>
                                 <th class="text-nowrap w-150px">จำนวนเงิน</th>
                                 <th class="text-nowrap">วันเวลา ที่รับเงิน</th>
@@ -375,6 +383,31 @@ $(document).ready(function() {
     });
   });
 
+  $('#bank').select2({
+    placeholder: "ค้นหาสินค้า",
+    allowClear: true,
+    width: 'resolve'
+  });
+
+  $('#bank').on('change', function () {
+    const selectedBankId = $(this).val();
+    console.log("✅ Selected bank_id:", selectedBankId);
+    if (datatable) {
+      datatable.ajax.reload();
+    } else {
+      console.warn("❌ datatable ยังไม่ถูกประกาศ");
+    }
+  });
+  
+  
+  
+  $.get("/order/get_bank_list", function (banks) {
+    banks.forEach(banks => {
+      $("#bank").append(
+        `<option value="${banks.id}">${banks.name}</option>`
+      );
+    });
+  });
     loadDataTable();
 
 });
@@ -394,6 +427,7 @@ function loadDataTable() {
             data: function(d) { 
                 //d.product_id = $('#productFilter').val();
                 const product_id = $('#productFilter').val();
+                d.bank_id = $('#bank').val();
                 const start_datetime = $('#startDateTime').val();
                 const end_datetime = $('#endDateTime').val();
 
@@ -408,6 +442,7 @@ function loadDataTable() {
                   search: d.search,
                   order: d.order,
                   product_id: $('#productFilter').val(),
+                  bank_id: $('#bank').val(),
                   start_datetime: $('#startDateTime').val(),
                   end_datetime: $('#endDateTime').val()
                 });
@@ -425,6 +460,7 @@ function loadDataTable() {
             },
             { data: "customer_name" },
             { data: "product_name" },
+            { data: "bank_name" },
             { data: "discount", render: data => parseFloat(data).toLocaleString("en-US", { minimumFractionDigits: 2 }) },
             { data: "amount", render: data => parseFloat(data).toLocaleString("en-US", { minimumFractionDigits: 2 }) },
             {

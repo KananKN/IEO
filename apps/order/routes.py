@@ -6,6 +6,7 @@ from apps.authentication.models import *
 from apps.product.models import *
 from apps.order.models import *
 from apps.lead.models import *
+from apps.bank_account.models import *
 
 from apps import db
 from flask import render_template, request, redirect, url_for, flash, Markup, jsonify, abort, send_file, Response,current_app, abort
@@ -349,7 +350,7 @@ def order_update(id):
                     OrderTermModel.order_id == data.id,
                 ).order_by(OrderTermModel.sequence).all()
     
-    print("orderTerm", orderTerm)
+    # print("orderTerm", orderTerm)
     # ✅ ถ้าไม่มีงวดผ่อนเลย
     if not orderTerm:
         for i, plan in enumerate(payment, start=1):
@@ -372,7 +373,7 @@ def order_update(id):
         OrderTermModel.order_id == data.id,
     ).order_by(OrderTermModel.sequence).all()
 
-    print("orderTerm after reload", orderTerm)
+    # print("orderTerm after reload", orderTerm)
     
     # 1. ดึงข้อมูล payments
     payments = PaymentModel.query.filter_by(order_id=data.id).all()
@@ -398,7 +399,7 @@ def order_update(id):
             "file": file,
             "payment": related_payment
         })
-    print("term_payment_files_map:", term_payment_files_map)
+    # print("term_payment_files_map:", term_payment_files_map)
     receipts = ReceiptModel.query.filter_by(order_id=data.id).all()
     tax = TaxInvoiceModel.query.filter_by(order_id=data.id).all()
 
@@ -408,11 +409,15 @@ def order_update(id):
     for t in tax:
         print(t.id, t.terms_id)  
 
+    
+    bank_list = BankAccountModel.query.all()
+    # print(bank_list)
+
 
     
     
     return render_template('order/order_update.html', segment='order' ,lead=lead, orderItem=orderItem, datas=data, payments=payments,product=product,members=member,orderTerms=orderTerm,term_payment_files_map=term_payment_files_map,
-                           receipts=receipts,tax=tax)
+                           receipts=receipts,tax=tax, bank_list=bank_list)
 
 @blueprint.route("/check_statusLead", methods=["POST"])
 @login_required
@@ -1057,6 +1062,11 @@ def save_single_term():
     amount = request.form.get("amount")
     file = request.files.get("formFile_payment")
     total_pay = request.files.get("total_pay")
+    bank_account = request.form.get("bank_account")
+    print("[DEBUG] 🔢 bank_account:", bank_account)
+    if bank_account == '':
+        bank_account = None
+
 
     raw_amount = request.form.get("amount", "0").replace(",", "")
     amount = float(raw_amount) 
@@ -1100,7 +1110,9 @@ def save_single_term():
         # note=note,
         payment_no=payment_no,
         status= 'pending',
-        sequence=term.sequence
+        sequence=term.sequence,
+        bank_id=bank_account,
+
     )
     db.session.add(newItem)
     db.session.flush() 
@@ -1346,9 +1358,10 @@ def get_account():
         2: OrderModel.order_number,
         3: MemberModel.first_name,
         4: ProductForSalesModel.name,
-        5: OrderTermModel.discount,       # ส่วนลดอยู่ที่ terms
-        6: ReceiptModel.amount,
-        7: PaymentModel.payment_date,
+        5: BankAccountModel.name,
+        6: OrderTermModel.discount,       # ส่วนลดอยู่ที่ terms
+        7: ReceiptModel.amount,
+        8: PaymentModel.payment_date,
     }
 
 
@@ -1357,12 +1370,18 @@ def get_account():
     .join(ReceiptModel.terms) \
     .join(OrderTermModel.order) \
     .join(OrderModel.product) \
+    .outerjoin(PaymentModel, PaymentModel.order_id == OrderModel.id) \
     .options(
         joinedload(ReceiptModel.member),
-        joinedload(ReceiptModel.terms).joinedload(OrderTermModel.order).joinedload(OrderModel.product)
-    ).outerjoin(
-        PaymentModel, PaymentModel.order_id == OrderModel.id
-    ).distinct()
+        joinedload(ReceiptModel.terms)
+            .joinedload(OrderTermModel.order)
+            .joinedload(OrderModel.product),
+        joinedload(ReceiptModel.terms)
+            .joinedload(OrderTermModel.order)
+            .joinedload(OrderModel.payments)
+            .joinedload(PaymentModel.bank_account)
+    ) \
+    .distinct()
 
 
 
@@ -1375,6 +1394,7 @@ def get_account():
                 MemberModel.first_name.ilike(search),
                 MemberModel.last_name.ilike(search),
                 ProductForSalesModel.name.ilike(search),
+                BankAccountModel.name.ilike(search),
                 func.to_char(ReceiptModel.created_at, 'DD/MM/YYYY').ilike(search),
                 func.to_char(OrderTermModel.discount, 'FM999999999.00').ilike(search),
                 func.to_char(OrderTermModel.amount, 'FM999999999.00').ilike(search),
@@ -1388,6 +1408,11 @@ def get_account():
         
     if product_id:
         query = query.filter(OrderModel.product_id == product_id)
+
+    bank_id = request_data.get("bank_id")
+    if bank_id:
+        query = query.filter(PaymentModel.bank_id == bank_id)
+        
 
     # ... (รับ product_id ไปแล้ว)
     start_datetime = request_data.get("start_datetime")
@@ -1427,15 +1452,23 @@ def get_account():
 
     data = []
     for index, order in enumerate(orders):
-        payment = (
-            db.session.query(PaymentModel)
-            .filter(PaymentModel.order_id == order.terms.order_id)
-            .order_by(PaymentModel.payment_date.desc())
-            .first()
-        )
+        
         member = order.member
         term = order.terms
         order_model = term.order if term else None
+        payment = None
+        if order_model and order_model.payments:
+            payments_filtered = [
+                p for p in order_model.payments
+                if (not bank_id or p.bank_id == int(bank_id)) and p.payment_date
+            ]
+            if payments_filtered:
+                payment = sorted(
+                    payments_filtered,
+                    key=lambda p: p.payment_date,
+                    reverse=True
+                )[0]
+
         product = order_model.product if order_model else None
 
         customer_name = f"{member.first_name or ''} {member.last_name or ''}".strip() if member else ''
@@ -1443,6 +1476,8 @@ def get_account():
         discount = term.discount if term else 0
 
         payment_date = to_datetime(payment.payment_date) if payment and payment.payment_date else None
+        bank_account = payment.bank_account.name if payment and payment.bank_account else None
+
 
         data.append({
             "id": start + index + 1,
@@ -1452,6 +1487,7 @@ def get_account():
             "receipt_no": order.receipt_no or '',
             "customer_name": customer_name,
             "product_name": product_name,
+            "bank_name": bank_account,
             "discount": float(discount or 0),
             "amount": float(order.amount or 0),
             "created_at": int(payment_date.timestamp() * 1000) if payment_date else None,
@@ -1524,10 +1560,11 @@ def get_invoice():
         2: OrderModel.order_number,
         3: MemberModel.first_name,
         4: ProductForSalesModel.name,
-        5: OrderTermModel.discount,
-        6: TaxInvoiceModel.amount,
-        7: TaxInvoiceModel.created_at,
-        8: PaymentModel.payment_date,
+        5: BankAccountModel.name,
+        6: OrderTermModel.discount,
+        7: TaxInvoiceModel.amount,
+        8: TaxInvoiceModel.created_at,
+        9: PaymentModel.payment_date,
     }
 
     # ───── Query หลัก ─────
@@ -1540,7 +1577,8 @@ def get_invoice():
             joinedload(TaxInvoiceModel.member),
             joinedload(TaxInvoiceModel.terms)
                 .joinedload(OrderTermModel.order)
-                .joinedload(OrderModel.product)
+                .joinedload(OrderModel.payments)
+                .joinedload(PaymentModel.bank_account)
         ).outerjoin(
         PaymentModel, PaymentModel.order_id == OrderModel.id
     ).distinct()
@@ -1555,6 +1593,7 @@ def get_invoice():
                 MemberModel.first_name.ilike(search),
                 MemberModel.last_name.ilike(search),
                 ProductForSalesModel.name.ilike(search),
+                BankAccountModel.name.ilike(search),
                 func.to_char(TaxInvoiceModel.created_at, 'DD/MM/YYYY').ilike(search),
                 func.to_char(TaxInvoiceModel.vat, 'FM999999999.00').ilike(search),
                 func.to_char(TaxInvoiceModel.amount_before_vat, 'FM999999999.00').ilike(search),
@@ -1566,7 +1605,9 @@ def get_invoice():
     
     product_id = request_data.get("product_id")  # ✅ รับค่ามาจาก select
 
-    print("Received product_id:", product_id)
+    bank_id = request_data.get("bank_id")
+    if bank_id:
+        query = query.filter(PaymentModel.bank_id == bank_id)
         
     if product_id:
         query = query.filter(OrderModel.product_id == product_id)
@@ -1609,14 +1650,19 @@ def get_invoice():
         member = invoice.member
         term = invoice.terms
         order_model = term.order if term else None
+        
         payment = None
-        if order_model:
-            payment = (
-                db.session.query(PaymentModel)
-                .filter(PaymentModel.order_id == order_model.id)
-                .order_by(PaymentModel.payment_date.desc())
-                .first()
-            )
+        if order_model and order_model.payments:
+            payments_filtered = [
+                p for p in order_model.payments
+                if (not bank_id or p.bank_id == int(bank_id)) and p.payment_date
+            ]
+            if payments_filtered:
+                payment = sorted(
+                    payments_filtered,
+                    key=lambda p: p.payment_date,
+                    reverse=True
+                )[0]
         product = order_model.product if order_model else None
 
         customer_name = f"{member.first_name or ''} {member.last_name or ''}".strip() if member else ''
@@ -1627,8 +1673,7 @@ def get_invoice():
         vat = float(invoice.vat or 0) if invoice else 0
         amount_before_vat = float(invoice.amount_before_vat or 0) if invoice else 0
         payment_date = to_datetime(payment.payment_date) if payment and payment.payment_date else None
-
-
+        bank_account = payment.bank_account.name if payment and payment.bank_account else None
         data.append({
             "id": start + index + 1,
             "term_id": invoice.terms_id,
@@ -1637,6 +1682,7 @@ def get_invoice():
             "order_id": invoice.order_id,
             "customer_name": customer_name,
             "product_name": product_name,
+            "bank_name": bank_account,
             "discount": discount,
             "amount": amount,
             "net_price": net_price,
@@ -1662,4 +1708,12 @@ def get_product_list():
     products = ProductForSalesModel.query.all()
     result = [{"id": p.id, "name": p.name} for p in products]
     return jsonify(result)
-    
+
+@blueprint.route("/get_bank_list")
+def get_bank_list():
+    banks = BankAccountModel.query.all()
+    result = [{"id": b.id, 
+               "name": b.name,
+                "account_number": b.account_number
+            } for b in banks]
+    return jsonify(result)
