@@ -1717,3 +1717,41 @@ def get_bank_list():
                 "account_number": b.account_number
             } for b in banks]
     return jsonify(result)
+
+@blueprint.route('/get_payment_detail/<int:payment_id>', methods=['GET'])
+@login_required
+def get_payment_detail(payment_id):
+    payment = PaymentModel.query.get(payment_id)
+    if not payment:
+        return jsonify({'error': 'ไม่พบข้อมูลการชำระเงิน'}), 404
+
+    return jsonify({
+        'id': payment.id,
+        'amount': payment.amount,
+        'payment_date': payment.payment_date.strftime('%d-%m-%Y %H:%M') if payment.payment_date else '',
+        'note': payment.note,
+        'payment_method': payment.payment_method,
+        'bank_name': payment.bank_account.name if payment.bank_account else '',
+        'bank_id': payment.bank_id,
+    })
+
+@blueprint.route('/update_payment_detail', methods=['POST'])
+@login_required
+def update_payment_detail():
+    data = request.get_json()
+    id = data.get("id")
+    pf = PaymentModel.query.filter_by(id=id).first()
+
+    if not pf:
+        return jsonify({"success": False, "message": "ไม่พบข้อมูล"})
+
+    try:
+        pf.payment_date = datetime.strptime(data.get("payment_date"), '%d-%m-%Y %H:%M')
+        pf.amount = float(data.get("amount", 0))
+        pf.bank_id = int(data.get("bank_id"))
+        db.session.commit()
+        return jsonify({"success": True})
+    except Exception as e:
+        db.session.rollback()
+        print("❌ Error:", e)
+        return jsonify({"success": False, "message": "เกิดข้อผิดพลาด"})
