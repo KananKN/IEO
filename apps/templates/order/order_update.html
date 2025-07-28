@@ -385,9 +385,7 @@
                                                                                         <i class="fas fa-lg fa-fw ms-5px fa-file"></i>
                                                                                         <span class="fs-6">{{ pf.file.filename }}</span>
                                                                                     </a>
-                                                                                    <a href="#" onclick="sweetAlertDelfile({{ pf.file.id }}, {{ datas.id }})">
-                                                                                        <i class="fas fa-lg fa-fw mx-5px fa-trash-can text-danger c_trash"></i>
-                                                                                    </a>
+                                                                                    
                                                                                 </div>
                                                                                 <div class="ms-2 row" style="width: 140px;">
                                                                                     <span >{{ pf.payment.payment_date.strftime('%d-%m-%Y %H:%M') if pf.payment.payment_date else '' }}</span>
@@ -408,6 +406,12 @@
 
                                                                                     <span>{{ '{:,.2f}'.format(pf.payment.amount or 0) }}</span>
                                                                                 </div>
+                                                                                <a onclick="editPaymentFile({{ pf.file.id }}, {{ pf.payment.id }})">
+                                                                                    <i class="fas fa-lg fa-fw mx-1 fa-pen text-primary c_edit"></i>
+                                                                                </a>
+                                                                                <a href="#" onclick="sweetAlertDelfile({{ pf.file.id }}, {{ datas.id }})">
+                                                                                    <i class="fas fa-lg fa-fw mx-5px fa-trash-can text-danger c_trash"></i>
+                                                                                </a>
                                                                                 
                                                                             </div>
                                                                         {% endfor %}
@@ -523,7 +527,58 @@
 
 
 
-
+<div class="modal fade" id="editPaymentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <form id="editPaymentForm">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">แก้ไขข้อมูลการชำระเงิน</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" name="file_id" id="edit_file_id" />
+            <div class="d-flex align-items-center mb-3">
+                <label for="edit_payment_date" class="me-2 mb-0" style="min-width: 100px;">วันที่จ่ายเงิน</label>
+                
+                <div class="input-group date" id="datepicker-disabled-past11" data-date-format="dd-mm-yyyy">
+                    <input type="text" class="form-control datetimepicker ps-2" placeholder="Select Date"
+                            name="edit_payment_date" id="edit_payment_date" autocomplete="off" />
+                    <span class="input-group-text">
+                        <i class="fa fa-calendar"></i>
+                    </span>
+                </div>
+            </div>
+           
+            <div class="d-flex align-items-center mb-3">
+                <label for="edit_amount" class="me-2 mb-0" style="min-width: 100px;"> จำนวนเงิน</label>
+                <input type="text" name="edit_amount" id="edit_amount" class="form-control" />
+            </div>
+            <div class="d-flex align-items-center mb-3">
+                <label for="edit_bank_id" class="me-2 mb-0" style="min-width: 100px;">ธนาคาร</label>
+                <select name="edit_bank_id" id="edit_bank_id" class="form-select">
+                    <option value="">เลือกธนาคาร</option>
+                    {% for bank in bank_list %}
+                    <option value="{{ bank.id }}">{{ bank.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <!-- <div class="d-flex align-items-center mb-3">
+                <label for="edit_file" class="me-2 mb-0" style="min-width: 100px;">เลือกไฟล์</label>
+                <input class="form-control formFileInput" type="file" id="file" name="formFile_payment"
+                accept=".pdf, .jpg, .jpeg, .png" onchange="validateFile(this)"  />
+            </div>
+             -->
+  
+            
+            </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-primary">บันทึก</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  
   <!-- ปุ่มปริ้น -->
   
   <!-- <button onclick="printTwoReceipts()">🖨️ พิมพ์ใบเสร็จ 2 ชุด</button> -->
@@ -873,6 +928,62 @@
     
 
    
+</script>
+<script>
+    function editPaymentFile(fileId,id) {
+        fetch(`/order/get_payment_detail/${id}`)
+          .then(response => response.json())
+          .then(data => {
+            $('#edit_file_id').val(data.id);
+            $('#edit_payment_date').val(data.payment_date);
+            let amount = formatNumberWithCommas(data.amount.toFixed(2))
+            console.log(amount)
+            $('#edit_amount').val(amount).trigger('input');
+            $('#edit_bank_id').val(data.bank_id);
+            $('#editPaymentModal').modal('show');
+          });
+      }
+      
+      // บันทึกการแก้ไข
+      $('#editPaymentForm').on('submit', function (e) {
+        e.preventDefault();
+        const formData = {
+          id: $('#edit_file_id').val(),
+          payment_date: $('#edit_payment_date').val(),
+          amount: $('#edit_amount').val(),
+          bank_id: $('#edit_bank_id').val()
+        };
+      
+        fetch('/order/update_payment_detail', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData)
+        })
+        .then(res => res.json())
+        .then((data) => {
+            console.log(data);
+            
+            location.reload();
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+            swal({
+                icon: "error",
+                title: error.message || "เกิดข้อผิดพลาด",
+                showConfirmButton: true
+            });
+        });
+      });
+      
+    flatpickr("#edit_payment_date", {
+        enableTime: true,
+        time_24hr: true,
+        dateFormat: "d-m-Y H:i",  // ✅ ใช้ format ที่คุณต้องการ
+        defaultHour: 0,
+        defaultMinute: 0,
+        allowInput: true,  
+    });
+      
 </script>
     
 <script>
