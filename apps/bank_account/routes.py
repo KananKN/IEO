@@ -53,7 +53,7 @@ def addBank():
     print(data)
     name = data.get("name")
     account_no = data.get("account_no")
-    name_check = BankAccountModel.query.filter_by(name=name,account_number=account_no).first()
+    name_check = BankAccountModel.query.filter_by(name=name).first()
     if not name_check :
         newItem = BankAccountModel(name=name,account_number=account_no)
         db.session.add(newItem)
