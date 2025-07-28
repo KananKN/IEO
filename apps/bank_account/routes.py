@@ -51,17 +51,21 @@ def index():
 def addBank():
     data = request.get_json()
     print(data)
-    name = data.get("name")
-    account_no = data.get("account_no")
-    name_check = BankAccountModel.query.filter_by(name=name).first()
-    if not name_check :
-        newItem = BankAccountModel(name=name,account_number=account_no)
-        db.session.add(newItem)
-        db.session.commit()
-        return jsonify({"success": True, "message": "Add success!"}), 201
-    else:
-        return jsonify({"success": False, "message": "Already registered!"}), 409
-    # return redirect(url_for('bank_account_blueprint.index'))
+    name = data.get("name", "").strip()
+    account_no = data.get("account_no", "").strip()
+
+    if not account_no:
+        return jsonify({"success": False, "message": "กรุณากรอกหมายเลขบัญชี"}), 400
+
+    existing = BankAccountModel.query.filter_by(account_number=account_no).first()
+    if existing:
+        return jsonify({"success": False, "message": "หมายเลขบัญชีนี้ถูกใช้แล้ว"}), 409
+
+    newItem = BankAccountModel(name=name, account_number=account_no)
+    db.session.add(newItem)
+    db.session.commit()
+
+    return jsonify({"success": True, "message": "เพิ่มบัญชีสำเร็จ"}), 201
 
 
 
@@ -86,15 +90,25 @@ def updateBank():
     name = data.get("name")
     account_no = data.get("account_no")
 
-    name_check = BankAccountModel.query.filter_by(id=id).first()
-    if name_check:
-        thisItem = BankAccountModel.query.filter_by(id=id).first()
+    # ตรวจสอบว่ามี Bank ที่ต้องการอัปเดตอยู่จริง
+    thisItem = BankAccountModel.query.filter_by(id=id).first()
+    if thisItem:
+        # 🔍 ตรวจสอบว่ามี account_number ซ้ำกับ id อื่นหรือไม่
+        duplicate = BankAccountModel.query.filter(
+            BankAccountModel.account_number == account_no,
+            BankAccountModel.id != id
+        ).first()
+
+        if duplicate:
+            return jsonify({"success": False, "message": "หมายเลขบัญชีนี้ถูกใช้แล้ว."}), 409
+
         thisItem.name = name
         thisItem.account_number = account_no
         db.session.commit()
-        return jsonify({"success": True, "message": "Update success!"}), 201
+        return jsonify({"success": True, "message": "Update success!"}), 200
     else:
-        return jsonify({"success": False, "message": "Already registered!"}), 409
+        return jsonify({"success": False, "message": "Bank account not found."}), 404
+
 
 
    
