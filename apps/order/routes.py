@@ -1747,7 +1747,8 @@ def update_payment_detail():
 
     try:
         pf.payment_date = datetime.strptime(data.get("payment_date"), '%d-%m-%Y %H:%M')
-        pf.amount = float(data.get("amount", 0))
+        amount_str = data.get("amount", "0").replace(",", "")
+        pf.amount = float(amount_str)
         pf.bank_id = int(data.get("bank_id"))
         db.session.commit()
         return jsonify({"success": True})
