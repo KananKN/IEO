@@ -246,6 +246,16 @@
             </div>  
 
             {% endif %}  
+            {% if current_user.has_permission('read_bank account')  %}
+             <div class="menu-item  {% if segment == 'bank_account' %} active {% endif %}" >
+                 <a href="/bank_account" class="menu-link">
+                  <div class="menu-icon">
+                        <i class="fas fa-file-invoice fs-18px mx-1 mt-1"></i>
+                    </div>
+                 <div class="menu-text mt-1">Bank Account</div></a>
+            </div>  
+
+            {% endif %}  
             {% if current_user.has_permission('read_lead')  %}
             <div
                 class="menu-item has-sub {% if segment in ['lead', 'create_lead', 'follow_lead'] %} active {% endif %}"
@@ -321,23 +331,12 @@
                         <a href="/order/invoice" class="menu-link">
                        <div class="menu-text mt-1">Invoice</div></a>
                     </div>
-                    
-                    
                 </div>
                 
             </div>
 
             {% endif %}  
-            {% if current_user.has_permission('read_user request')  %}
-             <div class="menu-item has-sub {% if segment == 'user_request' %} active {% endif %}" >
-                 <a href="/user_request/list_user" class="menu-link">
-                  <div class="menu-icon">
-                        <i class="fas fa-file-invoice fs-18px mx-1 mt-1"></i>
-                    </div>
-                 <div class="menu-text mt-1">Customer</div></a>
-            </div>  
-
-            {% endif %}  
+            
             {% if current_user.has_permission('read_list project')  %}    
             <div
                 class="menu-item has-sub {% if segment in ['list_Productsupplier', 'list_ProductEmployee','list_Productorganization','list_ProductAgency'] %} active {% endif %}"

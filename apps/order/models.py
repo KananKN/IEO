@@ -118,6 +118,8 @@ class PaymentModel(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     order_id = db.Column(db.Integer, db.ForeignKey("order.id", ondelete="CASCADE"))
+    bank_id = db.Column(db.Integer, db.ForeignKey("bank_accounts.id", ondelete="SET NULL"), nullable=True)
+    bank_account = db.relationship("BankAccountModel", back_populates="payments")
     order = db.relationship("OrderModel", back_populates="payments", lazy=True)
     
     product_id = db.Column(db.Integer, db.ForeignKey("product_for_sales.id", ondelete="CASCADE"))
@@ -243,6 +245,24 @@ class TaxInvoiceModel(db.Model):
     created_at = db.Column(db.DateTime,  default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime,  default=db.func.current_timestamp(),
                            onupdate=db.func.current_timestamp())
+
+
+class BankAccountModel(db.Model):
+    __tablename__ = 'bank_accounts'
+    id = db.Column(db.Integer, primary_key=True)    
+    name = db.Column(db.String(100), nullable=False)
+    account_number = db.Column(db.String(50), nullable=False, unique=True)
+    created_at = db.Column(db.DateTime,  default=db.func.current_timestamp())
+    updated_at = db.Column(db.DateTime,  default=db.func.current_timestamp(),
+                           onupdate=db.func.current_timestamp())
+    
+    payments = db.relationship("PaymentModel", back_populates="bank_account", lazy=True)
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "account_number": self.account_number
+        }
 
 
 

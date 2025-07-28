@@ -322,57 +322,57 @@
                                                 aria-labelledby="heading-{{ loop.index }}" 
                                                 data-bs-parent="#accordion-{{ loop.index }} ">
                                                     <div class="accordion-body text-drak bg-white ">
+
+                                                        <div class="d-flex align-items-center flex-wrap gap-2 mb-3" id="term-form-{{ term.id }}">
+
+                                                            <label class="form-label mb-0 me-2" style="min-width: 100px;">วันที่จ่ายเงิน</label>
                                                         
+                                                            <!-- Bank account select -->
+                                                            <select name="bank_account" class="form-select" style="width: 160px;">
+                                                                <option value="">เลือกธนาคาร</option>
+                                                                {% for bank in bank_list %}
+                                                                    <option value="{{ bank.id }}">{{ bank.name }}</option>
+                                                                {% endfor %}
+                                                            </select>
+                                                        
+                                                            <!-- Date picker -->
+                                                            <div class="input-group date me-2" id="datepicker-disabled-past{{ term.id }}" data-date-format="dd-mm-yyyy" style="width: 200px;">
+                                                                <input type="text" class="form-control datetimepicker ps-2" placeholder="Select Date"
+                                                                    id="kt_datepicker_{{ term.id }}" name="payment_dates" autocomplete="off" />
+                                                                <span class="input-group-text">
+                                                                    <i class="fa fa-calendar"></i>
+                                                                </span>
+                                                            </div>
+                                                        
+                                                            <!-- Amount -->
+                                                            <input type="text" class="form-control text-end price-input" name="amount" data-term-id="{{ term.id }}"
+                                                                value="0" oninput="formatInputNumberWithCommas(this); check_price(this)" placeholder="จำนวนเงิน" style="width: 120px;" />
+                                                        
+                                                            <!-- Hidden inputs -->
+                                                            <input hidden name="check_count" value="{{ '{:,.2f}'.format(term.outstanding_amount or 0) }}">
+                                                            <input name="total_pay" hidden data-term-id="{{ term.id }}" value="0">
+                                                        
+                                                            <!-- File upload -->
+                                                            <input class="form-control formFileInput" type="file" id="file-{{ term.id }}" name="formFile_payment"
+                                                                accept=".pdf, .jpg, .jpeg, .png" onchange="validateFile(this)" style="width: 220px;" />
+                                                        
+                                                            <!-- Save button -->
+                                                            <button type="button" class="btn btn-primary" onclick="saveSingleTerm({{ term.id }}, $(this))" style="width: 100px;">Save</button>
+                                                        
+                                                        </div>
+                                                        
+
+
                                                             <div class="row " id="term-form-{{ term.id }}"> 
-                                                                <div class="col-md-6 h-100 d-flex align-items-center justify-content-center flex-column gap-2 ">
-                                                                    <div class="d-flex flex-row align-items-center w-100 ">
-                                                                        <label class="col-md-3 col-form-label">วันที่จ่ายเงิน</label>
-                                                                        
-
-                                                                        <input type="hidden" name="term_ids" value="{{ term.id }}">
-                                                                        
-                                                                
-                                                                        <div class="d-flex align-items-center  flex-grow-1  ">
-                                                                            <div class="input-group date flex-grow-1 me-2" id="datepicker-disabled-past{{ term.id }}" data-date-format="dd-mm-yyyy" style="height: 35px; max-width: 230px;" >
-                                                                                <input type="text" class="form-control  datetimepicker ps-2" placeholder="Select Date"
-                                                                                    id="kt_datepicker_{{ term.id }}" name="payment_dates" autocomplete="off"
-                                                                                    value="" />
-                                                                                <span class="input-group-text input-group-addon">
-                                                                                    <i class="fa fa-calendar"></i>
-                                                                                </span>
-                                                                            </div>
-                                                                            
-
-
-                                                                            <div class="mx-1 w-100px ms-2">
-                                                                                <input type="text" class="form-control text-end price-input" name="amount" data-term-id="{{ term.id }}"
-                                                                                    value="0" oninput="formatInputNumberWithCommas(this); check_price(this)"  placeholder="จำนวนเงิน">
-                                                                            </div>
-                                                                            
-                                                                            <input hidden name="check_count" value="{{ '{:,.2f}'.format(term.outstanding_amount or 0) }}">
-                                                                            <input  name="total_pay" hidden data-term-id="{{ term.id }}" value="0">
-                                                                        </div>
-                                                                
-                                                                    </div>
+                                                                <div class="col-md-3 h-100 d-flex align-items-center justify-content-center flex-column gap-2 ">
                                                                     
-                                                                    <div class="d-flex flex-row  flex-grow-1 w-100 ">
-                                                                        <label class="col-md-3 col-form-label"></label>
-                                    
-                                                                        <input class="form-control formFileInput me-2" type="file" id="file-{{ term.id }}" name="formFile_payment" 
-                                                                            accept=".pdf, .jpg, .jpeg, .png" onchange="validateFile(this)"
-                                                                            style="height: 35px; max-width: 230px;" />
-                                                                            
-                                                                        <div class="mx-1 w-100px ps-1">
-                                                                            <button type="button" class="btn btn-primary w-100px" onclick="saveSingleTerm({{ term.id }}, $(this))" >Save</button>
-                                                                        </div>
-                                                                    </div>
                                                                     
                                                                     <!-- <a href="#" class="pt-2 ps-2" onclick="sweetAlerPrintfile({{term.id}},{{datas.id}})" hidden>
                                                                         <i class="material-icons">print</i>
                                                                     </a> -->
                                                                 </div>
                                                                 
-                                                                <div class="col-md-6 d-flex align-items-center justify-content-center flex-column gap-2 ps-0">
+                                                                <div class="col-md-9 d-flex align-items-center justify-content-center flex-column gap-2 ps-0">
                                                                     
 
                                                                     {% set payment_file_list = term_payment_files_map.get(term.id, []) %}
@@ -391,6 +391,9 @@
                                                                                 </div>
                                                                                 <div class="ms-2 row" style="width: 140px;">
                                                                                     <span >{{ pf.payment.payment_date.strftime('%d-%m-%Y %H:%M') if pf.payment.payment_date else '' }}</span>
+                                                                                </div>
+                                                                                <div class="ms-2 row" style="width: 200px;">
+                                                                                    <span >{{ pf.payment.bank_account.name if pf.payment.bank_account.name else '' }}</span>
                                                                                 </div>
                                                                                 <div class="ms-2 row" style="width: 100px;">
                                                                                     <!-- ใส่ default เสมอไว้ด้านล่างหลัง term.id -->
@@ -1588,6 +1591,8 @@ function sweetAlertDelfile(id_file,id_order) {
     function saveSingleTerm(termId,x) {
         var container = $(`#term-form-${termId}`);  // เลือก form ตาม termId
         var paymentDate = container.find('input[name="payment_dates"]').val() || '';
+        var selectBank = container.find('select[name="bank_account"]');
+        var bank_account = selectBank.val();
         var amount = container.find('input[name="amount"]').val() || 0;
         var total_pay = container.find('input[name="total_pay"]').val() || 0;
         var fileInput = container.find('input[name="formFile_payment"]')[0]; // [0] เพื่อเอา DOM element
@@ -1623,12 +1628,19 @@ function sweetAlertDelfile(id_file,id_order) {
             x.attr('disabled', true);
             return;
         }
+        /*if (!bank_account || isNaN(bank_account)) {
+            alert("❌ กรุณาเลือกบัญชีธนาคาร");
+            x.attr('disabled', false);
+            return;
+        }
+        */
 
         var formData = new FormData();
         formData.append('term_ids', termId);
         formData.append('payment_date', paymentDate);
         formData.append('amount', amount);
         formData.append('total_pay', total_pay);
+        formData.append('bank_account', bank_account);
 
         if (fileInput && fileInput.files && fileInput.files.length > 0) {
             formData.append('formFile_payment', fileInput.files[0]);
