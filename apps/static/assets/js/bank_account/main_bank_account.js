@@ -100,46 +100,40 @@ function func_save(mode, x) {
         return
     } 
     
-        if (mode == 'add') {
-            fetch("/bank_account/addBank", {
-                    method: "post",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-
-                        name: $('[name="name_bankAccount"]').val(),
-                        account_no: $('[name="account_no"]').val(),
-                    
-                    }),
-                })
-                .then((response) => response.json())
-                .then((data) => {
-                    console.log(data);
-                    x.attr('disabled',true);
-                    // swal({
-                    //     icon: "success",
-                    //     title: "Successfully added customer!",
-                    //     confirmButtonText: "OK", // ตัวเลือกที่ถูก deprecated
-                    //     showConfirmButton: true,
-                    //     // timer: 1500
-                    // });
-
-                    location.reload();
-                })
-                .catch((error) => {
-                    console.error("Error:", error);
-                    swal({
-                        icon: "error",
-                        title: "Error adding Bank!",
-                        confirmButtonText: "OK",  // ✅ ใช้ได้กับ Swal.fire()
-                        showConfirmButton: true
-                    });
-                    x.attr('disabled', false);
-                });
-
-
-        } else if (mode == 'edit') {
+    if (mode === 'add') {
+        fetch("/bank_account/addBank", {
+            method: "post",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                name: $('[name="name_bankAccount"]').val(),
+                account_no: $('[name="account_no"]').val(),
+            }),
+        })
+        .then((response) => {
+            if (!response.ok) {
+                return response.json().then((data) => { throw data });
+            }
+            return response.json();
+        })
+        .then((data) => {
+            console.log(data);
+            x.attr('disabled', true);
+            location.reload();
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+            swal({
+                icon: "error",
+                title: error.message || "เกิดข้อผิดพลาด",
+                showConfirmButton: true
+            });
+            x.attr('disabled', false);
+        });
+    }
+    
+         else if (mode == 'edit') {
         // alert(mode)
         fetch("/bank_account/updateBank", {
                 method: "post",
@@ -153,7 +147,12 @@ function func_save(mode, x) {
                   
                 }),
             })
-            .then((response) => response.json())
+            .then((response) => {
+                if (!response.ok) {
+                    return response.json().then((data) => { throw data });
+                }
+                return response.json();
+            })
             .then((data) => {
                 console.log(data);
                 x.attr('disabled',true);
@@ -170,9 +169,8 @@ function func_save(mode, x) {
                 console.error("Error:", error);
                 swal({
                     icon: "error",
-                    title: "error edit Bank!",
-                    confirmButtonText: "OK", // ตัวเลือกที่ถูก deprecated
-                    showConfirmButton: true,
+                    title: error.message || "เกิดข้อผิดพลาด",
+                    showConfirmButton: true
                 });
                  x.attr('disabled', false);
             });
