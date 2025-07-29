@@ -115,6 +115,12 @@
                         <tbody>
                             
                         </tbody>
+                        <tfoot>
+                          <tr>
+                              <td colspan="9" class="text-end"><strong>ยอดรวม:</strong></td>
+                              <td colspan="2" class="text-start"><strong id="total-amount">0.00</strong> บาท</td>
+                          </tr>
+                      </tfoot>
                     </table>
                 </div>
             </div>
@@ -601,6 +607,14 @@ function loadDataTable() {
                   end_datetime: $('#endDateTime').val()
                 });
             },
+            dataSrc: function (json) {
+              // ✅ อัปเดตยอดรวมใน HTML
+              $("#total-amount").text(Number(json.total_amount).toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+              }));
+              return json.data;
+            },
             contentType: "application/json",
             dataType: "json"
         },
@@ -623,11 +637,19 @@ function loadDataTable() {
             {
               data: "created_at",
               type: "num",
-              render: {
-                display: data => data ? moment(data).format("DD/MM/YYYY HH:mm") : "-",
-                sort: data => data // ใช้ timestamp สำหรับเรียง
+              render: function(data, type, row) {
+                if (type === "display") {
+                  return data ? moment(data).format("DD/MM/YYYY HH:mm") : "-";
+                }
+                return data || 0;
+              },
+              createdCell: function(td, cellData, rowData, row, col) {
+                // ใส่ attribute data-order สำหรับให้ DataTables ใช้ sort
+                if(cellData) {
+                  $(td).attr('data-order', cellData);
+                }
               }
-            },        
+            },     
             { 
                 data: null,  
 
