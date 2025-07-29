@@ -114,7 +114,16 @@
                         <tbody>
                             
                         </tbody>
+                        <tfoot>
+                          <tr>
+                              <td colspan="7" class="text-end"><strong>ยอดรวม:</strong></td>
+                              <td colspan="3" class="text-start"><strong id="total-amount">0.00</strong> บาท</td>
+                          </tr>
+                      </tfoot>
                     </table>
+                    <!-- <div class="text-end mt-2">
+                        <strong>ยอดรวมที่แสดง: <span id="total-amount">0.00</span> บาท</strong>
+                    </div> -->
                 </div>
             </div>
         </div>
@@ -447,6 +456,14 @@ function loadDataTable() {
                   end_datetime: $('#endDateTime').val()
                 });
             },
+            dataSrc: function (json) {
+              // ✅ อัปเดตยอดรวมใน HTML
+              $("#total-amount").text(Number(json.total_amount).toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+              }));
+              return json.data;
+            },
             contentType: "application/json",
             dataType: "json"
         },
@@ -466,14 +483,21 @@ function loadDataTable() {
             {
               data: "created_at",
               type: "num",
-              render: {
-                display: data => data ? moment(data).format("DD/MM/YYYY HH:mm") : "-",
-                sort: data => data // ใช้ timestamp สำหรับเรียง
+              render: function(data, type, row) {
+                if (type === "display") {
+                  return data ? moment(data).format("DD/MM/YYYY HH:mm") : "-";
+                }
+                return data || 0;
+              },
+              createdCell: function(td, cellData, rowData, row, col) {
+                // ใส่ attribute data-order สำหรับให้ DataTables ใช้ sort
+                if(cellData) {
+                  $(td).attr('data-order', cellData);
+                }
               }
             },     
             { 
                 data: null,  
-
                 orderable: false,  //ปิดการเรียงลำดับในคอลัมน์นี้
                 render: function(data, type, row) {
                     const termId = row.term_id || '';
@@ -495,7 +519,7 @@ function loadDataTable() {
                 }
             }
         ],
-        order: [[0, "asc"]],  // เรียงลำดับจาก ID
+        order: [[8, "asc"]],  // เรียงลำดับจาก ID
         lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
         pageLength: 10
     });
