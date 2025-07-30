@@ -88,9 +88,14 @@
                         <label>ถึงวันที่/เวลา</label>
                         <input type="text" id="endDateTime" class="form-control datetimepicker" placeholder="YYYY-MM-DD HH:mm:ss">
                       </div>
-                      <div class="col-md-2">
+                      <div class="col-md-4">
                         <label>&nbsp;</label><br>
                         <button id="btnFilter" class="btn btn-primary">🔍 ค้นหา</button>
+                        <button id="btnPrintPDF" class="btn btn-danger">
+                          <i class="fa fa-print"></i> พิมพ์รายงาน
+                        </button>
+                        <button onclick="printAllReceipts()" class="btn btn-success"><i class="fa fa-print"></i>  พิมพ์ใบกำกับภาษี / ใบเสร็จตามช่วงเวลา</button>
+
                       </div>
                     </div>
                     
@@ -135,7 +140,9 @@
 {% set tax_for_term = tax | selectattr("terms_id", "equalto", term.id) | list %}
 {% if tax_for_term %}
   {% for r in tax_for_term %}
-<div id="invoice-content-{{ term.id }}" hidden style="page-break-inside: avoid; break-inside: avoid;">
+  {% set data_date = r.transfer_date.strftime('%Y-%m-%dT00:00:00') if r.transfer_date else '' %}
+
+<div id="invoice-content-{{ term.id }}" hidden data-date="{{ data_date }}" style="page-break-inside: avoid; break-inside: avoid;">
     <!-- ตัวอย่าง (ใช้ข้อมูลจาก backend เช่น data.customer_name) -->
     <div style="display: table; width: 100%;">
   
@@ -685,7 +692,149 @@ function loadDataTable() {
 
 </script>
 <script>
-    class ReceiptPrinter {
+  class ReceiptPrinter {
+    constructor(receiptElements = [], invoiceElement = null) {
+      this.receiptElements = Array.isArray(receiptElements) ? receiptElements : [receiptElements];
+      this.invoiceElement = invoiceElement;
+    }
+  
+    getPrintableHTML() {
+      let combinedHTML = this.receiptElements
+        .map((el, i) => {
+          const isLast = i === this.receiptElements.length - 1;
+          return `<div style="page-break-after: ${isLast ? 'auto' : 'always'};">${el.innerHTML}</div>`;
+        })
+        .join("");
+  
+      if (this.invoiceElement) {
+        combinedHTML += `<div>${this.invoiceElement.innerHTML}</div>`;
+      }
+  
+      return `
+        <html>
+        <head>
+          <link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet"> 
+          <link rel="preload" as="image" href="/static/assets/img/logo/logo-ieo.png">
+          <title>Invoice Print</title>
+          <style>
+            @font-face {
+              font-family: "Kanit";
+              font-weight: normal;
+              font-style: normal;
+            }
+            body {
+              font-family: "Kanit", sans-serif;
+              width: 800px;
+              margin: 0 auto;
+              padding: 20px;
+              font-size: 16px !important;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-top: 10px;
+            }
+            table, th, td {
+              border: 1px solid black;
+            }
+            td, th {
+              padding: 8px;
+              text-align: left;
+            }
+            .right { text-align: right; }
+            .receipt-box {
+              border: 2px solid #000;
+              border-radius: 10px;
+              padding: 20px;
+              margin-top: 20px;
+            }
+            .row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
+            .col { line-height: 1.5; }
+            .col-15 { flex: 1.5; min-width: 80px; }
+            .col-20 { flex: 2; min-width: 100px; }
+            .col-25 { flex: 2.5; min-width: 150px; }
+            .subtext { font-size: 12px; color: #666; display: block; }
+            .label { width: 75px; }
+            .value { flex: 1; }
+            .payment-print-block .row {
+              min-width: 225px;
+              display: flex;
+              gap: 10px;
+              margin-top: 4px;
+            }
+  
+            @media print {
+              body {
+                font-family: 'Kanit', sans-serif !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                font-size: 14px !important;
+              }
+              div, table, td, th {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+              }
+              table, tr, td, th {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+              }
+              .receipt-box { border: 2px solid #000 !important; }
+              .black-bg { background-color: black !important; color: white !important; }
+              .no-print-margin { margin: 0 !important; padding: 0 !important; }
+              .row, .col { padding: 0 !important; margin: 0 !important; }
+            }
+          </style>
+        </head>
+        <body>${combinedHTML}</body>
+        </html>
+      `;
+    }
+  
+    print() {
+      const previewFrame = document.getElementById('receipt-preview-frame');
+      if (!previewFrame) {
+        alert('ไม่พบ iframe สำหรับพิมพ์');
+        return;
+      }
+  
+      const doc = previewFrame.contentDocument || previewFrame.contentWindow.document;
+      doc.open();
+      doc.write(this.getPrintableHTML());
+      doc.close();
+  
+      previewFrame.onload = () => {
+        const images = previewFrame.contentDocument.images;
+        if (images.length === 0) {
+          previewFrame.contentWindow.focus();
+          previewFrame.contentWindow.print();
+          return;
+        }
+  
+        let loaded = 0;
+        for (let img of images) {
+          if (img.complete) {
+            loaded++;
+          } else {
+            img.onload = img.onerror = () => {
+              loaded++;
+              if (loaded === images.length) {
+                previewFrame.contentWindow.focus();
+                previewFrame.contentWindow.print();
+              }
+            };
+          }
+        }
+  
+        if (loaded === images.length) {
+          previewFrame.contentWindow.focus();
+          previewFrame.contentWindow.print();
+        }
+      };
+    }
+  }
+  
+        
+    class ReceiptPrinter1 {
         constructor(receiptElement = null, invoiceElement = null) {
           this.receiptElement = receiptElement;
           this.invoiceElement = invoiceElement;
@@ -921,11 +1070,76 @@ function loadDataTable() {
         // ❌ อย่ามี receiptEl ตรงนี้ ถ้าไม่ได้ใช้
         // const receiptEl = document.getElementById(...); ← ลบทิ้ง
     
-        const printer = new ReceiptPrinter(null, invoiceEl); // ✅ ถูกต้อง
+        const printer = new ReceiptPrinter1(null, invoiceEl); // ✅ ถูกต้อง
         printer.print(); // แล้วค่อย print ภายหลัง
         
     });
     
+
+</script>
+<script>
+  $("#btnPrintPDF").on("click", function () {
+    const product_id = $("#productFilter").val();
+    const bank_id = $("#bank").val();
+    const start_datetime = $("#startDateTime").val();
+    const end_datetime = $("#endDateTime").val();
+
+    const query = $.param({
+        product_id: product_id,
+        bank_id: bank_id,
+        start_datetime: start_datetime,
+        end_datetime: end_datetime
+    });
+
+    window.open(`/order/print_invoice_pdf?${query}`, "_blank");
+});
+
+function parseDateFromThaiFormat(dateStr) {
+  const [datePart, timePart] = dateStr.trim().split(" ");
+  const [d, m, y] = datePart.split("-");
+  const [hour = "00", minute = "00", second = "00"] = (timePart || "00:00:00").split(":");
+
+  return new Date(`${y}-${m}-${d}T${hour}:${minute}:${second}`);
+}
+function printAllReceipts() {
+  const startDateStr = document.getElementById("startDateTime").value;
+  const endDateStr = document.getElementById("endDateTime").value;
+
+  let startDate = null;
+  let endDate = null;
+
+  if (startDateStr && endDateStr) {
+    startDate = parseDateFromThaiFormat(startDateStr);
+    endDate = parseDateFromThaiFormat(endDateStr);
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(23, 59, 59, 999);
+  }
+  
+  const allReceipts = Array.from(document.querySelectorAll('[id^="invoice-content-"]'));
+
+  const filteredReceipts = allReceipts.filter(el => {
+    const receiptDateStr = el.getAttribute("data-date");
+    if (!receiptDateStr) return false;
+
+    const receiptDate = new Date(receiptDateStr);
+
+    if (startDate && endDate) {
+      return receiptDate >= startDate && receiptDate <= endDate;
+    } else {
+      return true; // ไม่กรอกวัน = แสดงทั้งหมด
+    }
+
+    
+  });
+
+  if (filteredReceipts.length === 0) {
+    alert("ไม่พบใบเสร็จในช่วงวันที่ที่เลือก");
+    return;
+  }
+
+  const printer = new ReceiptPrinter(filteredReceipts);
+  printer.print();
+}
 
 </script>
 

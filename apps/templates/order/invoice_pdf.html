@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>รายการใบกำกับภาษี / ใบเสร็จ
+    </title>
+    <style>
+        body { font-family: Kanit, sans-serif; font-size: 14px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ccc; padding: 5px; text-align: left; }
+
+        @media print {
+            /* ซ่อนปุ่มและองค์ประกอบที่ไม่อยากให้พิมพ์ */
+            .no-print {
+              display: none !important;
+            }
+        
+            /* เปลี่ยนขนาดตัวอักษร */
+            body {
+              font-size: 12px;
+              color: black;
+            }
+        
+            /* บีบขนาด margin */
+            @page {
+              margin: 1cm;
+            }
+        
+            /* ตั้งค่าขนาด A4 แนวตั้ง 
+            html, body {
+              width: 210mm;
+              height: 297mm;
+            }*/
+        
+            /* เปลี่ยนสไตล์ของตาราง */
+            thead {
+                display: table-header-group;
+            }
+        
+            tfoot {
+                display: table-footer-group;
+            }
+        
+            table {
+                page-break-inside: auto;
+                width: 100%;
+                border-collapse: collapse;
+            }
+        
+            tr {
+                page-break-inside: avoid;
+                page-break-after: auto;
+            }
+
+            
+          }
+    </style>
+</head>
+<body>
+    <div class="row "style="text-align: center; margin-bottom: 20px;">
+        <h2 >รายการใบกำกับภาษี / ใบเสร็จ
+            {% if start_str and end_dt %}
+            ({{ start_str.strftime('%d/%m/%Y') }} - {{ end_dt.strftime('%d/%m/%Y') }})
+        {% else %}
+            &nbsp;
+        {% endif %}</h2>
+    </div>
+<table>
+    <thead>
+        <tr>
+            <th>ลำดับ</th>
+            <th>เลขที่ใบกำกับ</th>
+            <th>รหัส Order</th>
+            <th>ชื่อลูกค้า</th>
+            <th>โปรแกรม</th>
+            <th>ธนาคาร</th>
+            <th>จำนวนเงินรวมทั้งสิ้น</th>
+            <th>Vat</th>
+            <th>รวมมูลค่าสินค้า</th>
+            <th>วันเวลาที่รับเงิน</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for invoice in invoices %}
+            {% set term = invoice.terms %}
+
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ invoice.tax_invoice_no }}</td>
+                <td>{{ invoice.order.order_number }}</td>
+                <td>{{ invoice.member.first_name }} {{invoice.member.last_name }}</td>
+                <td>{{ invoice.order.product.name }} </td>
+                {% set payment = invoice.order.payments | selectattr("sequence", "equalto", invoice.terms.sequence) | list | first %}
+                <td>{{ payment.bank_account.name if payment and payment.bank_account else "" }}</td>
+                <td>{{ "{:,.2f}".format(term.net_price or 0) }}</td>
+                <td>{{ "{:,.2f}".format(invoice.vat or 0) }}</td>
+                <td style="text-align:right;">
+                    {{ "{:,.2f}".format(invoice.amount_before_vat or 0) }}
+                </td>
+                <td>
+                    {% set payment = term.order.payments | selectattr("sequence", "equalto", term.sequence) | selectattr("payment_date") | list | first %}
+                    {{ payment.payment_date.strftime("%d/%m/%Y") if payment else "-" }}
+                </td>
+            </tr>
+        {% endfor %}
+    </tbody>
+    <tfoot>
+        <tr>
+            <td colspan="8" class="text-end"><strong>ยอดรวม:</strong></td>
+            <td colspan="2" class="text-start"><strong id="total-amount">{{ "{:,.2f}".format(total_amount or 0) }}</strong> บาท</td>
+        </tr>
+    </tfoot>
+    
+</table>
+<!-- ✅ ย้ายยอดรวมมาอยู่นอก table เพื่อควบคุมให้แสดงหน้าสุดท้าย -->
+
+<script>
+    window.onload = function () {
+        window.print();
+    }
+</script>
+</body>
+</html>

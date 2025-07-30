@@ -1558,7 +1558,7 @@ def get_account():
             continue  # ไม่มี payment ที่ตรง
 
         # ✅ ตรงนี้สามารถใช้ receipt และ payment ได้อย่างปลอดภัย
-        print(f"[DEBUG] ✅ Receipt: {receipt.receipt_no}, Payment date: {payment.payment_date}")
+        # print(f"[DEBUG] ✅ Receipt: {receipt.receipt_no}, Payment date: {payment.payment_date}")
         payment_date = to_datetime(payment.payment_date) if payment and payment.payment_date else None
         bank_account = payment.bank_account.name if payment and payment.bank_account else None
 
@@ -2006,3 +2006,214 @@ def update_payment_detail():
         db.session.rollback()
         print("❌ Error:", e)
         return jsonify({"success": False, "message": "เกิดข้อผิดพลาด"})
+
+@blueprint.route("/print_receipt_pdf")
+@login_required
+def print_receipt_pdf():
+    product_id = request.args.get("product_id")
+    bank_id = request.args.get("bank_id")
+    start_str = request.args.get("start_datetime")
+    end_str = request.args.get("end_datetime")
+
+    try:
+        start_dt = datetime.strptime(start_str, "%d-%m-%Y %H:%M:%S") if start_str else None
+        end_dt = datetime.strptime(end_str, "%d-%m-%Y %H:%M:%S") if end_str else None
+    except ValueError:
+        start_dt, end_dt = None, None
+    
+    latest_payment_subq = db.session.query(
+        PaymentModel.order_id.label('order_id'),
+        func.max(PaymentModel.payment_date).label('latest_payment_date')
+    ).group_by(PaymentModel.order_id).subquery()
+
+    base_query = db.session.query(ReceiptModel) \
+        .join(ReceiptModel.member) \
+        .join(ReceiptModel.terms) \
+        .join(OrderTermModel.order) \
+        .join(latest_payment_subq, latest_payment_subq.c.order_id == OrderModel.id) \
+        .join(OrderModel.product) \
+        .options(
+            joinedload(ReceiptModel.member),
+            joinedload(ReceiptModel.terms)
+                .joinedload(OrderTermModel.order)
+                .joinedload(OrderModel.product),
+            joinedload(ReceiptModel.terms)
+                .joinedload(OrderTermModel.order)
+                .joinedload(OrderModel.payments)
+                .joinedload(PaymentModel.bank_account)
+        ) .distinct()
+    # apply filters เหมือนกับ get_invoice:
+    if product_id:
+        base_query = base_query.filter(OrderModel.product_id == product_id)
+
+    all_invoices = base_query.all()
+    filtered_invoice_ids = []
+    total_amount = 0
+
+    for invoice in all_invoices:
+        term = invoice.terms
+        order_model = term.order if term else None
+        if not order_model:
+            continue
+
+        payments = [p for p in order_model.payments if p.sequence == term.sequence and p.payment_date]
+
+        if bank_id:
+            payments = [p for p in payments if str(p.bank_id) == str(bank_id)]
+
+        if not payments:
+            continue
+
+        latest_payment = max(payments, key=lambda p: p.payment_date)
+
+        if start_dt and end_dt and not (start_dt <= latest_payment.payment_date <= end_dt):
+            continue
+
+        filtered_invoice_ids.append(invoice.id)
+
+        amount = float(term.amount or 0)
+        total_amount += amount
+    print(f"📊 Total Amount: {total_amount}, Total Discount: {total_amount}")
+
+    base_query = base_query.filter(ReceiptModel.id.in_(filtered_invoice_ids))
+    invoices = base_query.order_by(ReceiptModel.receipt_no).all()
+
+
+    return render_template("order/receipt_pdf.html", invoices=invoices,total_amount=total_amount,start_str=start_dt,end_dt=end_dt)
+
+@blueprint.route("/print_invoice_pdf")
+@login_required
+def print_invoice_pdf():
+    product_id = request.args.get("product_id")
+    bank_id = request.args.get("bank_id")
+    start_str = request.args.get("start_datetime")
+    end_str = request.args.get("end_datetime")
+
+    try:
+        start_dt = datetime.strptime(start_str, "%d-%m-%Y %H:%M:%S") if start_str else None
+        end_dt = datetime.strptime(end_str, "%d-%m-%Y %H:%M:%S") if end_str else None
+    except ValueError:
+        start_dt, end_dt = None, None
+    
+    latest_payment_subq = db.session.query(
+        PaymentModel.order_id.label('order_id'),
+        func.max(PaymentModel.payment_date).label('latest_payment_date')
+    ).group_by(PaymentModel.order_id).subquery()
+
+    base_query = db.session.query(TaxInvoiceModel)\
+        .join(TaxInvoiceModel.member)\
+        .join(TaxInvoiceModel.terms)\
+        .join(OrderTermModel.order)\
+        .join(latest_payment_subq, latest_payment_subq.c.order_id == OrderModel.id) \
+        .join(OrderModel.product)\
+        .options(
+            joinedload(TaxInvoiceModel.member),
+            joinedload(TaxInvoiceModel.terms)
+                .joinedload(OrderTermModel.order)
+                .joinedload(OrderModel.payments)
+                .joinedload(PaymentModel.bank_account)
+    ).distinct()
+    # apply filters เหมือนกับ get_invoice:
+    if product_id:
+        base_query = base_query.filter(OrderModel.product_id == product_id)
+
+    all_invoices = base_query.all()
+    filtered_invoice_ids = []
+    total_amount = 0
+
+    for invoice in all_invoices:
+        term = invoice.terms
+        order_model = term.order if term else None
+        if not order_model:
+            continue
+
+        payments = [p for p in order_model.payments if p.sequence == term.sequence and p.payment_date]
+
+        if bank_id:
+            payments = [p for p in payments if str(p.bank_id) == str(bank_id)]
+
+        if not payments:
+            continue
+
+        latest_payment = max(payments, key=lambda p: p.payment_date)
+
+        if start_dt and end_dt and not (start_dt <= latest_payment.payment_date <= end_dt):
+            continue
+
+        filtered_invoice_ids.append(invoice.id)
+
+        amount = float(term.amount or 0)
+        total_amount += amount
+    print(f"📊 Total Amount: {total_amount}, Total Discount: {total_amount}")
+
+    base_query = base_query.filter(TaxInvoiceModel.id.in_(filtered_invoice_ids))
+    invoices = base_query.order_by(TaxInvoiceModel.tax_invoice_no).all()
+
+
+    return render_template("order/invoice_pdf.html", invoices=invoices,total_amount=total_amount,start_str=start_dt,end_dt=end_dt)
+
+def get_filtered_receipts(product_id=None, bank_id=None, start=None, end=None):
+    query = OrderTermModel.query
+
+    if product_id:
+        query = query.filter(OrderTermModel.product_id == product_id)
+
+    if bank_id:
+        query = query.filter(PaymentModel.bank_id == bank_id)
+
+    if start:
+        query = query.filter(PaymentModel.payment_date >= start)
+
+    if end:
+        query = query.filter(PaymentModel.payment_date <= end)
+
+    # กรองเฉพาะที่มีการชำระแล้ว หรือมี VAT แล้ว
+    return query.all()
+
+@blueprint.route("/get_receipts_html", methods=["POST"])
+def get_receipts_html():
+    data = request.get_json()
+    product_id = data.get("product_id")
+    bank_id = data.get("bank_id")
+    start = data.get("start_datetime")
+    end = data.get("end_datetime")
+
+    receipts = get_filtered_receipts(product_id, bank_id, start, end)
+
+    print("receipts",receipts)
+
+    rendered_receipts = ""
+    for term in receipts:
+        rendered_receipts += render_template("order/receipt_partial.html", term=term)
+
+    return jsonify({ "html": rendered_receipts })
+
+@blueprint.route('/get_receipts_by_date')
+def get_receipts_by_date():
+    start_str = request.args.get('start')
+    end_str = request.args.get('end')
+
+    if not start_str or not end_str:
+        return jsonify({"error": "Missing start or end date"}), 400
+
+    try:
+        # แปลงเป็น datetime เลย ไม่ต้อง .date()
+        start_date = datetime.strptime(start_str, '%d-%m-%Y %H:%M:%S')
+        end_date = datetime.strptime(end_str, '%d-%m-%Y %H:%M:%S')
+    except ValueError:
+        return jsonify({"error": "Invalid date format"}), 400
+
+    # Query ใบเสร็จในช่วงเวลานี้
+    receipts = ReceiptModel.query.filter(
+        ReceiptModel.transfer_date >= start_date,
+        ReceiptModel.transfer_date <= end_date
+    ).all()
+
+    if not receipts:
+        return ""
+
+    # ดึง terms ที่เกี่ยวข้อง ถ้ามี
+    terms = [r.terms for r in receipts if r.terms]
+
+    # ส่ง template ที่คุณมี พร้อมตัวแปร
+    return render_template("receipt_partial.html", receipts=receipts, terms=terms)
