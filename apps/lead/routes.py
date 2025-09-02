@@ -393,6 +393,7 @@ def check_statusLead():
                             # db.extract('year', OrderModel.created_at) == current_year
                         ).first()
 
+    
         # === จัดการ LeadProgram ===
         if thisProgram:
             # แก้ไขข้อมูลเดิม
