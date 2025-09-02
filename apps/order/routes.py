@@ -21,13 +21,16 @@ from PIL import Image
 from flask_principal import Permission, RoleNeed
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
-from sqlalchemy import and_, func, case, asc, or_, cast, String, desc,text
+from sqlalchemy import and_, func, case, asc, or_, cast, String, desc,text, extract
 from sqlalchemy.orm import aliased, joinedload
 from collections import defaultdict
 from datetime import datetime, date, time
 from decimal import Decimal, ROUND_HALF_UP
+import pytz
+
+bangkok_tz = pytz.timezone("Asia/Bangkok")
 
 
 # import logging
@@ -268,7 +271,11 @@ def get_order():
             else f"{order.lead.agency.first_name or ''} {order.lead.agency.last_name or ''}".strip()
         )
         installment_list = [safe_model_to_dict(i) for i in order.product.installments] if order.product and order.product.installments else []
+        created_at_local = order.created_at
+        if created_at_local.tzinfo is None:
+            created_at_local = created_at_local.replace(tzinfo=timezone.utc)
 
+        created_at_local = created_at_local.astimezone(bangkok_tz)
         data.append({
             "id": start + index + 1,
             "order_number": order.order_number or '',
@@ -277,7 +284,7 @@ def get_order():
             "term": order.product.term_of_payment.name if order.product and order.product.term_of_payment else '',
             "email": order.lead.email if order.lead else '',
             "price": order.net_price,
-            "created_at": int(order.created_at.timestamp() * 1000),
+            "created_at": int(created_at_local.timestamp() * 1000),
             "data_user": safe_model_to_dict(order),
             "lead": safe_model_to_dict(order.lead),
             "product": safe_model_to_dict(order.product),
@@ -2217,3 +2224,59 @@ def get_receipts_by_date():
 
     # ส่ง template ที่คุณมี พร้อมตัวแปร
     return render_template("receipt_partial.html", receipts=receipts, terms=terms)
+
+LINE_TOKEN = "MxhKW0223Qw9AKWlxwtVnPmv8bIHUQdZgnIrvo5wIVA1gkDrYh7Q8AcrmZUe2W3kwwpAMg+otiBzVGh32oKotEIHZSrpoeR6YS8vmhyj+UiKKjiLT9Z6gzS7cgrlLuWF/g2adrbHRDQb2N/y5+SfwgdB04t89/1O/w1cDnyilFU="
+LINE_API_URL = "https://api.line.me/v2/bot/message/push"
+
+def send_line_message(to, message_text):
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {LINE_TOKEN}"
+    }
+    payload = {
+        "to": to,  # userId หรือ groupId
+        "messages": [{
+            "type": "text",
+            "text": message_text
+        }]
+    }
+    resp = requests.post(LINE_API_URL, headers=headers, json=payload)
+    return resp.status_code, resp.text
+
+def get_sales_summary():
+    total_today = 12345.67
+    total_month = 98765.43
+    return total_today, total_month
+
+@blueprint.route("/sales_summary/month", methods=["GET"])
+def sales_summary_month():
+    year = request.args.get("year", type=int, default=date.today().year)
+    month = request.args.get("month", type=int, default=date.today().month)
+    to = request.args.get("to")
+
+    # query ยอดขาย
+    total_sales = (
+        db.session.query(func.sum(PaymentModel.amount))
+        .filter(extract("year", PaymentModel.created_at) == year)
+        .filter(extract("month", PaymentModel.created_at) == month)
+        .scalar()
+    ) or 0.0
+
+    message = (
+        f"📊 รายงานยอดขายเดือน {month}/{year}\n"
+        f"💰 ยอดขายรวม: {total_sales:,.2f} บาท"
+    )
+
+    # ส่งเข้า LINE ถ้ามี to
+    if to:
+        status_code, resp_text = send_line_message(to, message)
+    else:
+        status_code, resp_text = (200, "no LINE sent")
+
+    return jsonify({
+        "year": year,
+        "month": month,
+        "total_sales": float(total_sales),
+        "line_status": status_code,
+        "line_resp": resp_text
+    })
