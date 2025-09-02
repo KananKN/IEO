@@ -339,8 +339,6 @@ def check_statusLead():
         agency_id = None
         
    
-
-   
   
     lead = leadModel.query.filter(
             or_(
@@ -388,7 +386,10 @@ def check_statusLead():
         if status == 'converted':
             existing_order = db.session.query(OrderModel).filter(
                             OrderModel.lead_id == int(id_lead),
-                            OrderModel.status.notin_(['completed', 'cancelled']),
+                            OrderModel.product_id == int(product.id),
+                            OrderModel.status.notin_(['completed', 'cancelled'])
+
+                            # OrderModel.status.notin_(['completed', 'cancelled']),
                             # db.extract('year', OrderModel.created_at) == current_year
                         ).first()
 
@@ -411,10 +412,10 @@ def check_statusLead():
 
         # ถ้ามีออร์เดอร์ค้างปีเดียวกัน และสถานะเป็น 'converted' => ห้ามสร้างใหม่
         if existing_order:
-            print("⚠️ พบออร์เดอร์ปีเดียวกันที่ยังไม่จบ ไม่สามารถสร้างใหม่ได้")
+            print("⚠️ พบออร์เดอร์ที่มีโครงเดียวกันที่ยังไม่จบ ไม่สามารถสร้างใหม่ได้")
             return jsonify({
                 "status": "error",
-                "message": "ไม่สามารถสร้างออร์เดอร์ได้ เนื่องจากมีออร์เดอร์ที่ยังไม่จบในปีเดียวกัน"
+                "message": "ไม่สามารถสร้างออร์เดอร์ใหม่ได้ เนื่องจากมีโครงการเดียวกันที่ยังไม่เสร็จสิ้น"
             }), 500
 
         # === ถ้า status เป็น 'converted' ให้สร้าง Order ใหม่ ===
