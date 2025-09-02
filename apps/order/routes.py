@@ -21,7 +21,9 @@ from PIL import Image
 from flask_principal import Permission, RoleNeed
 import json
 import os
-from datetime import datetime, timezone
+from datetime  import timezone
+import datetime 
+
 import uuid
 from sqlalchemy import and_, func, case, asc, or_, cast, String, desc,text, extract
 from sqlalchemy.orm import aliased, joinedload
@@ -176,6 +178,32 @@ status_label_expr = case(
     else_="สถานะไม่ทราบแน่ชัด"
 )
 
+BANGKOK_TZ = pytz.timezone("Asia/Bangkok")
+
+def to_bangkok_timestamp(dt):
+    """
+    แปลง datetime เป็น timestamp (ms) ตาม Bangkok timezone
+    dt: datetime object (naive หรือ timezone-aware)
+    คืนค่า: int milliseconds
+    """
+    if dt is None:
+        return None
+
+    # ถ้า datetime เป็น naive (ไม่มี tzinfo) → สมมติว่าเป็น UTC
+    if dt.tzinfo is None:
+        dt = BANGKOK_TZ.localize(dt)
+
+    # แปลงเป็น Bangkok
+    dt_local = dt.astimezone(BANGKOK_TZ)
+
+    # คืนค่าเป็น milliseconds สำหรับ JS
+    return int(dt_local.timestamp() * 1000)
+
+ts_ms = 1756817709484
+ts_s = ts_ms / 1000
+
+dt = datetime.fromtimestamp(ts_s)  # ใช้ตรงๆ
+print(dt)
 
 @blueprint.route("/get_order1", methods=["POST"])
 @login_required
@@ -271,11 +299,7 @@ def get_order():
             else f"{order.lead.agency.first_name or ''} {order.lead.agency.last_name or ''}".strip()
         )
         installment_list = [safe_model_to_dict(i) for i in order.product.installments] if order.product and order.product.installments else []
-        created_at_local = order.created_at
-        if created_at_local.tzinfo is None:
-            created_at_local = created_at_local.replace(tzinfo=timezone.utc)
-
-        created_at_local = created_at_local.astimezone(bangkok_tz)
+        
         data.append({
             "id": start + index + 1,
             "order_number": order.order_number or '',
@@ -284,7 +308,7 @@ def get_order():
             "term": order.product.term_of_payment.name if order.product and order.product.term_of_payment else '',
             "email": order.lead.email if order.lead else '',
             "price": order.net_price,
-            "created_at": int(created_at_local.timestamp() * 1000),
+            "created_at": to_bangkok_timestamp(order.created_at),
             "data_user": safe_model_to_dict(order),
             "lead": safe_model_to_dict(order.lead),
             "product": safe_model_to_dict(order.product),
