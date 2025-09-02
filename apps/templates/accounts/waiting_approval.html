@@ -69,7 +69,8 @@
     }
 
     // เช็คทุก 5 วินาที
-    setInterval(checkApprovalStatus, 5000);
+    //setInterval(checkApprovalStatus, 5000);
+    window.addEventListener('load', checkApprovalStatus);
 </script>
 <script>
     // ป้องกันปุ่ม back
