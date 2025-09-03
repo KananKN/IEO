@@ -87,15 +87,22 @@
                 <td>{{ invoice.order.order_number }}</td>
                 <td>{{ invoice.member.first_name }} {{invoice.member.last_name }}</td>
                 <td>{{ invoice.order.product.name }} </td>
-                {% set payment = invoice.order.payments | selectattr("sequence", "equalto", invoice.terms.sequence) | list | first %}
+                {% set payments = invoice.order.payments 
+                    | selectattr("sequence", "equalto", invoice.terms.sequence) 
+                    | selectattr("payment_date") 
+                    | list %}
+                
+                {% set payment = payments | max(attribute='payment_date') if payments else None %}
                 <td>{{ payment.bank_account.name if payment and payment.bank_account else "" }}</td>
                 <td>{{ "{:,.2f}".format(term.discount or 0) }}</td>
                 <td style="text-align:right;">
                     {{ "{:,.2f}".format(term.net_price or 0) }}
                 </td>
                 <td>
-                    {% set payment = term.order.payments | selectattr("sequence", "equalto", term.sequence) | selectattr("payment_date") | list | first %}
-                    {{ payment.payment_date.strftime("%d/%m/%Y") if payment else "-" }}
+                    
+                    
+                    {{ payment.payment_date.strftime("%d/%m/%Y %H:%M:%S") if payment else "-" }}
+                    
                 </td>
             </tr>
         {% endfor %}

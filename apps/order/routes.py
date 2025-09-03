@@ -2051,18 +2051,43 @@ def print_receipt_pdf():
         end_dt = datetime.strptime(end_str, "%d-%m-%Y %H:%M:%S") if end_str else None
     except ValueError:
         start_dt, end_dt = None, None
-    
-    latest_payment_subq = db.session.query(
-        PaymentModel.order_id.label('order_id'),
-        func.max(PaymentModel.payment_date).label('latest_payment_date')
-    ).group_by(PaymentModel.order_id).subquery()
 
-    base_query = db.session.query(ReceiptModel) \
-        .join(ReceiptModel.member) \
-        .join(ReceiptModel.terms) \
-        .join(OrderTermModel.order) \
-        .join(latest_payment_subq, latest_payment_subq.c.order_id == OrderModel.id) \
-        .join(OrderModel.product) \
+    # --- สร้าง subquery หา "latest payment_date" ต่อ order+sequence (และกรอง bank ถ้ามี) ---
+    payment_base = db.session.query(
+        PaymentModel.order_id.label("order_id"),
+        PaymentModel.sequence.label("sequence"),
+        func.max(PaymentModel.payment_date).label("latest_payment_date"),
+    ).filter(PaymentModel.payment_date.isnot(None))
+
+    # กรอง bank ที่ระดับ subquery ให้สอดคล้องกับ logic เดิม (เลือก max หลังกรอง bank)
+    bank_id_int = None
+    if bank_id:
+        try:
+            bank_id_int = int(bank_id)
+        except (TypeError, ValueError):
+            bank_id_int = None
+
+    if bank_id_int is not None:
+        payment_base = payment_base.filter(PaymentModel.bank_id == bank_id_int)
+
+    latest_payment_per_term_sq = payment_base.group_by(
+        PaymentModel.order_id, PaymentModel.sequence
+    ).subquery()
+
+    # --- query หลัก: join ไปยัง latest_payment_per_term_sq ด้วย order_id + sequence ---
+    base_query = (
+        db.session.query(ReceiptModel)
+        .join(ReceiptModel.member)
+        .join(ReceiptModel.terms)
+        .join(OrderTermModel.order)
+        .join(OrderModel.product)
+        .join(
+            latest_payment_per_term_sq,
+            and_(
+                latest_payment_per_term_sq.c.order_id == OrderModel.id,
+                latest_payment_per_term_sq.c.sequence == OrderTermModel.sequence,
+            ),
+        )  # ใช้ inner join เพื่อตัดใบเสร็จที่ไม่มี payment ออก
         .options(
             joinedload(ReceiptModel.member),
             joinedload(ReceiptModel.terms)
@@ -2071,47 +2096,44 @@ def print_receipt_pdf():
             joinedload(ReceiptModel.terms)
                 .joinedload(OrderTermModel.order)
                 .joinedload(OrderModel.payments)
-                .joinedload(PaymentModel.bank_account)
-        ) .distinct()
-    # apply filters เหมือนกับ get_invoice:
+                .joinedload(PaymentModel.bank_account),
+        )
+    )
+
+    # กรอง product ถ้ามี
     if product_id:
         base_query = base_query.filter(OrderModel.product_id == product_id)
 
-    all_invoices = base_query.all()
-    filtered_invoice_ids = []
-    total_amount = 0
+    # กรองช่วงวันที่ตาม "latest_payment_date" (ใช้ได้เมื่อมีทั้ง start และ end)
+    if start_dt and end_dt:
+        base_query = base_query.filter(
+            latest_payment_per_term_sq.c.latest_payment_date.between(start_dt, end_dt)
+        )
 
-    for invoice in all_invoices:
-        term = invoice.terms
-        order_model = term.order if term else None
-        if not order_model:
-            continue
+    # --- เรียงตามวันที่โอนล่าสุดของงวด (สำคัญสุด) และกัน tie-break ด้วยเลขที่ใบเสร็จ ---
+    base_query = base_query.order_by(
+        latest_payment_per_term_sq.c.latest_payment_date.asc(),
+        ReceiptModel.receipt_no.asc(),
+    )
 
-        payments = [p for p in order_model.payments if p.sequence == term.sequence and p.payment_date]
+    invoices = base_query.all()
 
-        if bank_id:
-            payments = [p for p in payments if str(p.bank_id) == str(bank_id)]
-
-        if not payments:
-            continue
-
-        latest_payment = max(payments, key=lambda p: p.payment_date)
-
-        if start_dt and end_dt and not (start_dt <= latest_payment.payment_date <= end_dt):
-            continue
-
-        filtered_invoice_ids.append(invoice.id)
-
+    # คำนวณ total_amount จาก amount ของงวดที่ผูกกับใบเสร็จ
+    total_amount = 0.0
+    for inv in invoices:
+        term = inv.terms
         amount = float(term.amount or 0)
         total_amount += amount
-    print(f"📊 Total Amount: {total_amount}, Total Discount: {total_amount}")
 
-    base_query = base_query.filter(ReceiptModel.id.in_(filtered_invoice_ids))
-    invoices = base_query.order_by(ReceiptModel.receipt_no).all()
+    print(f"📊 Total Amount: {total_amount}")
 
-
-    return render_template("order/receipt_pdf.html", invoices=invoices,total_amount=total_amount,start_str=start_dt,end_dt=end_dt)
-
+    return render_template(
+        "order/receipt_pdf.html",
+        invoices=invoices,
+        total_amount=total_amount,
+        start_str=start_dt,
+        end_dt=end_dt,
+    )
 @blueprint.route("/print_invoice_pdf")
 @login_required
 def print_invoice_pdf():
@@ -2135,7 +2157,7 @@ def print_invoice_pdf():
         .join(TaxInvoiceModel.member)\
         .join(TaxInvoiceModel.terms)\
         .join(OrderTermModel.order)\
-        .join(latest_payment_subq, latest_payment_subq.c.order_id == OrderModel.id) \
+        .join(latest_payment_subq, latest_payment_subq.c.order_id == OrderModel.id)\
         .join(OrderModel.product)\
         .options(
             joinedload(TaxInvoiceModel.member),
@@ -2143,8 +2165,8 @@ def print_invoice_pdf():
                 .joinedload(OrderTermModel.order)
                 .joinedload(OrderModel.payments)
                 .joinedload(PaymentModel.bank_account)
-    ).distinct()
-    # apply filters เหมือนกับ get_invoice:
+        ).distinct()
+
     if product_id:
         base_query = base_query.filter(OrderModel.product_id == product_id)
 
@@ -2152,6 +2174,8 @@ def print_invoice_pdf():
     filtered_invoice_ids = []
     total_amount = 0
 
+    # หลังจาก loop filter เสร็จแล้ว
+    invoice_with_date = []
     for invoice in all_invoices:
         term = invoice.terms
         order_model = term.order if term else None
@@ -2159,29 +2183,32 @@ def print_invoice_pdf():
             continue
 
         payments = [p for p in order_model.payments if p.sequence == term.sequence and p.payment_date]
-
         if bank_id:
             payments = [p for p in payments if str(p.bank_id) == str(bank_id)]
-
         if not payments:
             continue
 
         latest_payment = max(payments, key=lambda p: p.payment_date)
-
         if start_dt and end_dt and not (start_dt <= latest_payment.payment_date <= end_dt):
             continue
 
         filtered_invoice_ids.append(invoice.id)
+        invoice_with_date.append((invoice, latest_payment.payment_date))  # เก็บวันที่มาด้วย
 
         amount = float(term.amount or 0)
         total_amount += amount
-    print(f"📊 Total Amount: {total_amount}, Total Discount: {total_amount}")
 
-    base_query = base_query.filter(TaxInvoiceModel.id.in_(filtered_invoice_ids))
-    invoices = base_query.order_by(TaxInvoiceModel.tax_invoice_no).all()
+    # ✅ เรียงตามวันล่าสุด
+    invoice_with_date.sort(key=lambda x: x[1])
+    invoices = [inv for inv, _ in invoice_with_date]
 
-
-    return render_template("order/invoice_pdf.html", invoices=invoices,total_amount=total_amount,start_str=start_dt,end_dt=end_dt)
+    return render_template(
+        "order/invoice_pdf.html",
+        invoices=invoices,
+        total_amount=total_amount,
+        start_str=start_dt,
+        end_dt=end_dt
+    )
 
 def get_filtered_receipts(product_id=None, bank_id=None, start=None, end=None):
     query = OrderTermModel.query

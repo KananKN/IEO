@@ -98,9 +98,16 @@
                     {{ "{:,.2f}".format(invoice.amount_before_vat or 0) }}
                 </td>
                 <td>
-                    {% set payment = term.order.payments | selectattr("sequence", "equalto", term.sequence) | selectattr("payment_date") | list | first %}
-                    {{ payment.payment_date.strftime("%d/%m/%Y") if payment else "-" }}
+                    {% set payment = (
+                        term.order.payments
+                        | selectattr("sequence", "equalto", term.sequence)
+                        | selectattr("payment_date")
+                        | sort(attribute='payment_date')
+                        | last
+                    ) %}
+                    {{ payment.payment_date.strftime("%d/%m/%Y %H:%M:%S") if payment else "-" }}
                 </td>
+                
             </tr>
         {% endfor %}
     </tbody>
