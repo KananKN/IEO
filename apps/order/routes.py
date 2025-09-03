@@ -27,6 +27,7 @@ import datetime
 import uuid
 from sqlalchemy import and_, func, case, asc, or_, cast, String, desc,text, extract
 from sqlalchemy.orm import aliased, joinedload
+from sqlalchemy.exc import IntegrityError
 from collections import defaultdict
 from datetime import datetime, date, time
 from decimal import Decimal, ROUND_HALF_UP
@@ -1245,91 +1246,91 @@ def save_single_term():
     except Exception as e:
         db.session.rollback()
         return jsonify(success=False, error=f"เกิดข้อผิดพลาด: {str(e)}")
-    
+
 def generate_document_number(doc_type="DP", use_date=None):
     if use_date is None:
-        use_date = datetime.today()    # สมมุติใช้จาก ReceiptModel เป็นหลัก
-    latest_receipt = db.session.query(ReceiptModel.receipt_no)\
-        .filter(ReceiptModel.receipt_no.like(f"{doc_type}%"))\
-        .order_by(ReceiptModel.receipt_no.desc()).first()
+        use_date = datetime.today()
 
-    if latest_receipt and latest_receipt[0]:
-        # ดึงเฉพาะเลขรันสุดท้าย
-        last_number = int(latest_receipt[0].split("-")[-1])
-        next_number = last_number + 1
+    prefix = f"{doc_type}{use_date.strftime('%Y%m')}"
+
+    # ดึง ReceiptModel ล่าสุดตาม id
+    latest = db.session.query(ReceiptModel).order_by(ReceiptModel.id.desc()).first()
+    if latest and latest.receipt_no:
+        try:
+            last_number = int(latest.receipt_no.split("-")[-1])
+            next_number = last_number + 1
+        except:
+            next_number = 1
     else:
         next_number = 1
 
-    # ใช้ prefix แบบมีปีเดือนเพื่อให้ดูเวลาออกเอกสารได้ง่าย (แต่ไม่ส่งผลต่อเลขรัน)
-    year_month = use_date.strftime("%Y%m")
-    prefix = f"{doc_type}{year_month}"
-    return prefix, str(next_number).zfill(5)
+    # สร้างเลข
+    receipt_no = f"{prefix}-{str(next_number).zfill(5)}"
+
+    # ตรวจสอบซ้ำ
+    while db.session.query(ReceiptModel).filter_by(receipt_no=receipt_no).first():
+        next_number += 1
+        receipt_no = f"{prefix}-{str(next_number).zfill(5)}"
+
+    return receipt_no
+
+
 
 def generate_receipt_number(use_date=None):
-    prefix, number = generate_document_number("DP", use_date)
-    return f"{prefix}-{number}" 
+    return generate_document_number("DP", use_date)
 
 def generate_tax_invoice_number(use_date=None):
-    prefix, number = generate_document_number("BI", use_date)
-    return f"{prefix}-{number}" 
-     
+    return generate_document_number("BI", use_date)
 
 def create_receipt_and_invoice_for_term(term: OrderTermModel, transfer_date=None):
     try:
-        # เช็คก่อนว่า term นี้เคยออกใบเสร็จหรือยัง
-
         existing_receipt = ReceiptModel.query.filter_by(terms_id=term.id).first()
-        print(f"[DEBUG] 🔢 Term ID: {term.id}, Sequence: {term.sequence}, Amount: {term.amount}, VAT: {term.check_vat}")
         if existing_receipt:
             print(f"⚠️ Term {term.id} มีใบเสร็จแล้ว: {existing_receipt.receipt_no}")
             return
 
         used_transfer_date = transfer_date or term.updated_at or term.created_at
 
-            # สร้างใบเสร็จสำหรับงวดนี้
+        # สร้างเลขใบเสร็จแบบ global + ตรวจสอบเลขซ้ำ
+        receipt_no = generate_receipt_number(use_date=used_transfer_date)
+
         receipt = ReceiptModel(
             order_id=term.order_id,
             terms_id=term.id,
-            receipt_no=generate_receipt_number(use_date=used_transfer_date  ),
+            receipt_no=receipt_no,
             amount=term.net_price,
             member_id=term.order.member_id,
             transfer_date=used_transfer_date
         )
         db.session.add(receipt)
         db.session.flush()
-        
 
-        
-        # ตรวจสอบ VAT
         if term.check_vat:
             vat_rate = Decimal("1.07")
-            amount = term.net_price  # สมมุติว่าเป็น Decimal อยู่แล้ว
-
+            amount = term.net_price
             base_amount = (amount / vat_rate).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
             vat_amount = (amount - base_amount).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-            print(base_amount)
-            print(vat_amount)
             tax_invoice = TaxInvoiceModel(
                 order_id=term.order_id,
                 receipt_id=receipt.id,
                 tax_invoice_no=receipt.receipt_no.replace("DP", "BI"),
                 member_id=term.order.member_id,
                 amount=term.net_price,
-                vat=vat_amount,  
+                vat=vat_amount,
                 amount_before_vat=base_amount,
                 terms_id=term.id,
                 transfer_date=used_transfer_date
             )
             db.session.add(tax_invoice)
-            db.session.commit()
-            print(f"✅ งวด {term.sequence}: สร้างใบเสร็จ {receipt.receipt_no} และใบกำกับ {tax_invoice.tax_invoice_no}")
-        else:
-            db.session.commit()
-            print(f"✅ งวด {term.sequence}: สร้างใบเสร็จ {receipt.receipt_no} (ไม่มี VAT)")
+
+        db.session.commit()
+        print(f"✅ งวด {term.sequence}: สร้างใบเสร็จ {receipt.receipt_no}" +
+              (f" และใบกำกับ {tax_invoice.tax_invoice_no}" if term.check_vat else " (ไม่มี VAT)"))
 
     except Exception as e:
         db.session.rollback()
         print(f"❌ ERROR create_receipt_and_invoice_for_term: {e}")
+
 
 @blueprint.route('/account')
 @login_required
@@ -1355,33 +1356,31 @@ def account_list():
                            orderTerms=orderTerms)
 
 
-    
+
 @blueprint.route("/get_account", methods=["POST"])
 @login_required
 @read_permission.require(http_exception=403)
 def get_account():
     request_data = request.get_json()
-    print("📥 Received JSON:", request_data)
-
     draw = request_data.get("draw", 1)
     start = request_data.get("start", 0)
     length = request_data.get("length", 10)
     order = request_data.get("order", [])
     search_value = request_data.get("search", {}).get("value", "")
 
-    if length == -1:
-        total_query = db.session.query(func.count(ReceiptModel.id))
-        total_records = total_query.scalar()
-        length = total_records
+    # แก้ปัญหา LIMIT negative
+    if length < 0:
+        length = None  # None = ไม่จำกัด
+
     
-    # subquery เพื่อหา payment_date ล่าสุดต่อ order_id
+    # Subquery: ล่าสุดต่อ term
     latest_payment_subq = db.session.query(
-        PaymentModel.order_id.label('order_id'),
-        func.max(PaymentModel.payment_date).label('latest_payment_date')
-    ).group_by(PaymentModel.order_id).subquery()
+        PaymentModel.order_id.label("order_id"),
+        PaymentModel.sequence.label("sequence"),
+        func.max(PaymentModel.payment_date).label("latest_payment_date")
+    ).group_by(PaymentModel.order_id, PaymentModel.sequence).subquery()
 
-
-    # Mapping คอลัมน์จาก DataTable ไปยัง Database
+    # Mapping คอลัมน์จาก DataTable → Database
     column_map = {
         0: ReceiptModel.id,
         1: ReceiptModel.receipt_no,
@@ -1391,30 +1390,25 @@ def get_account():
         5: BankAccountModel.name,
         6: OrderTermModel.discount,
         7: ReceiptModel.amount,
-        8: latest_payment_subq.c.latest_payment_date,  # <-- ใช้ subquery นี้เพื่อเรียงวันที่ล่าสุด
-
+        8: latest_payment_subq.c.latest_payment_date,  # created_at / payment_date
     }
 
     # === Base Query ===
     base_query = db.session.query(ReceiptModel) \
-        .join(ReceiptModel.member) \
-        .join(ReceiptModel.terms) \
-        .join(OrderTermModel.order) \
-        .join(latest_payment_subq, latest_payment_subq.c.order_id == OrderModel.id) \
-        .join(OrderModel.product) \
-        .options(
-            joinedload(ReceiptModel.member),
-            joinedload(ReceiptModel.terms)
-                .joinedload(OrderTermModel.order)
-                .joinedload(OrderModel.product),
-            joinedload(ReceiptModel.terms)
-                .joinedload(OrderTermModel.order)
-                .joinedload(OrderModel.payments)
-                .joinedload(PaymentModel.bank_account)
-        ) .distinct()
-        # \
-        # .filter(PaymentModel.sequence == OrderTermModel.sequence) \
-        
+    .join(ReceiptModel.terms) \
+    .join(OrderTermModel.order) \
+    .join(latest_payment_subq,
+          (latest_payment_subq.c.order_id == OrderModel.id) &
+          (latest_payment_subq.c.sequence == OrderTermModel.sequence)
+    ) \
+    .join(ReceiptModel.member) \
+    .join(OrderModel.product) \
+    .options(
+        joinedload(ReceiptModel.member),
+        joinedload(ReceiptModel.terms)
+            .joinedload(OrderTermModel.order)
+            .joinedload(OrderModel.product)
+    ).distinct()
 
     # === Filter ===
     if search_value:
@@ -1444,10 +1438,6 @@ def get_account():
     except (ValueError, TypeError):
         bank_id = None
 
-    
-    # if bank_id:
-    #     base_query = base_query.filter(PaymentModel.bank_id == bank_id)
-
     start_datetime = request_data.get("start_datetime")
     end_datetime = request_data.get("end_datetime")
     try:
@@ -1456,177 +1446,103 @@ def get_account():
     except ValueError:
         start_dt, end_dt = None, None
 
-    # === จัดเรียง ===
+    # Apply order from DataTables
     if order:
         column_index = int(order[0]["column"])
         sort_direction = order[0]["dir"]
-        column_order = column_map.get(column_index, ReceiptModel.id)
+        column_order = {
+            8: latest_payment_subq.c.latest_payment_date,
+            0: ReceiptModel.id,
+            1: ReceiptModel.receipt_no,
+            2: OrderModel.order_number
+        }.get(column_index, ReceiptModel.id)
+
         column_order = column_order.desc() if sort_direction == "desc" else column_order.asc()
     else:
-        column_order = ReceiptModel.id.asc()
+        column_order = latest_payment_subq.c.latest_payment_date.desc()
 
-    if start_dt and end_dt:
-        all_receipts = base_query.all()
-        filtered_receipt_ids = []
-
-        for receipt in all_receipts:
-            term = receipt.terms
-            order_model = term.order if term else None
-            if not order_model:
-                continue
-
-            # ดึง payments ที่ตรงกับ sequence และมี payment_date
-            payments = [
-                p for p in order_model.payments
-                if p.sequence == term.sequence and p.payment_date
-            ]
-
-            # กรองตาม bank_id ถ้ามี
-            if bank_id:
-                payments = [p for p in payments if p.bank_id == bank_id]
-
-            if not payments:
-                continue
-
-            # เอา payment ล่าสุด
-            latest_payment = max(payments, key=lambda p: p.payment_date)
-
-            # print(f"[DEBUG] ✅ Receipt: {receipt.receipt_no}, Payment date: {latest_payment.payment_date}")
-
-            # เช็กว่า payment ล่าสุด อยู่ในช่วงเวลา
-            if start_dt <= latest_payment.payment_date <= end_dt:
-                filtered_receipt_ids.append(receipt.id)
-
-        # กรอง query หลักด้วย receipt id ที่ผ่านเงื่อนไข
-        base_query = base_query.filter(ReceiptModel.id.in_(filtered_receipt_ids))
-
-        # รวมยอดเฉพาะ receipt ที่เข้าเงื่อนไข
-        total_amount = db.session.query(func.sum(ReceiptModel.amount)) \
-            .filter(ReceiptModel.id.in_(filtered_receipt_ids)) \
-            .scalar() or 0
-
-        # print(f"📊 Filtered Total Amount: {total_amount}")
-    else:
-        if bank_id:
-            all_receipts = base_query.all()
-            filtered_receipt_ids = []
-            for receipt in all_receipts:
-                term = receipt.terms
-                order_model = term.order if term else None
-                if not order_model:
-                    continue
-
-                payments_filtered = [
-                    p for p in order_model.payments
-                    if p.sequence == term.sequence and p.payment_date
-                ]
-                
-
-                if payments_filtered:
-                    latest_payment = max(payments_filtered, key=lambda p: p.payment_date)
-                    if latest_payment.bank_id == int(bank_id):
-                        filtered_receipt_ids.append(receipt.id)
-                        # print(f"✅ Match Invoice: {receipt.receipt_no} | Bank: {bank_id} | Date: {latest_payment.payment_date}")
-                    # filtered_receipt_ids.append(receipt.id)
-
-            base_query = base_query.filter(ReceiptModel.id.in_(filtered_receipt_ids))
-
-            total_amount = db.session.query(func.sum(ReceiptModel.amount)) \
-                .filter(ReceiptModel.id.in_(filtered_receipt_ids)) \
-                .scalar() or 0
-            
-            total_discount = 0
-            for invoice in base_query.all():
-                term = invoice.terms
-                discount = float(term.discount or 0) if term else 0
-                total_discount += discount
-
-        else:
-            # ✅ ไม่มี filter ใดเลย → รวมทั้งหมด
-            all_ids = base_query.with_entities(ReceiptModel.id).subquery()
-            total_amount = db.session.query(func.sum(ReceiptModel.amount)) \
-                .filter(ReceiptModel.id.in_(all_ids)) \
-                .scalar() or 0
-        
-            total_discount = 0
-            for invoice in base_query.all():
-                term = invoice.terms
-                discount = float(term.discount or 0) if term else 0
-                total_discount += discount
-        print(f"📊 Total Amount: {total_amount}, Total Discount: {total_discount}")
-            
-            
-    # === Pagination ===
-    total_records = base_query.count()
-    orders = base_query.order_by(column_order).offset(start).limit(length).all()
-
-    # === เตรียมข้อมูล ===
-    data = []
-    for index, receipt in enumerate(orders):  # ✅ เปลี่ยนชื่อเป็น receipt
-        member = receipt.member
+    # === กรองตาม bank / date range / payment ล่าสุด ===
+    filtered_receipt_ids = []
+    for receipt in base_query.all():
         term = receipt.terms
         order_model = term.order if term else None
-
         if not order_model:
             continue
 
-        # ✅ เลือก Payment ที่ตรงกับ sequence และ bank/วันที่ล่าสุด
-        payment = None
         payments_filtered = [
             p for p in order_model.payments
             if p.sequence == term.sequence and p.payment_date
         ]
         if bank_id:
             payments_filtered = [p for p in payments_filtered if p.bank_id == bank_id]
-        
         if start_dt and end_dt:
             payments_filtered = [
                 p for p in payments_filtered if start_dt <= p.payment_date <= end_dt
             ]
-        if payments_filtered:
-            payment = sorted(payments_filtered, key=lambda p: p.payment_date, reverse=True)[0]
-        else:
-            continue  # ไม่มี payment ที่ตรง
+        if not payments_filtered:
+            continue
 
-        # ✅ ตรงนี้สามารถใช้ receipt และ payment ได้อย่างปลอดภัย
-        # print(f"[DEBUG] ✅ Receipt: {receipt.receipt_no}, Payment date: {payment.payment_date}")
-        payment_date = to_datetime(payment.payment_date) if payment and payment.payment_date else None
-        bank_account = payment.bank_account.name if payment and payment.bank_account else None
+        latest_payment = max(payments_filtered, key=lambda p: p.payment_date)
+        filtered_receipt_ids.append(receipt.id)
 
-        customer_name = f"{member.first_name or ''} {member.last_name or ''}".strip() if member else ''
-        product = order_model.product if order_model else None
-        product_name = product.name if product else ''
-        discount = term.discount if term else 0
+    if filtered_receipt_ids:
+        base_query = base_query.filter(ReceiptModel.id.in_(filtered_receipt_ids))
+
+    total_records = base_query.count()
+    total_amount = db.session.query(func.sum(ReceiptModel.amount)) \
+        .filter(ReceiptModel.id.in_(filtered_receipt_ids)) \
+        .scalar() or 0
+
+    # === Pagination + Order ===
+    receipts = base_query.order_by(column_order).offset(start).limit(length).all()
+
+    # === เตรียม data สำหรับ DataTables ===
+    data = []
+    for idx, receipt in enumerate(receipts):
+        term = receipt.terms
+        order_model = term.order if term else None
+        member = receipt.member
+
+        # latest payment
+        payments_filtered = [
+            p for p in order_model.payments
+            if p.sequence == term.sequence and p.payment_date
+        ]
+        if bank_id:
+            payments_filtered = [p for p in payments_filtered if p.bank_id == bank_id]
+        if start_dt and end_dt:
+            payments_filtered = [
+                p for p in payments_filtered if start_dt <= p.payment_date <= end_dt
+            ]
+        latest_payment = max(payments_filtered, key=lambda p: p.payment_date) if payments_filtered else None
+        payment_ts = int(latest_payment.payment_date.timestamp() * 1000) if latest_payment else None
 
         data.append({
-            "id": start + index + 1,
+            "id": start + idx + 1,
             "term_id": term.id if term else None,
             "order_number": order_model.order_number if order_model else '',
             "order_id": order_model.id if order_model else None,
             "receipt_no": receipt.receipt_no or '',
-            "customer_name": customer_name,
-            "product_name": product_name,
-            "bank_name": bank_account,
-            "discount": float(discount or 0),
+            "customer_name": f"{member.first_name or ''} {member.last_name or ''}".strip() if member else '',
+            "product_name": order_model.product.name if order_model and order_model.product else '',
+            "bank_name": latest_payment.bank_account.name if latest_payment and latest_payment.bank_account else '',
+            "discount": float(term.discount or 0),
             "amount": float(receipt.amount or 0),
-            "created_at": int(payment_date.timestamp() * 1000) if payment_date else None,
-            "data_user": safe_model_to_dict(receipt),
+            "created_at": payment_ts,
+            "data_user": safe_model_to_dict(receipt)
         })
 
-    
-
-    # # === ส่งกลับ ===
     return Response(
         json.dumps({
             "draw": draw,
             "recordsTotal": total_records,
             "recordsFiltered": total_records,
             "data": data,
-            "total_amount": float(total_amount),  # ✅ ยอดรวม
-            # "filtered_total_amount": float(filtered_total_amount)  # ✅ ยอดรวมตามช่วงเวลา
+            "total_amount": float(total_amount)
         }, ensure_ascii=False, default=str),
         content_type="application/json"
     )
+
  
 
 @blueprint.route('/invoice')
@@ -1983,6 +1899,10 @@ def get_invoice():
         }, ensure_ascii=False, default=str),
         content_type="application/json"
     )
+
+
+
+
 
 @blueprint.route("/get_product_list")
 def get_product_list():
