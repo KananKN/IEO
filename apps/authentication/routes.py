@@ -29,6 +29,7 @@ from flask_principal import Identity, identity_changed
 from datetime import datetime
 import uuid
 from sqlalchemy import and_, func, case, asc, or_, cast, String
+from contextlib import contextmanager
 
 
 
@@ -39,7 +40,18 @@ def route_default():
     return redirect(url_for('authentication_blueprint.login'))
 
 # Login & Registration
-
+# Context manager สำหรับ session
+@contextmanager
+def session_scope():
+    session = db.session()
+    try:
+        yield session
+        session.commit()
+    except Exception:
+        session.rollback()
+        raise
+    finally:
+        session.close()
 
 @blueprint.route("/github")
 def login_github():
@@ -49,6 +61,7 @@ def login_github():
 
     res = github.get("/user")
     return redirect(url_for('home_blueprint.index'))
+
 
 
 @blueprint.route('/login', methods=['GET', 'POST'])
@@ -63,25 +76,27 @@ def login():
         if 'remember' in request.form:
             if request.form['remember'] == 'remember':
                 remember = True
+                
         # Locate user
-        user = UserModel.query.filter_by(username=username).first()
+        with session_scope() as session:
+            user = UserModel.query.filter_by(username=username).first()
 
-        # Check the password and status
-        # if user and verify_pass(password, user.password) and (user.status is None or user.status == 'active'):
-        if user and verify_pass(password, user.password):
-            print("user name and password passed.")
-            login_user(user, remember=remember)
-            identity = Identity(user.id)
-            identity_changed.send(current_app._get_current_object(), identity=identity)
-            return redirect(url_for('authentication_blueprint.route_default'))
+            # Check the password and status
+            # if user and verify_pass(password, user.password) and (user.status is None or user.status == 'active'):
+            if user and verify_pass(password, user.password):
+                print("user name and password passed.")
+                login_user(user, remember=remember)
+                identity = Identity(user.id)
+                identity_changed.send(current_app._get_current_object(), identity=identity)
+                return redirect(url_for('authentication_blueprint.route_default'))
 
-        # Something (user or pass) is not ok
-        return render_template('accounts/login.html',
-                               msg='❌ ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง',
-                               form=login_form)
-        # return render_template('accounts/login.html',
-        #                        msg='Wrong user or password',
-        #                        form=login_form)
+            # Something (user or pass) is not ok
+            return render_template('accounts/login.html',
+                                msg='❌ ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง',
+                                form=login_form)
+            # return render_template('accounts/login.html',
+            #                        msg='Wrong user or password',
+            #                        form=login_form)
 
     if not current_user.is_authenticated:
         return render_template('accounts/login.html',
@@ -133,29 +148,54 @@ def login():
 @blueprint.route('/register', methods=['GET', 'POST'])
 def register_interest():
     ref = request.args.get('ref') 
+
+    # ---------------------
+    # Query agency
+    # ---------------------
     agency = AgencyModel.query.filter_by(agency_code=ref).first()
     agency_id = agency.id if agency else None
+    # serialize agency ก่อนปิด session
+    agency_dict = agency.__dict__.copy() if agency else None
 
-    print(f"➡️ register_interest: ref={ref}, agency_id={agency_id}")
-    # category = ProductCategoryModel.query.all()
-    category = db.session.query(ProductCategoryModel)\
-        .join(ProductForSalesModel, ProductForSalesModel.product_category_id == ProductCategoryModel.id)\
-        .join(ProductAgencyAssociation, ProductAgencyAssociation.product_id == ProductForSalesModel.id)\
-        .filter(ProductAgencyAssociation.agency_id == agency_id)\
-        .distinct().all()
+    # ---------------------
+    # Category query
+    # ---------------------
+    category_objs = (
+        db.session.query(ProductCategoryModel)
+        .join(ProductForSalesModel, ProductForSalesModel.product_category_id == ProductCategoryModel.id)
+        .join(ProductAgencyAssociation, ProductAgencyAssociation.product_id == ProductForSalesModel.id)
+        .filter(ProductAgencyAssociation.agency_id == agency_id)
+        .distinct()
+        .all()
+    )
+    # แปลงเป็น list ของ dict ก่อนปิด session
+    category = [c.__dict__.copy() for c in category_objs]
 
-    country = CountryModel.query.all()
-    agencies = AgencyModel.query.filter_by(org_type='agency').order_by(AgencyModel.first_name.asc()).all()
-    agencies_with_IEO = [agency.__dict__.copy() for agency in agencies]
-    # agencies_with_IEO.append({
-    #     'id': None,
-    #     'agency_code': 'IEO',
-    #     'first_name': 'IEO',
-    #     'last_name': '',
-    # })
-    product = ProductForSalesModel.query.all()
+    # ---------------------
+    # Countries
+    # ---------------------
+    country_objs = CountryModel.query.all()
+    country = [c.__dict__.copy() for c in country_objs]
 
+    # ---------------------
+    # Agencies
+    # ---------------------
+    agencies_objs = (
+        AgencyModel.query.filter_by(org_type='agency')
+        .order_by(AgencyModel.first_name.asc())
+        .all()
+    )
+    agencies_with_IEO = [a.__dict__.copy() for a in agencies_objs]
 
+    # ---------------------
+    # Products
+    # ---------------------
+    product_objs = ProductForSalesModel.query.all()
+    product = [p.__dict__.copy() for p in product_objs]
+
+    # ---------------------
+    # Social channels
+    # ---------------------
     social_channels = [
         {"id": 1, "name": "Facebook"},
         {"id": 2, "name": "Instagram"},
@@ -165,12 +205,21 @@ def register_interest():
         {"id": 6, "name": "อื่น ๆ"},
     ]
 
-    
+    # ---------------------
+    # Close session หลัง serialize ทุก object
+    # ---------------------
+    db.session.remove()
 
-    # agency = AgencyModel.query.filter(AgencyModel.status == 'active').first()
-    # if session.get('waiting_user_id') and session.get('waiting_user_type') == 'user':
-    #     return redirect(url_for('authentication_blueprint.waiting_approval'))
-    return render_template('accounts/register_interest.html',categorys=category,countrys=country, agencys=agencies_with_IEO,product=product,social_channels=social_channels,ref=ref)
+    return render_template(
+        'accounts/register_interest.html',
+        categorys=category,
+        countrys=country,
+        agencys=agencies_with_IEO,
+        product=product,
+        social_channels=social_channels,
+        ref=ref
+    )
+
 
 @blueprint.route('/api/get_categories_by_agency/<int:agency_id>')
 def get_categories_by_agency(agency_id):

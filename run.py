@@ -35,6 +35,15 @@ except KeyError:
     exit('Error: Invalid <config_mode>. Expected values [Debug, Production] ')
 
 app = create_app(app_config)
+
+db.session.expire_on_commit = False  # ป้องกัน DetachedInstanceError
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_size': 20,        # จำนวน connection หลัก
+    'max_overflow': 10,     # connection เกิน pool_size
+    'pool_timeout': 30,     # วินาทีรอ connection
+    'pool_recycle': 1800,   # หมุน connection ทุก 30 นาที
+}
+
 CORS(app, origins=['*'])
 Migrate(app, db)
 
