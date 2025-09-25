@@ -1247,14 +1247,48 @@ def save_single_term():
         db.session.rollback()
         return jsonify(success=False, error=f"เกิดข้อผิดพลาด: {str(e)}")
 
+# def generate_document_number(doc_type="DP", use_date=None):
+#     if use_date is None:
+#         use_date = datetime.today()
+
+#     prefix = f"{doc_type}{use_date.strftime('%Y%m')}"
+
+#     # ดึง ReceiptModel ล่าสุดตาม id
+#     latest = db.session.query(ReceiptModel).order_by(ReceiptModel.id.desc()).first()
+#     if latest and latest.receipt_no:
+#         try:
+#             last_number = int(latest.receipt_no.split("-")[-1])
+#             next_number = last_number + 1
+#         except:
+#             next_number = 1
+#     else:
+#         next_number = 1
+
+#     # สร้างเลข
+#     receipt_no = f"{prefix}-{str(next_number).zfill(5)}"
+
+#     # ตรวจสอบซ้ำ
+#     while db.session.query(ReceiptModel).filter_by(receipt_no=receipt_no).first():
+#         next_number += 1
+#         receipt_no = f"{prefix}-{str(next_number).zfill(5)}"
+
+#     return receipt_no
+
+
 def generate_document_number(doc_type="DP", use_date=None):
     if use_date is None:
         use_date = datetime.today()
 
     prefix = f"{doc_type}{use_date.strftime('%Y%m')}"
 
-    # ดึง ReceiptModel ล่าสุดตาม id
-    latest = db.session.query(ReceiptModel).order_by(ReceiptModel.id.desc()).first()
+    # ดึงใบเสร็จล่าสุดของเดือนนั้น (filter ตาม prefix)
+    latest = (
+        db.session.query(ReceiptModel)
+        .filter(ReceiptModel.receipt_no.like(f"{prefix}-%"))
+        .order_by(ReceiptModel.id.desc())
+        .first()
+    )
+
     if latest and latest.receipt_no:
         try:
             last_number = int(latest.receipt_no.split("-")[-1])
@@ -1264,10 +1298,10 @@ def generate_document_number(doc_type="DP", use_date=None):
     else:
         next_number = 1
 
-    # สร้างเลข
+    # สร้างเลขเอกสาร
     receipt_no = f"{prefix}-{str(next_number).zfill(5)}"
 
-    # ตรวจสอบซ้ำ
+    # ตรวจสอบซ้ำ เผื่อมี race condition
     while db.session.query(ReceiptModel).filter_by(receipt_no=receipt_no).first():
         next_number += 1
         receipt_no = f"{prefix}-{str(next_number).zfill(5)}"
@@ -1289,7 +1323,8 @@ def create_receipt_and_invoice_for_term(term: OrderTermModel, transfer_date=None
             print(f"⚠️ Term {term.id} มีใบเสร็จแล้ว: {existing_receipt.receipt_no}")
             return
 
-        used_transfer_date = transfer_date or term.updated_at or term.created_at
+        #used_transfer_date = transfer_date or term.updated_at or term.created_at
+        used_transfer_date = transfer_date 
 
         # สร้างเลขใบเสร็จแบบ global + ตรวจสอบเลขซ้ำ
         receipt_no = generate_receipt_number(use_date=used_transfer_date)
