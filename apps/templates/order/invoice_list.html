@@ -122,7 +122,7 @@
                         </tbody>
                         <tfoot>
                           <tr>
-                              <td colspan="9" class="text-end"><strong>ยอดรวม:</strong></td>
+                              <td colspan="6" class="text-end"><strong>ยอดรวม:</strong></td>
                               <td colspan="2" class="text-start"><strong id="total-amount">0.00</strong> บาท</td>
                           </tr>
                       </tfoot>
@@ -645,10 +645,13 @@ function loadDataTable() {
             { 
               data: 'created_at',
               render: function(data, type) {
+                  console.log(data)
                   if(type === 'display') {
                       return data ? moment(data).format('DD/MM/YYYY HH:mm') : '-';
                   }
-                  return data || 0; // ใช้ timestamp สำหรับ sort
+                  return Number(data) || 0;
+
+                  console.log(data)
               }
           },                 
             { 
