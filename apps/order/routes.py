@@ -1568,7 +1568,7 @@ def get_account():
             if p.payment_date 
         ]
 
-        print("all_payments",all_payments)
+        # print("all_payments",all_payments)
         all_relevant_payments = all_payments
 
 
@@ -1596,8 +1596,8 @@ def get_account():
         # เลือก latest payment จริง ๆ
         latest_payment = max(all_relevant_payments, key=lambda p: p.payment_date)
         payment_ts = to_bangkok_timestamp(latest_payment.payment_date) if latest_payment else None
-        print("latest_payment",latest_payment)
-        print("payment_ts",payment_ts)
+        # print("latest_payment",latest_payment)
+        # print("payment_ts",payment_ts)
 
 
 
@@ -1820,9 +1820,9 @@ def get_invoice():
             .scalar() or 0
         
 
-        print(f"📊 Filtered Total Amount: {total_amount}")
-        print(f"📊 Filtered Total VAT: {total_vat}")
-        print(f"📊 Filtered Total total_before_vat: {total_before_vat}")
+        # print(f"📊 Filtered Total Amount: {total_amount}")
+        # print(f"📊 Filtered Total VAT: {total_vat}")
+        # print(f"📊 Filtered Total total_before_vat: {total_before_vat}")
 
     else:
         if bank_id:
@@ -1891,9 +1891,9 @@ def get_invoice():
             .filter(TaxInvoiceModel.id.in_([inv.id for inv in all_invoices]))\
             .scalar() or 0
             
-        print(f"📊 Total Amount: {total_amount}")
-        print(f"📊 Total VAT: {total_vat}")
-        print(f"📊 Total total_before_vat: {total_before_vat}")
+        # print(f"📊 Total Amount: {total_amount}")
+        # print(f"📊 Total VAT: {total_vat}")
+        # print(f"📊 Total total_before_vat: {total_before_vat}")
     total_records = base_query.count()
 
     # ───── ดึงข้อมูลรายการตามช่วงที่ต้องการ ─────
@@ -1929,18 +1929,26 @@ def get_invoice():
                 payments_filtered = [p for p in payments_filtered if p.bank_id == int(bank_id)]
 
             if start_dt and end_dt:
-                payments_filtered = [
-                    p for p in payments_filtered if start_dt <= p.payment_date <= end_dt
-                ]
+                # payments_filtered = [
+                #     p for p in payments_filtered if start_dt <= p.payment_date <= end_dt
+                # ]
+                start_dt_utc = BANGKOK_TZ.localize(start_dt).astimezone(pytz.UTC)
+                end_dt_utc = BANGKOK_TZ.localize(end_dt).astimezone(pytz.UTC)
+                temp = []
+                for p in payments_filtered:
+                    dt = p.payment_date
+                    if dt.tzinfo is None:
+                        dt = BANGKOK_TZ.localize(dt)
+                    dt_utc = dt.astimezone(pytz.UTC)
+                    if start_dt_utc <= dt_utc <= end_dt_utc:
+                        temp.append(p)
+                payments_filtered = temp
             # print(f"payments_filtered: {payments_filtered}")
             if not payments_filtered:
                 continue  # 🔥 ข้ามเลยถ้าไม่มี payment ที่ match
             if payments_filtered:
-                payment = sorted(
-                    payments_filtered,
-                    key=lambda p: p.payment_date,
-                    reverse=True
-                )[0]
+                # payment = sorted(payments_filtered,key=lambda p: p.payment_date,reverse=True)[0]
+                payment = max(payments_filtered, key=lambda p: p.payment_date)
 
         bank_account = payment.bank_account.name if payment and payment.bank_account else None
         product = order_model.product if order_model else None
@@ -1968,7 +1976,8 @@ def get_invoice():
             "net_price": net_price,
             "vat": vat,
             "amount_before_vat": amount_before_vat,
-            "created_at": int(payment_date.timestamp() * 1000) if payment_date else None,
+            # "created_at": int(payment_date.timestamp() * 1000) if payment_date else None,
+            "created_at": to_bangkok_timestamp(payment.payment_date) if payment else None,
             "data_user": safe_model_to_dict(invoice),
         })
 
