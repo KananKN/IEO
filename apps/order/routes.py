@@ -31,9 +31,8 @@ from sqlalchemy.exc import IntegrityError
 from collections import defaultdict
 from datetime import datetime, date, time
 from decimal import Decimal, ROUND_HALF_UP
-import pytz
+import pytz 
 
-bangkok_tz = pytz.timezone("Asia/Bangkok")
 
 
 # import logging
@@ -180,6 +179,8 @@ status_label_expr = case(
 )
 
 BANGKOK_TZ = pytz.timezone("Asia/Bangkok")
+now_utc = datetime.utcnow().replace(tzinfo=pytz.UTC)
+
 
 def to_bangkok_timestamp(dt):
     """
@@ -309,6 +310,7 @@ def get_order():
             "term": order.product.term_of_payment.name if order.product and order.product.term_of_payment else '',
             "email": order.lead.email if order.lead else '',
             "price": order.net_price,
+            # "created_at": to_bangkok_timestamp(order.created_at),
             "created_at": to_bangkok_timestamp(order.created_at),
             "data_user": safe_model_to_dict(order),
             "lead": safe_model_to_dict(order.lead),
@@ -1195,10 +1197,19 @@ def save_single_term():
         target = 'apps/static/assets/files/payment/'
         os.makedirs(target, exist_ok=True)
 
+        # ftype = file_PO.filename.rsplit('.', 1)[-1]  # นามสกุลไฟล์
+        # filename = f'SLIP{term.order.order_number}_{payment_no}.{ftype}'
+        # file_path = os.path.join(target, filename)
         ftype = file_PO.filename.rsplit('.', 1)[-1]  # นามสกุลไฟล์
-        filename = f'SLIP{term.order.order_number}_{payment_no}.{ftype}'
+        base_filename = f'SLIP{term.order.order_number}_{payment_no}'
+        filename = f'{base_filename}.{ftype}'
         file_path = os.path.join(target, filename)
 
+        counter = 1
+        while os.path.exists(file_path):
+            filename = f'{base_filename}_{counter}.{ftype}'
+            file_path = os.path.join(target, filename)
+            counter += 1
         try:
             file_PO.save(file_path)
         except Exception as e:
@@ -1390,6 +1401,13 @@ def account_list():
                            receipts=receipt,  # <== ใบกำกับภาษีทั้งหมด
                            orderTerms=orderTerms)
 
+def to_utc(dt):
+    """แปลง datetime เป็น UTC แบบ timezone-aware"""
+    if dt is None:
+        return None
+    if dt.tzinfo is None:
+        dt = BANGKOK_TZ.localize(dt)
+    return dt.astimezone(pytz.UTC)
 
 
 @blueprint.route("/get_account", methods=["POST"])
@@ -1539,18 +1557,49 @@ def get_account():
         member = receipt.member
 
         # latest payment
-        payments_filtered = [
+        # ดึง payments ทั้งหมดของ order/term
+        # all_relevant_payments = [
+        #     p for p in order_model.payments
+        #     if p.sequence == term.sequence and p.payment_date
+        # ]
+
+        all_payments = [
             p for p in order_model.payments
-            if p.sequence == term.sequence and p.payment_date
+            if p.payment_date 
         ]
+
+        print("all_payments",all_payments)
+        all_relevant_payments = all_payments
+
+
+        # Filter bank ถ้ามี
         if bank_id:
-            payments_filtered = [p for p in payments_filtered if p.bank_id == bank_id]
+            all_relevant_payments = [p for p in all_relevant_payments if p.bank_id == bank_id]
+
         if start_dt and end_dt:
-            payments_filtered = [
-                p for p in payments_filtered if start_dt <= p.payment_date <= end_dt
-            ]
-        latest_payment = max(payments_filtered, key=lambda p: p.payment_date) if payments_filtered else None
-        payment_ts = int(latest_payment.payment_date.timestamp() * 1000) if latest_payment else None
+            start_dt_utc = BANGKOK_TZ.localize(start_dt).astimezone(pytz.UTC)
+            end_dt_utc = BANGKOK_TZ.localize(end_dt).astimezone(pytz.UTC)
+            temp = []
+            for p in all_relevant_payments:
+                dt = p.payment_date
+                if dt.tzinfo is None:
+                    dt = BANGKOK_TZ.localize(dt)
+                dt_utc = dt.astimezone(pytz.UTC)
+                if start_dt_utc <= dt_utc <= end_dt_utc:
+                    temp.append(p)
+            all_relevant_payments = temp
+
+        # ถ้า filtered_payments ว่าง → skip receipt
+        if not all_relevant_payments:
+            continue
+
+        # เลือก latest payment จริง ๆ
+        latest_payment = max(all_relevant_payments, key=lambda p: p.payment_date)
+        payment_ts = to_bangkok_timestamp(latest_payment.payment_date) if latest_payment else None
+        print("latest_payment",latest_payment)
+        print("payment_ts",payment_ts)
+
+
 
         data.append({
             "id": start + idx + 1,

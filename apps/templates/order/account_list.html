@@ -107,9 +107,9 @@
                     <table id="data-table-responsive" width="100%" class="table table-striped table-bordered align-middle text-nowrap">
                         <thead>
                             <tr>
-                                <th width="1%">ลำดับ</th>
+                                <!-- <th width="1%">ลำดับ</th> -->
                                 <th class="text-nowrap ">เลขที่</th>
-                                <th class="text-nowrap ">รหัส Order</th>
+                                <!-- <th class="text-nowrap ">รหัส Order</th> -->
                                 <th class="text-nowrap">ชื่อลูกค้า</th>
                                 <th class="text-nowrap">โปรแกรม</th>
                                 <th class="text-nowrap">ธนาคาร</th>
@@ -140,7 +140,8 @@
 
 <a href="javascript:;" class="btn btn-icon btn-circle btn-primary btn-scroll-to-top" data-toggle="scroll-to-top"><i class="fa fa-angle-up"></i></a>
 
-<iframe id="receipt-preview-frame" style="width: 100%; height: 1200px; border: 1px solid #ccc; margin-top: 20px;display:none;"></iframe>{% for term in orderTerms %}
+<iframe id="receipt-preview-frame" style="width: 100%; height: 1200px; border: 1px solid #ccc; margin-top: 20px;display:none;"></iframe>
+{% for term in orderTerms %}
 
 <iframe id="print-frame" style="width: 100%; height: 1200px; border: 1px solid #ccc; margin-top: 20px;display:none;"></iframe>
 
@@ -479,34 +480,32 @@ function loadDataTable() {
             dataType: "json"
         },
         columns: [
-            { data: "id" },
+            //{ data: "id" },
             { data: "receipt_no" },
+            /*
             { data: "order_number",
               render: function(data, type, row) {
                 return `<a href="/order/order_update/${row.order_id}">${data}</a>`;
               } 
-            },
+            },*/
             { data: "customer_name" },
             { data: "product_name" },
             { data: "bank_name" },
             { data: "discount", render: data => parseFloat(data).toLocaleString("en-US", { minimumFractionDigits: 2 }) },
             { data: "amount", render: data => parseFloat(data).toLocaleString("en-US", { minimumFractionDigits: 2 }) },
-            {
-              data: "created_at",
-              type: "num",
+            { 
+              data: 'created_at',
               render: function(data, type, row) {
-                if (type === "display") {
-                  return data ? moment(data).format("DD/MM/YYYY HH:mm") : "-";
-                }
-                return data || 0;
-              },
-              createdCell: function(td, cellData, rowData, row, col) {
-                // ใส่ attribute data-order สำหรับให้ DataTables ใช้ sort
-                if(cellData) {
-                  $(td).attr('data-order', cellData);
-                }
+                  if (type === 'display') {
+                      return data ? moment(data).format('DD/MM/YYYY HH:mm') : '-';
+                  }
+                  if (type === 'sort' || type === 'type') {
+                      // return timestamp ให้ DataTables sort numeric
+                      return data ? parseInt(data) : 0;
+                  }
+                  return data || 0; // fallback
               }
-            },     
+            },  
             { 
                 data: null,  
                 orderable: false,  //ปิดการเรียงลำดับในคอลัมน์นี้
@@ -530,7 +529,7 @@ function loadDataTable() {
                 }
             }
         ],
-        order: [[8, "asc"]],  // เรียงลำดับจาก ID
+        order: [[0, "desc"]],  // เรียงลำดับจาก ID
         lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
         pageLength: 10
     });
