@@ -16,7 +16,10 @@ from flask_login import login_required, current_user
 from flask import request, redirect, url_for
 from datetime import datetime
 
+import logging
 from flask import render_template
+import pytz
+
 # from pyngrok import ngrok
 
 
@@ -25,6 +28,8 @@ DEBUG = (os.getenv('DEBUG', 'False') == 'True')
 DEBUG = 'True'
 # The configuration
 get_config_mode = 'Debug' if DEBUG else 'Production'
+BANGKOK_TZ = pytz.timezone("Asia/Bangkok")
+
 
 try:
 
@@ -35,6 +40,22 @@ except KeyError:
     exit('Error: Invalid <config_mode>. Expected values [Debug, Production] ')
 
 app = create_app(app_config)
+
+
+class BangkokFormatter(logging.Formatter):
+    def formatTime(self, record, datefmt=None):
+        dt = datetime.fromtimestamp(record.created, tz=BANGKOK_TZ)
+        if datefmt:
+            return dt.strftime(datefmt)
+        return dt.isoformat()
+
+# Apply formatter ให้ werkzeug log
+log = logging.getLogger("werkzeug")
+for handler in log.handlers:
+    handler.setFormatter(BangkokFormatter(
+        "%(asctime)s - %(levelname)s - %(message)s",
+        datefmt="%d/%b/%Y %H:%M:%S"
+    ))
 
 db.session.expire_on_commit = False  # ป้องกัน DetachedInstanceError
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
