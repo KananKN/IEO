@@ -19,6 +19,8 @@ from datetime import datetime
 import logging
 from flask import render_template
 import pytz
+from werkzeug.serving import WSGIRequestHandler
+
 
 # from pyngrok import ngrok
 
@@ -48,6 +50,10 @@ class BangkokFormatter(logging.Formatter):
         if datefmt:
             return dt.strftime(datefmt)
         return dt.isoformat()
+class BangkokRequestHandler(WSGIRequestHandler):
+    def log_date_time_string(self):
+        dt = datetime.now(BANGKOK_TZ)
+        return dt.strftime("%d/%b/%Y %H:%M:%S")
 
 # Apply formatter ให้ werkzeug log
 log = logging.getLogger("werkzeug")
@@ -130,4 +136,4 @@ if __name__ == "__main__":
     # public_url = ngrok.connect(5003)
     # print(" * ngrok tunnel:", public_url)
     # app.run()
-    app.run(host='0.0.0.0',port=5003)
+    app.run(host='0.0.0.0',port=5003,request_handler=BangkokRequestHandler)
