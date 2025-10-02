@@ -201,11 +201,7 @@ def to_bangkok_timestamp(dt):
     # คืนค่าเป็น milliseconds สำหรับ JS
     return int(dt_local.timestamp() * 1000)
 
-ts_ms = 1756817709484
-ts_s = ts_ms / 1000
 
-dt = datetime.fromtimestamp(ts_s)  # ใช้ตรงๆ
-print(dt)
 
 @blueprint.route("/get_order1", methods=["POST"])
 @login_required
@@ -1409,7 +1405,6 @@ def to_utc(dt):
         dt = BANGKOK_TZ.localize(dt)
     return dt.astimezone(pytz.UTC)
 
-
 @blueprint.route("/get_account", methods=["POST"])
 @login_required
 @read_permission.require(http_exception=403)
@@ -1425,7 +1420,6 @@ def get_account():
     if length < 0:
         length = None  # None = ไม่จำกัด
 
-    
     # Subquery: ล่าสุดต่อ term
     latest_payment_subq = db.session.query(
         PaymentModel.order_id.label("order_id"),
@@ -1433,37 +1427,28 @@ def get_account():
         func.max(PaymentModel.payment_date).label("latest_payment_date")
     ).group_by(PaymentModel.order_id, PaymentModel.sequence).subquery()
 
-    # Mapping คอลัมน์จาก DataTable → Database
-    column_map = {
-        0: ReceiptModel.id,
-        1: ReceiptModel.receipt_no,
-        2: OrderModel.order_number,
-        3: MemberModel.first_name,
-        4: ProductForSalesModel.name,
-        5: BankAccountModel.name,
-        6: OrderTermModel.discount,
-        7: ReceiptModel.amount,
-        8: latest_payment_subq.c.latest_payment_date,  # created_at / payment_date
-    }
+    # prefix/suffix ของ receipt_no สำหรับ sort
+    prefix_expr = cast(func.substring(ReceiptModel.receipt_no, 3, 6), Integer)  # YYYYMM
+    suffix_expr = cast(func.substring(ReceiptModel.receipt_no, 10), Integer)    # running number
 
     # === Base Query ===
     base_query = db.session.query(ReceiptModel) \
-    .join(ReceiptModel.terms) \
-    .join(OrderTermModel.order) \
-    .join(latest_payment_subq,
-          (latest_payment_subq.c.order_id == OrderModel.id) &
-          (latest_payment_subq.c.sequence == OrderTermModel.sequence)
-    ) \
-    .join(ReceiptModel.member) \
-    .join(OrderModel.product) \
-    .options(
-        joinedload(ReceiptModel.member),
-        joinedload(ReceiptModel.terms)
-            .joinedload(OrderTermModel.order)
-            .joinedload(OrderModel.product)
-    ).distinct()
+        .join(ReceiptModel.terms) \
+        .join(OrderTermModel.order) \
+        .join(latest_payment_subq,
+              (latest_payment_subq.c.order_id == OrderModel.id) &
+              (latest_payment_subq.c.sequence == OrderTermModel.sequence)
+        ) \
+        .join(ReceiptModel.member) \
+        .join(OrderModel.product) \
+        .options(
+            joinedload(ReceiptModel.member),
+            joinedload(ReceiptModel.terms)
+                .joinedload(OrderTermModel.order)
+                .joinedload(OrderModel.product)
+        ).distinct()
 
-    # === Filter ===
+    # === Filter search ===
     if search_value:
         search = f"%{search_value}%"
         base_query = base_query.filter(
@@ -1474,80 +1459,65 @@ def get_account():
                 MemberModel.last_name.ilike(search),
                 ProductForSalesModel.name.ilike(search),
                 BankAccountModel.name.ilike(search),
-                func.to_char(ReceiptModel.created_at, 'DD/MM/YYYY').ilike(search),
-                func.to_char(OrderTermModel.discount, 'FM999999999.00').ilike(search),
-                func.to_char(OrderTermModel.amount, 'FM999999999.00').ilike(search),
-                func.to_char(PaymentModel.payment_date, 'DD/MM/YYYY HH24:MI:SS').ilike(search),
             )
         )
 
+    # Filter product
     product_id = request_data.get("product_id")
     if product_id:
         base_query = base_query.filter(OrderModel.product_id == product_id)
 
+    # Filter bank
     bank_id = request_data.get("bank_id")
     try:
         bank_id = int(bank_id)
     except (ValueError, TypeError):
         bank_id = None
+    if bank_id:
+        base_query = base_query.join(OrderModel.payments).filter(PaymentModel.bank_id == bank_id)
 
+    # Filter datetime
     start_datetime = request_data.get("start_datetime")
     end_datetime = request_data.get("end_datetime")
     try:
-        start_dt = datetime.strptime(start_datetime, "%d-%m-%Y %H:%M:%S") if start_datetime else None
-        end_dt = datetime.strptime(end_datetime, "%d-%m-%Y %H:%M:%S") if end_datetime else None
+        start_dt_utc = BANGKOK_TZ.localize(datetime.strptime(start_datetime, "%d-%m-%Y %H:%M:%S")).astimezone(pytz.UTC) if start_datetime else None
+        end_dt_utc = BANGKOK_TZ.localize(datetime.strptime(end_datetime, "%d-%m-%Y %H:%M:%S")).astimezone(pytz.UTC) if end_datetime else None
     except ValueError:
-        start_dt, end_dt = None, None
+        start_dt_utc, end_dt_utc = None, None
 
-    # Apply order from DataTables
+    if start_dt_utc and end_dt_utc:
+        base_query = base_query.filter(
+            latest_payment_subq.c.latest_payment_date.between(start_dt_utc, end_dt_utc)
+        )
+
+    # === Apply order ===
     if order:
         column_index = int(order[0]["column"])
-        sort_direction = order[0]["dir"]
-        column_order = {
-            8: latest_payment_subq.c.latest_payment_date,
-            0: ReceiptModel.id,
-            1: ReceiptModel.receipt_no,
-            2: OrderModel.order_number
-        }.get(column_index, ReceiptModel.id)
-
-        column_order = column_order.desc() if sort_direction == "desc" else column_order.asc()
+        sort_dir = order[0]["dir"]
+        if column_index == 0:  # sort receipt_no (prefix+suffix)
+            column_order = [prefix_expr.desc(), suffix_expr.desc()] if sort_dir=="desc" else [prefix_expr.asc(), suffix_expr.asc()]
+        elif column_index == 6:  # created_at
+            col_expr = latest_payment_subq.c.latest_payment_date
+            column_order = [col_expr.desc() if sort_dir=="desc" else col_expr.asc()]
+        else:
+            column_map = {
+                1: MemberModel.first_name,
+                2: ProductForSalesModel.name,
+                3: BankAccountModel.name,
+                4: OrderTermModel.discount,
+                5: ReceiptModel.amount,
+                6: latest_payment_subq.c.latest_payment_date,
+            }
+            col_expr = column_map.get(column_index, ReceiptModel.id)
+            column_order = [col_expr.desc() if sort_dir=="desc" else col_expr.asc()]
     else:
-        column_order = latest_payment_subq.c.latest_payment_date.desc()
-
-    # === กรองตาม bank / date range / payment ล่าสุด ===
-    filtered_receipt_ids = []
-    for receipt in base_query.all():
-        term = receipt.terms
-        order_model = term.order if term else None
-        if not order_model:
-            continue
-
-        payments_filtered = [
-            p for p in order_model.payments
-            if p.sequence == term.sequence and p.payment_date
-        ]
-        if bank_id:
-            payments_filtered = [p for p in payments_filtered if p.bank_id == bank_id]
-        if start_dt and end_dt:
-            payments_filtered = [
-                p for p in payments_filtered if start_dt <= p.payment_date <= end_dt
-            ]
-        if not payments_filtered:
-            continue
-
-        latest_payment = max(payments_filtered, key=lambda p: p.payment_date)
-        filtered_receipt_ids.append(receipt.id)
-
-    if filtered_receipt_ids:
-        base_query = base_query.filter(ReceiptModel.id.in_(filtered_receipt_ids))
+        # Default sort by receipt_no (latest month + largest running number)
+        column_order = [prefix_expr.desc(), suffix_expr.desc()]
 
     total_records = base_query.count()
-    total_amount = db.session.query(func.sum(ReceiptModel.amount)) \
-        .filter(ReceiptModel.id.in_(filtered_receipt_ids)) \
-        .scalar() or 0
 
     # === Pagination + Order ===
-    receipts = base_query.order_by(column_order).offset(start).limit(length).all()
+    receipts = base_query.order_by(*column_order).offset(start).limit(length).all()
 
     # === เตรียม data สำหรับ DataTables ===
     data = []
@@ -1555,51 +1525,12 @@ def get_account():
         term = receipt.terms
         order_model = term.order if term else None
         member = receipt.member
+        latest_payment = max(
+            [p for p in order_model.payments if p.payment_date] or [None],
+            key=lambda p: p.payment_date if p else datetime.min
+        )
 
-        # latest payment
-        # ดึง payments ทั้งหมดของ order/term
-        # all_relevant_payments = [
-        #     p for p in order_model.payments
-        #     if p.sequence == term.sequence and p.payment_date
-        # ]
-
-        all_payments = [
-            p for p in order_model.payments
-            if p.payment_date 
-        ]
-
-        # print("all_payments",all_payments)
-        all_relevant_payments = all_payments
-
-
-        # Filter bank ถ้ามี
-        if bank_id:
-            all_relevant_payments = [p for p in all_relevant_payments if p.bank_id == bank_id]
-
-        if start_dt and end_dt:
-            start_dt_utc = BANGKOK_TZ.localize(start_dt).astimezone(pytz.UTC)
-            end_dt_utc = BANGKOK_TZ.localize(end_dt).astimezone(pytz.UTC)
-            temp = []
-            for p in all_relevant_payments:
-                dt = p.payment_date
-                if dt.tzinfo is None:
-                    dt = BANGKOK_TZ.localize(dt)
-                dt_utc = dt.astimezone(pytz.UTC)
-                if start_dt_utc <= dt_utc <= end_dt_utc:
-                    temp.append(p)
-            all_relevant_payments = temp
-
-        # ถ้า filtered_payments ว่าง → skip receipt
-        if not all_relevant_payments:
-            continue
-
-        # เลือก latest payment จริง ๆ
-        latest_payment = max(all_relevant_payments, key=lambda p: p.payment_date)
-        payment_ts = to_bangkok_timestamp(latest_payment.payment_date) if latest_payment else None
-        # print("latest_payment",latest_payment)
-        # print("payment_ts",payment_ts)
-
-
+        payment_ts = to_bangkok_timestamp(latest_payment.payment_date) if latest_payment else 0
 
         data.append({
             "id": start + idx + 1,
@@ -1616,6 +1547,10 @@ def get_account():
             "data_user": safe_model_to_dict(receipt)
         })
 
+    total_amount = sum(r["amount"] for r in data)
+    # total_amount = db.session.query(func.sum(ReceiptModel.amount)) \
+    #     .filter(ReceiptModel.id.in_(filtered_receipt_ids)) \
+    #     .scalar() or 0
     return Response(
         json.dumps({
             "draw": draw,
@@ -1626,6 +1561,8 @@ def get_account():
         }, ensure_ascii=False, default=str),
         content_type="application/json"
     )
+
+
 
  
 
@@ -1684,17 +1621,28 @@ def get_invoice():
     ).group_by(PaymentModel.order_id).subquery()
 
     # ───── Mapping คอลัมน์จาก DataTable ไปยัง Model ─────
+    # column_map = {
+    #     0: TaxInvoiceModel.id,
+    #     1: TaxInvoiceModel.tax_invoice_no,
+    #     2: OrderModel.order_number,
+    #     3: MemberModel.first_name,
+    #     4: ProductForSalesModel.name,
+    #     5: BankAccountModel.name,
+    #     6: OrderTermModel.discount,
+    #     7: TaxInvoiceModel.amount,
+    #     8: TaxInvoiceModel.created_at,
+    #     9: latest_payment_subq.c.latest_payment_date,  # <-- ใช้ subquery นี้เพื่อเรียงวันที่ล่าสุด
+
+    # }
     column_map = {
-        0: TaxInvoiceModel.id,
-        1: TaxInvoiceModel.tax_invoice_no,
-        2: OrderModel.order_number,
-        3: MemberModel.first_name,
-        4: ProductForSalesModel.name,
-        5: BankAccountModel.name,
-        6: OrderTermModel.discount,
-        7: TaxInvoiceModel.amount,
-        8: TaxInvoiceModel.created_at,
-        9: latest_payment_subq.c.latest_payment_date,  # <-- ใช้ subquery นี้เพื่อเรียงวันที่ล่าสุด
+        0: TaxInvoiceModel.tax_invoice_no,
+        1: MemberModel.first_name,
+        2: ProductForSalesModel.name,
+        3: BankAccountModel.name,
+        4: OrderTermModel.discount,
+        5: TaxInvoiceModel.amount,
+        6: TaxInvoiceModel.created_at,
+        7: latest_payment_subq.c.latest_payment_date,  # <-- ใช้ subquery นี้เพื่อเรียงวันที่ล่าสุด
 
     }
 
@@ -1703,7 +1651,7 @@ def get_invoice():
         .join(TaxInvoiceModel.member)\
         .join(TaxInvoiceModel.terms)\
         .join(OrderTermModel.order)\
-        .join(latest_payment_subq, latest_payment_subq.c.order_id == OrderModel.id) \
+        .outerjoin(latest_payment_subq, latest_payment_subq.c.order_id == OrderModel.id) \
         .join(OrderModel.product)\
         .options(
             joinedload(TaxInvoiceModel.member),
@@ -1758,16 +1706,39 @@ def get_invoice():
         start_dt, end_dt = None, None
 
 
-    # ───── จัดเรียงข้อมูล (Ordering) ─────
-    if order:
-        column_index = int(order[0]["column"])
-        sort_direction = order[0]["dir"]
-        column_order = column_map.get(column_index, TaxInvoiceModel.id)  # fallback
-        column_order = column_order.desc() if sort_direction == "desc" else column_order.asc()
-    else:
-        column_order = TaxInvoiceModel.id.asc()
+    # # ───── จัดเรียงข้อมูล (Ordering) ─────
+    # if order:
+    #     column_index = int(order[0]["column"])
+    #     sort_direction = order[0]["dir"]
+    #     column_order = column_map.get(column_index, TaxInvoiceModel.id)  # fallback
+    #     if sort_direction == "desc":
+    #         column_order = column_order.desc().nullslast()
+    #     else:
+    #         column_order = column_order.asc().nullsfirst()
+    # else:
+    #     column_order = TaxInvoiceModel.id.asc()
+
 
     # base_query = query  # <- สำคัญมาก
+    # ───── Filter bank ─────
+    if bank_id:
+        base_query = base_query.join(OrderModel.payments)\
+            .filter(PaymentModel.bank_id == bank_id)
+
+    # ───── Filter date range ─────
+    if start_dt and end_dt:
+        start_utc = BANGKOK_TZ.localize(start_dt).astimezone(pytz.UTC)
+        end_utc = BANGKOK_TZ.localize(end_dt).astimezone(pytz.UTC)
+        base_query = base_query.filter(latest_payment_subq.c.latest_payment_date.between(start_utc, end_utc))
+
+    # ───── Ordering ─────
+    if order:
+        column_index = int(order[0]["column"])
+        sort_dir = order[0]["dir"]
+        column_order = column_map.get(column_index, TaxInvoiceModel.id)
+        column_order = column_order.desc().nullslast() if sort_dir == "desc" else column_order.asc().nullsfirst()
+    else:
+        column_order = TaxInvoiceModel.id.asc()
 
 
     if start_dt and end_dt:
@@ -1977,7 +1948,7 @@ def get_invoice():
             "vat": vat,
             "amount_before_vat": amount_before_vat,
             # "created_at": int(payment_date.timestamp() * 1000) if payment_date else None,
-            "created_at": to_bangkok_timestamp(payment.payment_date) if payment else None,
+            "created_at": to_bangkok_timestamp(payment.payment_date) if payment else 0,
             "data_user": safe_model_to_dict(invoice),
         })
 
