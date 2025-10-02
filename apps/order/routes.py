@@ -1525,13 +1525,18 @@ def get_account():
         term = receipt.terms
         order_model = term.order if term else None
         member = receipt.member
-        latest_payment = max(
-            [p for p in order_model.payments if p.payment_date] or [None],
-            key=lambda p: p.payment_date if p else datetime.min
-        )
+        latest_payment = None
+        if order_model and order_model.payments:
+            payments_filtered = [
+                p for p in order_model.payments
+                if p.sequence == term.sequence and p.payment_date  # ✅ กรองเฉพาะ sequence เดียวกัน
+            ]
+            if payments_filtered:
+                latest_payment = max(payments_filtered, key=lambda p: p.payment_date)
+
 
         payment_ts = to_bangkok_timestamp(latest_payment.payment_date) if latest_payment else 0
-
+        
         data.append({
             "id": start + idx + 1,
             "term_id": term.id if term else None,
