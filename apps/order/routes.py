@@ -1515,6 +1515,8 @@ def get_account():
         column_order = [prefix_expr.desc(), suffix_expr.desc()]
 
     total_records = base_query.count()
+    total_amount = base_query.with_entities(func.sum(ReceiptModel.amount)).scalar() or 0
+
 
     # === Pagination + Order ===
     receipts = base_query.order_by(*column_order).offset(start).limit(length).all()
@@ -1552,10 +1554,9 @@ def get_account():
             "data_user": safe_model_to_dict(receipt)
         })
 
-    total_amount = sum(r["amount"] for r in data)
-    # total_amount = db.session.query(func.sum(ReceiptModel.amount)) \
-    #     .filter(ReceiptModel.id.in_(filtered_receipt_ids)) \
-    #     .scalar() or 0
+    #ผลรวมแบ่งเป็นหน้า
+    # total_amount = sum(r["amount"] for r in data)
+    
     return Response(
         json.dumps({
             "draw": draw,
