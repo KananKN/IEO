@@ -1315,12 +1315,47 @@ def generate_document_number(doc_type="DP", use_date=None):
 
     return receipt_no
 
+def generate_tax_invoice_number(use_date=None):
+    """
+    สร้างเลข tax_invoice (BI) เรียงต่อเดือนใหม่
+    - เริ่มนับ 1 ใหม่ทุกเดือน
+    - ป้องกันเลขซ้ำ (race condition)
+    """
+    if use_date is None:
+        use_date = datetime.today()
+
+    prefix = f"BI{use_date.strftime('%Y%m')}"
+
+    # หาเลขสูงสุดจาก tax_invoice ของเดือนนั้น
+    # ใช้ COALESCE เผื่อไม่มีเลขเก่า
+    last_number = (
+        db.session.query(
+            func.max(
+                func.cast(
+                    func.split_part(TaxInvoiceModel.tax_invoice_no, '-', 2), db.Integer
+                )
+            )
+        )
+        .filter(TaxInvoiceModel.tax_invoice_no.like(f"{prefix}-%"))
+        .scalar()
+    )
+
+    print("last_number", last_number)
+    next_number = (last_number or 0) + 1
+    tax_invoice_no = f"{prefix}-{str(next_number).zfill(5)}"
+
+    # ตรวจสอบซ้ำเผื่อ race condition
+    while db.session.query(TaxInvoiceModel).filter_by(tax_invoice_no=tax_invoice_no).first():
+        next_number += 1
+        tax_invoice_no = f"{prefix}-{str(next_number).zfill(5)}"
+
+    return tax_invoice_no
 
 
 def generate_receipt_number(use_date=None):
     return generate_document_number("DP", use_date)
 
-def generate_tax_invoice_number(use_date=None):
+def generate_tax_invoice_number1(use_date=None):
     return generate_document_number("BI", use_date)
 
 def create_receipt_and_invoice_for_term(term: OrderTermModel, transfer_date=None):
@@ -1355,7 +1390,8 @@ def create_receipt_and_invoice_for_term(term: OrderTermModel, transfer_date=None
             tax_invoice = TaxInvoiceModel(
                 order_id=term.order_id,
                 receipt_id=receipt.id,
-                tax_invoice_no=receipt.receipt_no.replace("DP", "BI"),
+                # tax_invoice_no=receipt.receipt_no.replace("DP", "BI"),
+                tax_invoice_no=generate_tax_invoice_number(use_date=used_transfer_date),
                 member_id=term.order.member_id,
                 amount=term.net_price,
                 vat=vat_amount,

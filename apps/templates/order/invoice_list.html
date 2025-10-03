@@ -1063,12 +1063,7 @@ function loadDataTable() {
           alert(`❌ ไม่พบใบกำกับภาษี (invoice-content-${termId})`);
           return;
         }
-        // ✅ เรียงตาม tax_invoice_no
-        const sortedReceipts = filteredReceipts.sort((a, b) => {
-          const taxA = a.getAttribute("data-tax") || "";
-          const taxB = b.getAttribute("data-tax") || "";
-          return taxA.localeCompare(taxB, undefined, { numeric: true });
-        });
+        
         // ❌ อย่ามี receiptEl ตรงนี้ ถ้าไม่ได้ใช้
         // const receiptEl = document.getElementById(...); ← ลบทิ้ง
     
