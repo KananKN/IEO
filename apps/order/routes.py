@@ -1595,23 +1595,19 @@ def invoice_list():
                            segment='invoice',
                            tax=invoices,  # <== ใบกำกับภาษีทั้งหมด
                            orderTerms=orderTerms)
-
 @blueprint.route("/get_invoice", methods=["POST"])
 @login_required
 @read_permission.require(http_exception=403)
 def get_invoice():
-    request_data = request.get_json()
-
-    # ───── ข้อมูลพื้นฐานจาก DataTables ─────
+    request_data = request.get_json() or {}
     draw = request_data.get("draw", 1)
-    start = request_data.get("start", 0)
-    length = request_data.get("length", 10)
+    start = int(request_data.get("start", 0))
+    length = int(request_data.get("length", 10))
     order = request_data.get("order", [])
     search_value = request_data.get("search", {}).get("value", "")
 
-    # ถ้า length = -1 หมายถึงเอาทั้งหมด
+
     if length == -1:
-        # ดึงจำนวนแถวทั้งหมดจากฐานข้อมูลก่อน
         total_query = db.session.query(func.count(ReceiptModel.id))
         total_records = total_query.scalar()
 
@@ -1620,26 +1616,80 @@ def get_invoice():
     else:
         # ไม่ต้องใช้ .limit()
         pass
-    # subquery เพื่อหา payment_date ล่าสุดต่อ order_id
-    latest_payment_subq = db.session.query(
-        PaymentModel.order_id.label('order_id'),
-        func.max(PaymentModel.payment_date).label('latest_payment_date')
-    ).group_by(PaymentModel.order_id).subquery()
 
-    # ───── Mapping คอลัมน์จาก DataTable ไปยัง Model ─────
-    # column_map = {
-    #     0: TaxInvoiceModel.id,
-    #     1: TaxInvoiceModel.tax_invoice_no,
-    #     2: OrderModel.order_number,
-    #     3: MemberModel.first_name,
-    #     4: ProductForSalesModel.name,
-    #     5: BankAccountModel.name,
-    #     6: OrderTermModel.discount,
-    #     7: TaxInvoiceModel.amount,
-    #     8: TaxInvoiceModel.created_at,
-    #     9: latest_payment_subq.c.latest_payment_date,  # <-- ใช้ subquery นี้เพื่อเรียงวันที่ล่าสุด
+    product_id = request_data.get("product_id")
+    bank_id_raw = request_data.get("bank_id")
+    try:
+        bank_id = int(bank_id_raw) if bank_id_raw not in (None, "", "null") else None
+    except (ValueError, TypeError):
+        bank_id = None
 
-    # }
+    start_datetime = request_data.get("start_datetime")
+    end_datetime = request_data.get("end_datetime")
+    start_dt = end_dt = None
+    start_utc = end_utc = None
+    try:
+        if start_datetime:
+            start_dt = datetime.strptime(start_datetime, "%d-%m-%Y %H:%M:%S")
+        if end_datetime:
+            end_dt = datetime.strptime(end_datetime, "%d-%m-%Y %H:%M:%S")
+        if start_dt and end_dt:
+            # normalize to UTC (database assumed UTC storage)
+            start_utc = BANGKOK_TZ.localize(start_dt).astimezone(pytz.UTC)
+            end_utc = BANGKOK_TZ.localize(end_dt).astimezone(pytz.UTC)
+    except Exception:
+        start_utc = end_utc = None
+
+    # --- build base query (TaxInvoice with joins) ---
+    base_query = db.session.query(TaxInvoiceModel).join(TaxInvoiceModel.member).join(TaxInvoiceModel.terms).join(OrderTermModel.order).join(OrderModel.product)
+
+    # --- apply product filter if any ---
+    if product_id:
+        base_query = base_query.filter(OrderModel.product_id == product_id)
+
+    # --- apply search filters (kept similar to yours) ---
+    if search_value:
+        s = f"%{search_value}%"
+        base_query = base_query.filter(or_(
+            TaxInvoiceModel.tax_invoice_no.ilike(s),
+            OrderModel.order_number.ilike(s),
+            MemberModel.first_name.ilike(s),
+            MemberModel.last_name.ilike(s),
+            ProductForSalesModel.name.ilike(s),
+            func.to_char(TaxInvoiceModel.created_at, 'DD/MM/YYYY').ilike(s),
+            func.to_char(TaxInvoiceModel.vat, 'FM999999999.00').ilike(s),
+            func.to_char(TaxInvoiceModel.amount_before_vat, 'FM999999999.00').ilike(s),
+            func.to_char(OrderTermModel.amount, 'FM999999999.00').ilike(s),
+            func.to_char(OrderTermModel.net_price, 'FM999999999.00').ilike(s),
+        ))
+
+    # --- IMPORTANT: find TaxInvoice IDs that have at least one Payment matching criteria ---
+    invoice_id_subquery = None
+    filters_for_payment = []
+    # require payment.sequence == orderterm.sequence to match term
+    payment_term_match = PaymentModel.sequence == OrderTermModel.sequence
+    filters_for_payment.append(payment_term_match)
+
+    if bank_id:
+        filters_for_payment.append(PaymentModel.bank_id == bank_id)
+    if start_utc and end_utc:
+        filters_for_payment.append(PaymentModel.payment_date.between(start_utc, end_utc))
+
+    if filters_for_payment:
+        ids_q = db.session.query(TaxInvoiceModel.id).join(TaxInvoiceModel.terms).join(OrderTermModel.order).join(OrderModel.payments).filter(*filters_for_payment).distinct()
+        filtered_ids = [r.id for r in ids_q.all()]
+        # If nothing matched, return empty response fast
+        if not filtered_ids:
+            return Response(json.dumps({
+                "draw": draw,
+                "recordsTotal": 0,
+                "recordsFiltered": 0,
+                "data": [],
+                "total_amount": 0.0
+            }, ensure_ascii=False, default=str), content_type="application/json")
+        base_query = base_query.filter(TaxInvoiceModel.id.in_(filtered_ids))
+
+    # --- ordering ---
     column_map = {
         0: TaxInvoiceModel.tax_invoice_no,
         1: MemberModel.first_name,
@@ -1648,328 +1698,84 @@ def get_invoice():
         4: OrderTermModel.discount,
         5: TaxInvoiceModel.amount,
         6: TaxInvoiceModel.created_at,
-        7: latest_payment_subq.c.latest_payment_date,  # <-- ใช้ subquery นี้เพื่อเรียงวันที่ล่าสุด
-
+        7: None,  # latest payment col handled separately if needed
     }
-
-    # ───── Query หลัก ─────
-    base_query = db.session.query(TaxInvoiceModel)\
-        .join(TaxInvoiceModel.member)\
-        .join(TaxInvoiceModel.terms)\
-        .join(OrderTermModel.order)\
-        .outerjoin(latest_payment_subq, latest_payment_subq.c.order_id == OrderModel.id) \
-        .join(OrderModel.product)\
-        .options(
-            joinedload(TaxInvoiceModel.member),
-            joinedload(TaxInvoiceModel.terms)
-                .joinedload(OrderTermModel.order)
-                .joinedload(OrderModel.payments)
-                .joinedload(PaymentModel.bank_account)
-    ).distinct()
-
-    # ───── ค้นหาจากคำค้น (Search) ─────
-    if search_value:
-        search = f"%{search_value}%"
-        base_query = base_query.filter(
-            or_(
-                TaxInvoiceModel.tax_invoice_no.ilike(search),
-                OrderModel.order_number.ilike(search),
-                MemberModel.first_name.ilike(search),
-                MemberModel.last_name.ilike(search),
-                ProductForSalesModel.name.ilike(search),
-                BankAccountModel.name.ilike(search),
-                func.to_char(TaxInvoiceModel.created_at, 'DD/MM/YYYY').ilike(search),
-                func.to_char(TaxInvoiceModel.vat, 'FM999999999.00').ilike(search),
-                func.to_char(TaxInvoiceModel.amount_before_vat, 'FM999999999.00').ilike(search),
-                func.to_char(OrderTermModel.amount, 'FM999999999.00').ilike(search),
-                func.to_char(OrderTermModel.net_price, 'FM999999999.00').ilike(search),
-                func.to_char(PaymentModel.payment_date, 'DD/MM/YYYY HH24:MI:SS').ilike(search),
-            )
-        )
-    
-    product_id = request_data.get("product_id")  # ✅ รับค่ามาจาก select
-
-    bank_id = request_data.get("bank_id")
-    # if bank_id:
-    #     query = query.filter(PaymentModel.bank_id == bank_id)
-        
-    if product_id:
-        base_query = base_query.filter(OrderModel.product_id == product_id)
-    
-    bank_id = request_data.get("bank_id")
-    try:
-        bank_id = int(bank_id)
-    except (ValueError, TypeError):
-        bank_id = None
-    # ... (รับ product_id ไปแล้ว)
-    
-    start_datetime = request_data.get("start_datetime")
-    end_datetime = request_data.get("end_datetime")
-    try:
-        start_dt = datetime.strptime(start_datetime, "%d-%m-%Y %H:%M:%S") if start_datetime else None
-        end_dt = datetime.strptime(end_datetime, "%d-%m-%Y %H:%M:%S") if end_datetime else None
-    except ValueError:
-        start_dt, end_dt = None, None
-
-
-    # # ───── จัดเรียงข้อมูล (Ordering) ─────
-    # if order:
-    #     column_index = int(order[0]["column"])
-    #     sort_direction = order[0]["dir"]
-    #     column_order = column_map.get(column_index, TaxInvoiceModel.id)  # fallback
-    #     if sort_direction == "desc":
-    #         column_order = column_order.desc().nullslast()
-    #     else:
-    #         column_order = column_order.asc().nullsfirst()
-    # else:
-    #     column_order = TaxInvoiceModel.id.asc()
-
-
-    # base_query = query  # <- สำคัญมาก
-    # ───── Filter bank ─────
-    if bank_id:
-        base_query = base_query.join(OrderModel.payments)\
-            .filter(PaymentModel.bank_id == bank_id)
-
-    # ───── Filter date range ─────
-    if start_dt and end_dt:
-        start_utc = BANGKOK_TZ.localize(start_dt).astimezone(pytz.UTC)
-        end_utc = BANGKOK_TZ.localize(end_dt).astimezone(pytz.UTC)
-        base_query = base_query.filter(latest_payment_subq.c.latest_payment_date.between(start_utc, end_utc))
-
-    # ───── Ordering ─────
     if order:
-        column_index = int(order[0]["column"])
-        sort_dir = order[0]["dir"]
-        column_order = column_map.get(column_index, TaxInvoiceModel.id)
-        column_order = column_order.desc().nullslast() if sort_dir == "desc" else column_order.asc().nullsfirst()
+        col_idx = int(order[0].get("column", 0))
+        sort_dir = order[0].get("dir", "asc")
+        col = column_map.get(col_idx) or TaxInvoiceModel.id
+        column_order = col.desc().nullslast() if sort_dir == "desc" else col.asc().nullsfirst()
     else:
         column_order = TaxInvoiceModel.id.asc()
 
-
-    if start_dt and end_dt:
-        all_invoices = base_query.all()
-        filtered_invoice_ids = []
-
-        for invoice in all_invoices:
-            term = invoice.terms
-            order_model = term.order if term else None
-
-            if not order_model:
-                continue
-
-            payments = [
-                p for p in order_model.payments
-                if p.sequence == term.sequence and p.payment_date
-            ]
-
-
-            # กรองตาม bank_id ถ้ามี
-            if bank_id:
-                payments = [p for p in payments if p.bank_id == bank_id]
-
-            if not payments:
-                continue
-
-            # เอา payment ล่าสุด
-            latest_payment = max(payments, key=lambda p: p.payment_date)
-
-            # print(f"[DEBUG] ✅ Receipt: {invoice.tax_invoice_no}, Payment date: {latest_payment.payment_date}")
-
-            if start_dt <= latest_payment.payment_date <= end_dt:
-                filtered_invoice_ids.append(invoice.id)
-
-        # ✅ กรอง query หลัก
-        base_query = base_query.filter(TaxInvoiceModel.id.in_(filtered_invoice_ids))
-
-        total_amount = 0
-        for invoice in base_query.all():
-            term = invoice.terms
-            amount = float(term.net_price or 0) if term else 0
-            total_amount += amount
-        # ✅ รวมยอดเฉพาะ ID ที่ผ่าน filter
-        total_vat = db.session.query(func.sum(TaxInvoiceModel.vat))\
-                .filter(TaxInvoiceModel.id.in_(filtered_invoice_ids))\
-                .scalar() or 0
-        
-        total_before_vat = db.session.query(func.sum(TaxInvoiceModel.amount_before_vat))\
-            .filter(TaxInvoiceModel.id.in_(filtered_invoice_ids))\
-            .scalar() or 0
-        
-
-        # print(f"📊 Filtered Total Amount: {total_amount}")
-        # print(f"📊 Filtered Total VAT: {total_vat}")
-        # print(f"📊 Filtered Total total_before_vat: {total_before_vat}")
-
+    # --- totals (use filtered_ids if present to be accurate) ---
+    if filters_for_payment:
+        ids = filtered_ids
+        total_vat = float(db.session.query(func.coalesce(func.sum(TaxInvoiceModel.vat), 0)).filter(TaxInvoiceModel.id.in_(ids)).scalar() or 0)
+        total_before_vat = float(db.session.query(func.coalesce(func.sum(TaxInvoiceModel.amount_before_vat), 0)).filter(TaxInvoiceModel.id.in_(ids)).scalar() or 0)
+        total_amount = float(db.session.query(func.coalesce(func.sum(OrderTermModel.net_price), 0)).join(TaxInvoiceModel.terms).filter(TaxInvoiceModel.id.in_(ids)).scalar() or 0)
     else:
-        if bank_id:
-            all_invoices = base_query.all()
-            filtered_invoice_ids = []
+        total_vat = float(db.session.query(func.coalesce(func.sum(TaxInvoiceModel.vat), 0)).scalar() or 0)
+        total_before_vat = float(db.session.query(func.coalesce(func.sum(TaxInvoiceModel.amount_before_vat), 0)).scalar() or 0)
+        total_amount = float(db.session.query(func.coalesce(func.sum(OrderTermModel.net_price), 0)).join(TaxInvoiceModel.terms).scalar() or 0)
 
-            for invoice in all_invoices:
-                term = invoice.terms
-                order_model = term.order if term else None
-                if not order_model:
-                    continue
+    # --- counts and pagination ---
+    total_records_filtered = base_query.distinct().count()
+    # If you need unfiltered total for DataTables:
+    total_records_all = db.session.query(func.count(TaxInvoiceModel.id)).scalar()
 
-                # หาทุก payment ที่มีวัน และตรง sequence
-                payments = [
-                    p for p in order_model.payments
-                    if p.sequence == term.sequence and p.payment_date
-                ]
-
-                # หา payment ล่าสุดก่อน แล้วเช็ค bank_id
-                if payments:
-                    latest_payment = max(payments, key=lambda p: p.payment_date)
-                    if latest_payment.bank_id == int(bank_id):
-                        filtered_invoice_ids.append(invoice.id)
-                        # print(f"✅ Match Invoice: {invoice.tax_invoice_no} | Bank: {bank_id} | Date: {latest_payment.payment_date}")
-
-            base_query = base_query.filter(TaxInvoiceModel.id.in_(filtered_invoice_ids))
-
-            total_amount = 0
-            for invoice in base_query.all():
-                term = invoice.terms
-                amount = float(term.net_price or 0) if term else 0
-                print(f"🧾 {invoice.tax_invoice_no} | Term: {term.id if term else '-'} | Net: {amount}")
-                total_amount += amount
-
-            total_vat = db.session.query(func.sum(TaxInvoiceModel.vat))\
-                .filter(TaxInvoiceModel.id.in_(filtered_invoice_ids))\
-                .scalar() or 0
-            
-            total_before_vat = db.session.query(func.sum(TaxInvoiceModel.amount_before_vat))\
-            .filter(TaxInvoiceModel.id.in_(filtered_invoice_ids))\
-            .scalar() or 0
-            # print(f"📊 Filtered Total VAT: {total_vat}")
-            # print(f"📊 Total Amount (filtered by bank only): {total_amount}")
-            # print(f"📊 Total Amount (total_before_vat): {total_before_vat}")
-            # total_amount = db.session.query(func.sum(TaxInvoiceModel.amount))\
-            #     .filter(TaxInvoiceModel.id.in_(filtered_invoice_ids))\
-            #     .scalar() or 0
-
-        else:
-            # ไม่มี filter ใดเลย
-            all_invoices = base_query.all()
-            total_amount = 0
-            for invoice in all_invoices:
-                term = invoice.terms
-                amount = float(term.net_price or 0) if term else 0
-                # print(f"✅ Invoice: {invoice.tax_invoice_no}, Term amount: {amount}")
-                total_amount += amount
-            # total_amount = db.session.query(func.sum(TaxInvoiceModel.amount))\
-            #     .filter(TaxInvoiceModel.id.in_(all_ids))\
-            #     .scalar() or 0
-            total_vat = db.session.query(func.sum(TaxInvoiceModel.vat))\
-            .filter(TaxInvoiceModel.id.in_([inv.id for inv in all_invoices]))\
-            .scalar() or 0
-
-            total_before_vat = db.session.query(func.sum(TaxInvoiceModel.amount_before_vat))\
-            .filter(TaxInvoiceModel.id.in_([inv.id for inv in all_invoices]))\
-            .scalar() or 0
-            
-        # print(f"📊 Total Amount: {total_amount}")
-        # print(f"📊 Total VAT: {total_vat}")
-        # print(f"📊 Total total_before_vat: {total_before_vat}")
-    total_records = base_query.count()
-
-    # ───── ดึงข้อมูลรายการตามช่วงที่ต้องการ ─────
     invoices = base_query.order_by(column_order).offset(start).limit(length).all()
 
-    # ───── เตรียมข้อมูลสำหรับ DataTables ─────
+    # --- build data for returned page ---
     data = []
-    for index, invoice in enumerate(invoices):
-        
-        member = invoice.member
-        term = invoice.terms
+    for idx, invoice in enumerate(invoices):
+        # get a term safely (if .terms is a list/relationship)
+        term = invoice.terms[0] if isinstance(invoice.terms, (list, tuple)) and invoice.terms else invoice.terms
         order_model = term.order if term else None
-        
-        # payment = None
-        # if order_model and order_model.payments:
-        #     payments_filtered = [
-        #         p for p in order_model.payments
-        #         if (not bank_id or p.bank_id == int(bank_id)) and p.payment_date
-        #     ]
-        #     if payments_filtered:
-        #         payment = sorted(
-        #             payments_filtered,
-        #             key=lambda p: p.payment_date,
-        #             reverse=True
-        #         )[0]
-        payment = None
-        if order_model and order_model.payments:
-            payments_filtered = [
-                p for p in order_model.payments
-                if p.sequence == term.sequence and p.payment_date  # หรือใช้ p.term_id == term.id ถ้ามี field นี้
-            ]
-            if bank_id:
-                payments_filtered = [p for p in payments_filtered if p.bank_id == int(bank_id)]
 
-            if start_dt and end_dt:
-                # payments_filtered = [
-                #     p for p in payments_filtered if start_dt <= p.payment_date <= end_dt
-                # ]
-                start_dt_utc = BANGKOK_TZ.localize(start_dt).astimezone(pytz.UTC)
-                end_dt_utc = BANGKOK_TZ.localize(end_dt).astimezone(pytz.UTC)
-                temp = []
-                for p in payments_filtered:
-                    dt = p.payment_date
-                    if dt.tzinfo is None:
-                        dt = BANGKOK_TZ.localize(dt)
-                    dt_utc = dt.astimezone(pytz.UTC)
-                    if start_dt_utc <= dt_utc <= end_dt_utc:
-                        temp.append(p)
-                payments_filtered = temp
-            # print(f"payments_filtered: {payments_filtered}")
-            if not payments_filtered:
-                continue  # 🔥 ข้ามเลยถ้าไม่มี payment ที่ match
-            if payments_filtered:
-                # payment = sorted(payments_filtered,key=lambda p: p.payment_date,reverse=True)[0]
-                payment = max(payments_filtered, key=lambda p: p.payment_date)
+        # fetch latest payment for this order & term (respecting bank/date filters if present)
+        payment_q = db.session.query(PaymentModel).filter(
+            PaymentModel.order_id == (order_model.id if order_model else None),
+            PaymentModel.sequence == (term.sequence if term else None)
+        )
+        if bank_id:
+            payment_q = payment_q.filter(PaymentModel.bank_id == bank_id)
+        if start_utc and end_utc:
+            payment_q = payment_q.filter(PaymentModel.payment_date.between(start_utc, end_utc))
+        payment = payment_q.order_by(PaymentModel.payment_date.desc()).first()
 
-        bank_account = payment.bank_account.name if payment and payment.bank_account else None
+        bank_account_name = payment.bank_account.name if payment and payment.bank_account else None
         product = order_model.product if order_model else None
 
-        customer_name = f"{member.first_name or ''} {member.last_name or ''}".strip() if member else ''
-        product_name = product.name if product else ''
-        discount = float(term.discount or 0) if term else 0
-        amount = float(term.amount or 0) if term else 0
-        net_price = float(term.net_price or 0) if term else 0
-        vat = float(invoice.vat or 0) if invoice else 0
-        amount_before_vat = float(invoice.amount_before_vat or 0) if invoice else 0
-        payment_date = to_datetime(payment.payment_date) if payment and payment.payment_date else None
-        # bank_account = payment.bank_account.name if payment and payment.bank_account else None
+        customer_name = ""
+        if invoice.member:
+            customer_name = f"{invoice.member.first_name or ''} {invoice.member.last_name or ''}".strip()
+
         data.append({
-            "id": start + index + 1,
-            "term_id": invoice.terms_id,
+            "id": start + idx + 1,
+            "term_id": getattr(term, "id", None),
             "tax_invoice_no": invoice.tax_invoice_no or '',
-            "order_number": invoice.order.order_number,
+            "order_number": invoice.order.order_number if invoice.order else '',
             "order_id": invoice.order_id,
             "customer_name": customer_name,
-            "product_name": product_name,
-            "bank_name": bank_account,
-            "discount": discount,
-            "amount": amount,
-            "net_price": net_price,
-            "vat": vat,
-            "amount_before_vat": amount_before_vat,
-            # "created_at": int(payment_date.timestamp() * 1000) if payment_date else None,
-            "created_at": to_bangkok_timestamp(payment.payment_date) if payment else 0,
+            "product_name": product.name if product else '',
+            "bank_name": bank_account_name,
+            "discount": float(getattr(term, "discount", 0) or 0),
+            "amount": float(getattr(term, "amount", 0) or 0),
+            "net_price": float(getattr(term, "net_price", 0) or 0),
+            "vat": float(invoice.vat or 0),
+            "amount_before_vat": float(invoice.amount_before_vat or 0),
+            "created_at": to_bangkok_timestamp(payment.payment_date) if payment and payment.payment_date else 0,
             "data_user": safe_model_to_dict(invoice),
         })
 
-    # ───── ส่งผลลัพธ์กลับ DataTables ─────
-    return Response(
-        json.dumps({
-            "draw": draw,
-            "recordsTotal": total_records,
-            "recordsFiltered": total_records,
-            "data": data,
-            "total_amount": float(total_amount)  # ✅ ส่งยอดรวมกลับ
-        }, ensure_ascii=False, default=str),
-        content_type="application/json"
-    )
-
+    return Response(json.dumps({
+        "draw": draw,
+        "recordsTotal": total_records_all,
+        "recordsFiltered": total_records_filtered,
+        "data": data,
+        "total_amount": float(total_amount)
+    }, ensure_ascii=False, default=str), content_type="application/json")
 
 
 
