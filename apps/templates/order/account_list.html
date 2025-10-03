@@ -140,17 +140,16 @@
 
 <a href="javascript:;" class="btn btn-icon btn-circle btn-primary btn-scroll-to-top" data-toggle="scroll-to-top"><i class="fa fa-angle-up"></i></a>
 
-<iframe id="receipt-preview-frame" style="width: 100%; height: 1200px; border: 1px solid #ccc; margin-top: 20px;display:none;"></iframe>
-{% for term in orderTerms %}
+<iframe id="receipt-preview-frame" style="width: 100%; height: 1200px; border: 1px solid #ccc; margin-top: 20px;display:none;"></iframe>{% for term in orderTerms %}
 
-<iframe id="print-frame" style="width: 100%; height: 1200px; border: 1px solid #ccc; margin-top: 20px;display:none;"></iframe>
+<iframe id="print-frame" style="width: 100%; height: 1200px; border: 1px solid #ccc; margin-top: 10px;display:none;"></iframe>
 
 <!-- templates/receipt_partial.html -->
 {% set receipt_for_term = receipts | selectattr("terms_id", "equalto", term.id) | list %}
 {% if receipt_for_term %}
   {% set r = receipt_for_term[0] %}
   {% set data_date = r.transfer_date.strftime('%Y-%m-%dT00:00:00') if r.transfer_date else '' %}
-<div id="receipt-content-{{ term.id }}" data-date="{{ data_date }}" hidden>
+<div id="receipt-content-{{ term.id }}" data-date="{{ data_date }}" data-receipt="{{r.receipt_no}}" hidden>
     <!-- ตัวอย่าง (ใช้ข้อมูลจาก backend เช่น data.customer_name) -->
     <div style="text-align: right; line-height: 1.4; margin-bottom: 10px;">
         <div>เลขที่ 80 อาคาร เค.เอ.เอ็น ห้องเลขที่ 104 ชั้น 1</div>
@@ -159,7 +158,7 @@
         <div>Tel. (66) 26426131-2 Fax. (66) 26426133</div>
     </div>
 
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
         <div style="border: 1px solid black; padding: 8px 0px; width: 150px; text-align: center;">
           <div>ไม่ใช่ใบกำกับภาษี</div>
           <hr style="margin: 4px 0;">
@@ -246,7 +245,7 @@
       </div>
     
       <!-- กล่องการชำระ -->
-      <div class="receipt-box " style="margin-top: 30px; margin-bottom: 10px;">
+      <div class="receipt-box " style="margin-top: 20px; margin-bottom: 10px;">
         <div class="row" style="margin-bottom:0px">
           <div class="col col-15" style="display: flex; flex-direction: column; justify-content: space-between; height: 138px;">
             <div>
@@ -501,7 +500,7 @@ function loadDataTable() {
                   }
                   if (type === 'sort' || type === 'type') {
                       // return timestamp ให้ DataTables sort numeric
-                      return data ? parseInt(data) : 0;
+                      return data ? Number(data) : 0;
                   }
                   return data || 0; // fallback
               }
@@ -966,6 +965,12 @@ function loadDataTable() {
       alert("ไม่พบใบเสร็จในช่วงวันที่ที่เลือก");
       return;
     }
+    // ✅ เรียงตาม tax_invoice_no
+    const sortedReceipts = filteredReceipts.sort((a, b) => {
+      const taxA = a.getAttribute("data-receipt") || "";
+      const taxB = b.getAttribute("data-receipt") || "";
+      return taxA.localeCompare(taxB, undefined, { numeric: true });
+    });
   
     const printer = new ReceiptPrinter(filteredReceipts);
     console.log("🖨️ ใบที่กรองได้:", filteredReceipts.map(el => el.id));

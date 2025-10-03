@@ -142,7 +142,7 @@
   {% for r in tax_for_term %}
   {% set data_date = r.transfer_date.strftime('%Y-%m-%dT00:00:00') if r.transfer_date else '' %}
 
-<div id="invoice-content-{{ term.id }}" hidden data-date="{{ data_date }}" style="page-break-inside: avoid; break-inside: avoid;">
+<div id="invoice-content-{{ term.id }}" hidden data-date="{{ data_date }}" data-tax="{{ r.tax_invoice_no }}" style="page-break-inside: avoid; break-inside: avoid;">
     <!-- ตัวอย่าง (ใช้ข้อมูลจาก backend เช่น data.customer_name) -->
     <div style="display: table; width: 100%;">
   
@@ -1063,7 +1063,12 @@ function loadDataTable() {
           alert(`❌ ไม่พบใบกำกับภาษี (invoice-content-${termId})`);
           return;
         }
-    
+        // ✅ เรียงตาม tax_invoice_no
+        const sortedReceipts = filteredReceipts.sort((a, b) => {
+          const taxA = a.getAttribute("data-tax") || "";
+          const taxB = b.getAttribute("data-tax") || "";
+          return taxA.localeCompare(taxB, undefined, { numeric: true });
+        });
         // ❌ อย่ามี receiptEl ตรงนี้ ถ้าไม่ได้ใช้
         // const receiptEl = document.getElementById(...); ← ลบทิ้ง
     
@@ -1133,6 +1138,13 @@ function printAllReceipts() {
     alert("ไม่พบใบเสร็จในช่วงวันที่ที่เลือก");
     return;
   }
+
+  // ✅ เรียงตาม tax_invoice_no
+  const sortedReceipts = filteredReceipts.sort((a, b) => {
+    const taxA = a.getAttribute("data-tax") || "";
+    const taxB = b.getAttribute("data-tax") || "";
+    return taxA.localeCompare(taxB, undefined, { numeric: true });
+  });
 
   const printer = new ReceiptPrinter(filteredReceipts);
   printer.print();

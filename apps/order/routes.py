@@ -2101,11 +2101,14 @@ def print_receipt_pdf():
         )
 
     # --- เรียงตามวันที่โอนล่าสุดของงวด (สำคัญสุด) และกัน tie-break ด้วยเลขที่ใบเสร็จ ---
+    # base_query = base_query.order_by(
+    #     latest_payment_per_term_sq.c.latest_payment_date.asc(),
+    #     ReceiptModel.receipt_no.asc(),
+    # )
+    # --- เรียงตามเลขที่ใบเสร็จ (tax_invoice_no ของ ReceiptModel)
     base_query = base_query.order_by(
-        latest_payment_per_term_sq.c.latest_payment_date.asc(),
-        ReceiptModel.receipt_no.asc(),
+        ReceiptModel.receipt_no.asc()  # หรือ .desc() ถ้าต้องการย้อนกลับ
     )
-
     invoices = base_query.all()
 
     # คำนวณ total_amount จาก amount ของงวดที่ผูกกับใบเสร็จ
@@ -2189,7 +2192,10 @@ def print_invoice_pdf():
         total_amount += amount
 
     # ✅ เรียงตามวันล่าสุด
-    invoice_with_date.sort(key=lambda x: x[1])
+    # invoice_with_date.sort(key=lambda x: x[1])
+
+    # ✅ เรียงตาม tax_invoice_no (เลขที่ใบกำกับภาษี)
+    invoice_with_date.sort(key=lambda x: x[0].tax_invoice_no)
     invoices = [inv for inv, _ in invoice_with_date]
 
     return render_template(
