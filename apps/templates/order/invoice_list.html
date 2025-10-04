@@ -28,6 +28,7 @@
         font-size: 18px;
         line-height: 1;
       }
+      
   </style>
 {% endblock stylesheets %}
 
@@ -142,7 +143,7 @@
   {% for r in tax_for_term %}
   {% set data_date = r.transfer_date.strftime('%Y-%m-%dT00:00:00') if r.transfer_date else '' %}
 
-<div id="invoice-content-{{ term.id }}" hidden data-date="{{ data_date }}" data-tax="{{ r.tax_invoice_no }}" style="page-break-inside: avoid; break-inside: avoid;">
+<div id="invoice-content-{{ term.id }}" class="print-block" data-date="{{ data_date }}" data-tax="{{ r.tax_invoice_no }}" style="display:none; page-break-inside: avoid; break-inside: avoid;">
     <!-- ตัวอย่าง (ใช้ข้อมูลจาก backend เช่น data.customer_name) -->
     <div style="display: table; width: 100%;">
   
@@ -177,7 +178,7 @@
             <td style="border: 1px solid black; width: 150px; text-align: center; vertical-align: middle; padding: 8px;">
               <div>ต้นฉบับ / Original</div>
               <hr style="margin: 4px 0;">
-              <h4 style="margin: 0 0;">{{ r.tax_invoice_no }}</h4>
+              <h4 style="margin: 0 0;">{{ r.tax_invoice_no }} </h4>
               <div>(เอกสารออกเป็นชุด)</div>
             </td>
           </tr>
@@ -316,7 +317,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr style="height: 185px;vertical-align: top;font-size: 14px">
+            <tr style="height: 170px;vertical-align: top;font-size: 14px">
               <td style="text-align: center;font-weight: normal; ">1</td>
               
               <td style="white-space: normal; word-break: break-word;">
@@ -451,9 +452,12 @@
       </td>
     </tr>
   </table>
+  <div class="c_txt" style="text-align: right; margin-top: 4px; font-size: 10px; color: #555;">
+    <small>{{ r.tax_invoice_no }}/{{ r.receipt.receipt_no }}</small>
+  </div>
+    
 
-
-
+  
       
     </div>
     {% endfor %}
@@ -535,7 +539,7 @@ $(document).ready(function() {
 
   $('#productFilter').on('change', function () {
     const selectedProductId = $(this).val();
-    console.log("✅ Sending product_id:", selectedProductId);
+    //console.log("✅ Sending product_id:", selectedProductId);
     datatable.ajax.reload(); // ต้องชี้ที่ตัวแปร global datatable
   });
 
@@ -555,7 +559,7 @@ $(document).ready(function() {
 
   $('#bank').on('change', function () {
     const selectedBankId = $(this).val();
-    console.log("✅ Selected bank_id:", selectedBankId);
+    //console.log("✅ Selected bank_id:", selectedBankId);
     if (datatable) {
       datatable.ajax.reload();
     } else {
@@ -645,13 +649,13 @@ function loadDataTable() {
             { 
               data: 'created_at',
               render: function(data, type) {
-                  console.log(data)
+                  //console.log(data)
                   if(type === 'display') {
                       return data ? moment(data).format('DD/MM/YYYY HH:mm') : '-';
                   }
                   return Number(data) || 0;
 
-                  console.log(data)
+                  //console.log(data)
               }
           },                 
             { 
@@ -779,6 +783,7 @@ function loadDataTable() {
               .black-bg { background-color: black !important; color: white !important; }
               .no-print-margin { margin: 0 !important; padding: 0 !important; }
               .row, .col { padding: 0 !important; margin: 0 !important; }
+              
             }
           </style>
         </head>
@@ -882,7 +887,7 @@ function loadDataTable() {
                   border: 2px solid #000;
                   border-radius: 10px;
                   padding: 20px;
-                  margin-top: 20px;
+                  margin-top: 10px;
                 }
                 .row {
                   display: flex;
@@ -930,6 +935,7 @@ function loadDataTable() {
                     .receipt-box {
                     border: 2px solid #000 !important;
                     }
+                    
 
                     /* บังคับให้แสดงสีพื้นหลัง */
                     .black-bg {
@@ -947,6 +953,32 @@ function loadDataTable() {
                     margin: 0 !important;
                     }
                     
+                    /* ครอบ block ของ invoice */
+                    .print-block {
+                      display: block !important;
+                      page-break-inside: avoid !important;
+                      break-inside: avoid !important;
+                      margin: 0 auto;
+                    }
+
+                    /* ปรับ table/flex ภายใน */
+                    .print-block table {
+                      page-break-inside: auto !important; /* ให้ browser ตัด row ได้ตามธรรมชาติ */
+                    }
+
+                    /* เปลี่ยน flex row/col เป็น block สำหรับ print */
+                    .print-block .row {
+                      display: block !important;
+                      margin: 0 !important;
+                      padding: 0 !important;
+                    }
+
+                    .print-block .col {
+                      display: block !important;
+                      width: 100% !important;
+                      margin: 0 !important;
+                      padding: 0 !important;
+                    }
                    
                 }
 
@@ -959,91 +991,83 @@ function loadDataTable() {
       
         preview(previewIframeId = 'receipt-preview-frame') {
           const previewFrame = document.getElementById(previewIframeId);
-          if (!previewFrame) {
-            alert('ไม่พบ iframe สำหรับ preview');
-            return;
-          }
-          previewFrame.style.display = 'block';
-      
-          const doc = previewFrame.contentDocument || previewFrame.contentWindow.document;
-          doc.open();
-          doc.write(this.getPrintableHTML());
-          doc.close();
-          // ✅ รอจน DOM โหลดเสร็จ
-  previewFrame.onload = () => {
-    const iframeDoc = previewFrame.contentDocument || previewFrame.contentWindow.document;
-    const images = iframeDoc.images;
-
-    if (images.length === 0) {
-      previewFrame.contentWindow.focus();
-      previewFrame.contentWindow.print();
-      return;
-    }
-
-    let loaded = 0;
-    for (let img of images) {
-      if (img.complete) {
-        loaded++;
-      } else {
-        img.onload = img.onerror = () => {
-          loaded++;
-          if (loaded === images.length) {
-            previewFrame.contentWindow.focus();
-            previewFrame.contentWindow.print();
-          }
-        };
-      }
-    }
-
-    // กรณีรูปโหลดครบแล้วตั้งแต่แรก
-    if (loaded === images.length) {
-      previewFrame.contentWindow.focus();
-      previewFrame.contentWindow.print();
-    }
-  };
-        }
-      
-        print() {
-          const previewFrame = document.getElementById('receipt-preview-frame');
-          if (!previewFrame) {
-            alert('ไม่พบ iframe สำหรับพิมพ์');
-            return;
-          }
-      
-          const doc = previewFrame.contentDocument || previewFrame.contentWindow.document;
-          doc.open();
-          doc.write(this.getPrintableHTML());
-          doc.close();
-      
-          previewFrame.onload = () => {
-            const images = previewFrame.contentDocument.images;
-            if (images.length === 0) {
-              previewFrame.contentWindow.focus();
-              previewFrame.contentWindow.print();
-              return;
-            }
+          if (!previewFrame) return alert('ไม่พบ iframe สำหรับ preview');
         
-            let loaded = 0;
-            for (let img of images) {
-              if (img.complete) {
-                loaded++;
-              } else {
-                img.onload = img.onerror = () => {
+          // แสดง iframe แบบ hidden แต่ไม่ใช้ display:none
+          previewFrame.style.visibility = 'hidden';
+          previewFrame.style.display = 'block';
+        
+          const doc = previewFrame.contentDocument || previewFrame.contentWindow.document;
+          doc.open();
+          doc.write(this.getPrintableHTML());
+          doc.close();
+        
+          // รอจน DOM และ fonts โหลดเสร็จ
+          previewFrame.onload = () => {
+            const iframeDoc = previewFrame.contentDocument || previewFrame.contentWindow.document;
+        
+            // รอ font โหลดเสร็จ
+            iframeDoc.fonts.ready.then(() => {
+              // รอรูปทั้งหมดโหลดครบ
+              const images = iframeDoc.images;
+              let loaded = 0;
+        
+              if (images.length === 0) {
+                previewFrame.style.visibility = 'visible';
+                previewFrame.contentWindow.focus();
+                return;
+              }
+        
+              for (let img of images) {
+                if (img.complete) loaded++;
+                else img.onload = img.onerror = () => {
                   loaded++;
-                  if (loaded === images.length) {
-                    previewFrame.contentWindow.focus();
-                    previewFrame.contentWindow.print();
-                  }
+                  if (loaded === images.length) previewFrame.style.visibility = 'visible';
                 };
               }
-            }
         
-            if (loaded === images.length) {
-              previewFrame.contentWindow.focus();
-              previewFrame.contentWindow.print();
-            }
+              if (loaded === images.length) previewFrame.style.visibility = 'visible';
+            });
           };
         }
+        
+        print() {
+          const previewFrame = document.getElementById('receipt-preview-frame');
+          if (!previewFrame) return alert('ไม่พบ iframe สำหรับพิมพ์');
+        
+          const doc = previewFrame.contentDocument || previewFrame.contentWindow.document;
+          doc.open();
+          doc.write(this.getPrintableHTML());
+          doc.close();
+        
+          previewFrame.onload = () => {
+            const iframeWin = previewFrame.contentWindow;
+            const iframeDoc = previewFrame.contentDocument || iframeWin.document;
+        
+            iframeDoc.fonts.ready.then(() => {
+              const images = iframeDoc.images;
+              let loaded = 0;
+        
+              const doPrint = () => {
+                iframeWin.focus();
+                iframeWin.print();
+              };
+        
+              if (images.length === 0) return doPrint();
+        
+              for (let img of images) {
+                if (img.complete) loaded++;
+                else img.onload = img.onerror = () => {
+                  loaded++;
+                  if (loaded === images.length) doPrint();
+                };
+              }
+        
+              if (loaded === images.length) doPrint();
+            });
+          };
+        }
+        
       }
       
   </script>
