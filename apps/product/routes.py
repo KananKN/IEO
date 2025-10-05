@@ -8,8 +8,10 @@ from apps.product.models import *
 from apps.supplier.models import *
 from apps.employee.models import *
 from apps.lead.models import *
+from apps.product.line_noti import send_line_message
+
 from apps import db
-from flask import render_template, request, redirect, url_for, flash, Markup, jsonify, abort, send_file
+from flask import render_template, request, redirect, url_for, flash, Markup, jsonify, abort, send_file, session
 from flask_login import login_required, current_user, logout_user
 from jinja2 import TemplateNotFound
 import random
@@ -27,6 +29,8 @@ from sqlalchemy import and_, func, case, asc
 from collections import defaultdict
 
 from decimal import Decimal
+from urllib.parse import urlencode
+
 
 
 
@@ -384,7 +388,8 @@ def deleteTerm():
 @login_required
 @read_permission.require(http_exception=403)
 def productSales():
-    datas = ProductForSalesModel.query.all()
+    # datas = ProductForSalesModel.query.all()
+    datas = ProductForSalesModel.query.filter_by(status="approved").all()
     # print(datas)
     return render_template('/product/productSales.html', segment='productSales' ,datas=datas)
 
@@ -451,6 +456,124 @@ def EditProductSales(id):
     return render_template('/productForSales/EditProductSales.html', segment='productSales' , datas=datas, productCars=productCar, countrys=country, periods=period,termOfPaymentModels=termOfPaymentModel, file_data=file_data,payments=payment,organizations=organization,employees=employee,selected_organizations=selected_organizations,selected_employee=selected_employee,selected_agencys=selected_agency,agencys=agency,universitys=university,
                            grouped_payments=grouped_payments,max_terms=max_terms,col_list=col_list)
 
+@blueprint.route('/PreviewProductSales/<id>')
+@login_required
+@read_permission.require(http_exception=403)
+def PreviewProductSales(id):
+    
+
+    datas= ProductForSalesModel.query.filter_by(id=id).first()
+    print(datas)
+
+    if not datas:
+        flash("❌ ไม่พบข้อมูลสินค้า", "danger")
+        color = "#ffcecd"
+        return render_template('/productForSales/approved_product.html', segment='productSales',color=color  )
+    
+
+    productCar = ProductCategoryModel.query.all()
+    country = CountryModel.query.order_by(asc(CountryModel.name)).all()
+    period = PeriodModel.query.all()
+    termOfPaymentModel = term_of_paymentModel.query.order_by(term_of_paymentModel.name).all()
+    file_data = FileModel.query.filter_by(product_for_sales_id = datas.id).all()
+    payment = installmentsPaymentModel.query.filter_by(product_for_sales_id=datas.id).all()
+    organization = OrganizationModel.query.order_by(OrganizationModel.name).all()
+    employee = EmployeeModel.query.order_by(EmployeeModel.name).all()
+    # agency = AgencyModel.query.order_by(AgencyModel.agency_code).all()
+    agency = AgencyModel.query.filter(AgencyModel.org_type == 'agency').all()
+    university = AgencyModel.query.filter(AgencyModel.org_type == 'university').all()
+    
+    productSup = ProductOrganizationAssociation.query.filter_by(product_id=id).all()
+    selected_organizations = [p.organization_id for p in productSup]
+    
+    productEmplo = ProductEmployerAssociation.query.filter_by(product_id=id).all()
+    selected_employee = [e.employee_id for e in productEmplo]
+    
+    productAgency = ProductAgencyAssociation.query.filter_by(product_id=id).all()
+    selected_agency = [e.agency_id for e in productAgency]
+
+    if datas.status == "approved":
+        # flash("✅ สินค้านี้ได้รับการอนุมัติเรียบร้อยแล้ว")
+        return redirect(url_for("product_blueprint.approved_product",product_id=id))
+
+    elif datas.status == "rejected":
+        # flash("❌ สินค้านี้ไม่ได้รับการอนุมัติ")
+        return redirect(url_for("product_blueprint.approved_product",product_id=id))
+    
+   
+    grouped_payments = defaultdict(list)
+    for p in payment:
+        grouped_payments[p.year].append(p)
+    print(grouped_payments)
+
+    max_terms = 0
+    if grouped_payments:
+        max_terms = max(len(items) for items in grouped_payments.values())
+    number_of_columns = len(grouped_payments)
+    col_list = list(range(number_of_columns)) 
+
+
+    return render_template('/productForSales/PreviewProductSales.html', segment='productSales' , datas=datas, productCars=productCar, countrys=country, periods=period,termOfPaymentModels=termOfPaymentModel, file_data=file_data,payments=payment,organizations=organization,employees=employee,selected_organizations=selected_organizations,selected_employee=selected_employee,selected_agencys=selected_agency,agencys=agency,universitys=university,
+                           grouped_payments=grouped_payments,max_terms=max_terms,col_list=col_list)
+
+@blueprint.route('/approve/<int:product_id>')
+@login_required
+def approved_product(product_id):
+    product = ProductForSalesModel.query.filter_by(id=product_id).first()
+
+    color = "#3d78ed"  
+    # ตรวจสอบสิทธิ์ Admin
+    if current_user.role.name != "Admin":
+        flash("⏳ สินค้านี้กำลังรอการอนุมัติ", "warning")
+        color = "#ffc107"
+        return render_template('/productForSales/approved_product.html', segment='productSales'  )
+
+
+    else:
+        # product.status = "approved"
+        if product.status == "approved":
+            flash("✅ สินค้านี้ได้รับการอนุมัติเรียบร้อยแล้ว", "success")
+            color = "#28a745"
+        elif product.status == "rejected":
+            flash("❌ สินค้านี้ไม่ได้รับการอนุมัติ", "danger")
+            color = "#ffcecd"
+    # db.session.commit()
+
+    # ส่งแจ้งเตือนไปยัง LINE
+   
+    # return redirect(url_for('product_blueprint.productSales'))
+        return render_template('/productForSales/approved_product.html', segment='productSales',color=color  )
+
+@blueprint.route('/change_status', methods=['POST'])
+@login_required
+def change_product_status():
+
+    data = request.get_json()  # รับ JSON จาก fetch/post
+    product_id = data.get("id")
+    action = data.get("mode")  # 'approve' หรือ 'reject'
+    print(current_user.role)
+    # ตรวจสอบว่าเป็น Admin
+    if current_user.role.name != "Admin":
+        return jsonify({"error": "คุณไม่มีสิทธิ์อนุมัติสินค้า"}), 403
+
+    # ดึงสินค้าตาม id
+    product = ProductForSalesModel.query.get_or_404(product_id)
+
+    # เช็ค action
+    if action == "approve":
+        product.status = "approved"
+    elif action == "reject":
+        product.status = "rejected"
+    else:
+        return jsonify({"error": "Action ไม่ถูกต้อง"}), 400
+
+    db.session.commit()
+
+    return jsonify({
+        "message": f"เปลี่ยน status สำเร็จ",
+        "status": product.status
+    })
+
 @blueprint.route('/addProductSale', methods=['GET', 'POST'])
 @login_required
 @read_permission.require(http_exception=403)
@@ -514,6 +637,7 @@ def addProductSale():
         period_id=period_id,  # ✅ แก้ไขให้ period_id เป็น int หรือ None
         term_of_payment_id=term_of_payment_id,
         detail=detail,
+        status="approved" if current_user.role.name == "Admin" else "pending"
         # start_at=start,
         # end_at=end,
     )
@@ -733,7 +857,38 @@ def addProductSale():
         db.session.commit()  # บันทึกข้อมูลลงฐานข้อมูล
         print("เพิ่ม Agency เข้าโครงการสำเร็จ")            
     # print(datas)
-    return redirect(url_for('product_blueprint.EditProductSales',id=new_item.id))
+    # หลังจากสร้าง new_item เรียบร้อยแล้ว
+
+    if current_user.role.name == "Admin":
+        flash("✅ เพิ่มข้อมูลสินค้าเรียบร้อยแล้ว", "success")
+        # return redirect(url_for('product_blueprint.EditProductSales', id=new_item.id))
+        return redirect(url_for('product_blueprint.productSales', id=new_item.id))
+    else:
+        
+        
+        # ✅ สร้าง URL ของหน้าที่ต้องการให้ approve
+        redirect_urls = url_for(
+            'product_blueprint.PreviewProductSales',
+            id=new_item.id,
+            _external=True
+        )
+
+        # ✅ สร้าง login url พร้อม query next
+        # ห่อด้วย login route
+        login_url = url_for(
+            'authentication_blueprint.login',
+            next=redirect_urls,
+            _external=True
+        )
+
+        # ✅ ส่งแจ้งเตือนเข้า LINE ให้ admin ไปกด approve
+        message = f"📝 มีสินค้าใหม่รออนุมัติ: {name}\nตรวจสอบที่: {login_url}"
+        send_line_message(message)
+        flash("📝 สินค้านี้รอการอนุมัติจาก Admin", "info")
+        return redirect(login_url)
+
+
+        # return redirect(url_for('product_blueprint.PreviewProductSales', id=new_item.id))
 
 def get_all_check_vat_values(term_years):
     # อ่าน checkbox ตัวเดียว
@@ -809,6 +964,12 @@ def updateProductSale():
         thisItem.detail=detail
         # thisItem.start_at=start,
         # thisItem.end_at=end,
+        # action = request.form.get("action")  # 'approve', 'reject' หรือ None
+
+        # if action == "approve":
+        #     thisItem.status = "approved"
+        # elif action == "reject":
+        #     thisItem.status = "rejected"
     
     db.session.commit()
     
@@ -1214,6 +1375,15 @@ def save_payment():
     except Exception as e:
         db.session.rollback()
         return jsonify({"status": "error", "message": str(e)})
+    
+
+@blueprint.route('/send_test_line')
+@login_required
+def send_test_line():
+    print(current_user.role)
+    if current_user.role.name != "Admin":
+        send_line_message("test message from flask")
+    return "Sent!"
 
 
 

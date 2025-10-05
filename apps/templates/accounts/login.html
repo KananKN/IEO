@@ -81,6 +81,7 @@
                     </label>
                 </div>
                 <div class="mb-15px">
+                    <input type="hidden" name="next" value="{{ request.args.get('next') or '' }}">
                     <button
                         type="submit"
                         name="login"

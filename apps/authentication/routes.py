@@ -31,6 +31,7 @@ import uuid
 from sqlalchemy import and_, func, case, asc, or_, cast, String
 from contextlib import contextmanager
 
+from urllib.parse import urlparse, urljoin
 
 
 @blueprint.route('/')
@@ -63,10 +64,17 @@ def login_github():
     return redirect(url_for('home_blueprint.index'))
 
 
+def is_safe_url(target):
+    ref_url = urlparse(request.host_url)
+    test_url = urlparse(urljoin(request.host_url, target))
+    return test_url.scheme in ('http', 'https') and ref_url.netloc == test_url.netloc
 
 @blueprint.route('/login', methods=['GET', 'POST'])
 def login():
     login_form = LoginForm(request.form)
+    next_page = request.args.get('next') or request.form.get('next') or None
+
+    
     if 'login' in request.form:
 
         # read form data
@@ -88,6 +96,13 @@ def login():
                 login_user(user, remember=remember)
                 identity = Identity(user.id)
                 identity_changed.send(current_app._get_current_object(), identity=identity)
+
+                # รับค่า next จาก query string
+                if next_page:
+                    from urllib.parse import urlparse
+                    path = urlparse(next_page).path
+                    return redirect(path)
+                
                 return redirect(url_for('authentication_blueprint.route_default'))
 
             # Something (user or pass) is not ok
@@ -97,7 +112,15 @@ def login():
             # return render_template('accounts/login.html',
             #                        msg='Wrong user or password',
             #                        form=login_form)
-
+    if current_user.is_authenticated:
+        print("User already logged in")
+        if next_page:
+            # เอาเฉพาะ path เพื่อให้ปลอดภัย
+            from urllib.parse import urlparse
+            path = urlparse(next_page).path
+            return redirect(path)
+        return redirect(url_for('home_blueprint.index'))
+    
     if not current_user.is_authenticated:
         return render_template('accounts/login.html',
                                form=login_form)
@@ -290,6 +313,7 @@ def get_projects_bulk():
         .filter(
             ProductForSalesModel.product_category_id == category_id,
             ProductForSalesModel.country_id.in_(country_ids),
+            ProductForSalesModel.status == "approved", 
             ProductAgencyAssociation.agency_id == agency_id,
             ProductAgencyAssociation.status == 'active'
         ).all()
@@ -321,6 +345,7 @@ def get_projects_bulk_admin():
         .filter(
             ProductForSalesModel.product_category_id == category_id,
             ProductForSalesModel.country_id.in_(country_ids),
+            ProductForSalesModel.status == "approved",     # ✅ เอาเฉพาะ approved
             ProductAgencyAssociation.agency_id == agency_id,
             ProductAgencyAssociation.status == 'active'
         ).all()

@@ -94,9 +94,34 @@
 
     <div class="panel panel-default" data-sortable-id="ui-widget-11" data-init="true">
         <div class="panel-heading ui-sortable-handle">
-            <h3 class="panel-title " style="font-size: 20px;">Product For Sales </h3>
+            <h3 class="panel-title " style="font-size: 20px;">Product For Sales 
+                <span class="badge 
+                        {% if datas.status == 'pending' %}bg-warning
+                        {% elif datas.status == 'approved' %}bg-success
+                        {% elif datas.status == 'rejected' %}bg-danger
+                        {% endif %}
+                    ">
+                {% if datas.status == 'pending' %}
+                    รออนุมัติ
+                {% elif datas.status == 'approved' %}
+                    อนุมัติแล้ว
+                {% elif datas.status == 'rejected' %}
+                    ไม่อนุมัติ
+                {% else %}
+                    {{ datas.status }}
+                {% endif %}
+            </span></h3>
             <div class="panel-heading-btn">
-                <button type="button"  class="btn btn-blue"  onclick="func_save()">Save</button>
+                {% if current_user.role.name == "Admin" %}
+
+                    <a href="javascript:;" class="btn btn-success  btn-icon btn-circle btn-lg"><i class="fas fa-check" onclick="sweetAlertApprove('{{ datas.id }}')"></i></a>
+                    <a href="javascript:;" onclick="sweetAlertReject('{{ datas.id }}')" class=" btn btn-danger btn-icon btn-circle btn-lg">
+                    <i class="fas fa-times"></i></a>
+                {% endif %}
+                <!-- Icon สำหรับ Admin -->
+               
+                
+                <button type="button"  class="btn btn-blue" hidden onclick="func_save()">Save</button>
             </div>
         </div>
         <div class="panel-body">
@@ -111,13 +136,13 @@
                     <div class="row mb-3"  >
                         <label class="form-label col-form-label col-md-4">Name Product</label>
                         <div class="col-md-8">
-                            <input  class="form-control"  name="name_product" id="i_nameProduct"  value="{{datas.name}}"  display data-parsley-required="true"/>
+                            <input  class="form-control"  name="name_product" id="i_nameProduct"  value="{{datas.name}}" disabled  display data-parsley-required="true"/>
                         </div>
                     </div> 
                     <div class="row mb-3">
                         <label class="form-label col-form-label col-md-4">Product Category</label>
                         <div class="col-lg-8">
-                            <select class="default-select2 form-control"  name="productCategory" id="i_productCategory" >
+                            <select class="default-select2 form-control"  name="productCategory" id="i_productCategory" disabled>
                                 <option value="">ไม่มี</option>
                                 {% for productCar in productCars %}
                                     <option value="{{productCar.id}}" {% if datas.product_category_id|int == productCar.id|int %} selected {% endif %}>{{productCar.name}}</option>
@@ -128,7 +153,7 @@
                     <div class="row mb-3">
                         <label class="form-label col-form-label col-md-4">Country</label>
                         <div class="col-lg-8">
-                            <select class="default-select2 form-control"  name="country" id="i_country" >
+                            <select class="default-select2 form-control"  name="country" id="i_country" disabled>
                                 <option value="">ไม่มี</option>
                                 {% for country in countrys %}
                                     <option value="{{country.id}}" {% if datas.country_id|int == country.id|int %} selected {% endif %}>{{country.name}}</option>
@@ -140,7 +165,7 @@
                     <div class="row mb-3">
                         <label class="form-label col-form-label col-md-4">Period</label>
                         <div class="col-lg-8">
-                            <select class="default-select2 form-control"  name="period" id="i_period" >
+                            <select class="default-select2 form-control"  name="period" id="i_period" disabled>
                                 <option value="">ไม่มี</option>
                                 {% for period in periods %}
                                     <option value="{{period.id}}" data-period="{{period.name}}" {% if datas.period_id|int == period.id|int %} selected {% endif %}>{{period.name}}</option>
@@ -163,7 +188,7 @@
                     <div class="form-group row">
                         <label class="form-label col-form-label col-lg-4">รายละเอียดโครงการ</label>
                         <div class="col-lg-8">
-                            <textarea class="form-control" id="detail" rows="4" cols="50"  name="detail" placeholder="" >{{datas.detail}}</textarea>
+                            <textarea class="form-control" id="detail" rows="4" cols="50"  name="detail" disabled placeholder="" >{{datas.detail}}</textarea>
                         </div>
                     </div> 
 
@@ -176,7 +201,7 @@
                         <div class="col-md-8">
                            <!-- ส่วน Input สำหรับอัปโหลดไฟล์ -->
                             <input 
-                                class="form-control" type="file" id="formFile_img" name="formFile_img"  
+                                class="form-control" type="file" id="formFile_img" name="formFile_img"   disabled
                                 accept=".jpg, .jpeg, .png" onchange="validateFile(this)" 
                             />
 
@@ -207,7 +232,7 @@
                         <label class="form-label col-form-label col-md-4">ไฟล์โครงการ</label>
 
                         <div class="col-md-8">
-                            <input class="form-control" type="file" id="formFile_file" name="formFile_file" multiple accept=".pdf,"  onchange="validateFile(this)"/>
+                            <input class="form-control" type="file" id="formFile_file" name="formFile_file" multiple accept=".pdf," disabled  onchange="validateFile(this)"/>
                         </div>
                         {% for file_data in file_data %}
                             {% if file_data.file_type == 1 %}
@@ -245,7 +270,7 @@
 
                         <div class="col-md-4">
                             {% set default_year = datas.year %}
-                            <select name="inputYear" id="inputYear" class="default-select2 form-control">
+                            <select name="inputYear" id="inputYear" class="default-select2 form-control" disabled>
                                 {% for year in range(2020, 2031) %}
                                     <option value="{{ year }}" {% if year == (default_year | int) %}selected{% endif %}>{{ year }}</option>
                                 {% endfor %}
@@ -256,7 +281,7 @@
                         <div class="col-md-4 text-end" >
 
                             <!-- <button type="button"  class="btn btn-blue"  onclick="func_add_payment()">Save</button> -->
-                            <button type="button"  class="btn btn-blue"  id="btnAddToTable">เพิ่มข้อมูลในตาราง</button>
+                            <button type="button"  class="btn btn-blue"  id="btnAddToTable" disabled>เพิ่มข้อมูลในตาราง</button>
                         </div>
                     </div> 
                     <div class="row mb-15px" >
@@ -264,13 +289,13 @@
                         
                         <div class="col-md-4">
                             <!-- <input  class="form-control price-input"  name="price" id="i_prices" value="{{ '{:,.2f}'.format(datas.price|float) }}" oninput="formatNumberWithCommas(this)"  data-parsley-required="true"/> -->
-                            <input  class="form-control price-input"  name="price" id="i_prices" value=""  oninput="formatNumberWithCommas(this)"  data-parsley-required="true"/>
+                            <input  class="form-control price-input"  name="price" id="i_prices" value=""  disabled oninput="formatNumberWithCommas(this)"  data-parsley-required="true"/>
                         </div>
                     </div>
                     <div class="row mb-15px">
                         <label class="form-label col-form-label col-md-4">Term Of Payment</label>
                         <div class="col-md-8">
-                           <select class="default-select2 form-control"  name="term" id="i_term" >
+                           <select class="default-select2 form-control"  name="term" id="i_term" disabled>
                                 <option value="">ไม่มี</option>
                                 {% for term in termOfPaymentModels %}
                                     <option value="{{term.name}}" {% if datas.term_of_payment_id|int == term.name|int %} selected {% endif %}>{{term.name}}</option>
@@ -312,7 +337,7 @@
                                 <td ><strong>เลือก</strong></td>
                                 {% for year in grouped_payments.keys() %}
                                     <td class="text-center" style="width: 75px; max-width: 75px; text-align:center; padding: 4px 8px;">
-                                        <input type="radio" name="selectedYear" class="mt-2" value="{{ year }}" {% if year == datas.year %}checked{% endif %}>
+                                        <input type="radio" name="selectedYear" class="mt-2" value="{{ year }}" disabled {% if year == datas.year %}checked{% endif %}>
                                     </td>
                                 {% endfor %}
                             </tr>
@@ -325,7 +350,7 @@
                                     {% set price = (items[0].price if items|length > 0 and items[0].price|float != 0 else datas.price) %}
                                     <td>
                                         <input class="form-control text-end" name="price_{{ year }}" 
-                                            value="{{ '{:,.2f}'.format(price|float) }}" 
+                                            value="{{ '{:,.2f}'.format(price|float) }}" disabled
                                             oninput="formatNumberWithCommas(this)" style="width: 100px;">
                                     </td>
                                 {% endfor %}
@@ -341,7 +366,7 @@
                                         <td>
                                             {% if items|length > term_index %}
                                                 <input class="form-control text-end" name="installments_{{ year }}[]"
-                                                    value="{{ '{:,.2f}'.format(items[term_index].amount|float) }}"
+                                                    value="{{ '{:,.2f}'.format(items[term_index].amount|float) }}" disabled
                                                     oninput="formatNumberWithCommas(this)" style="width: 100px;">
                                                 <input type="hidden" name="term_id_{{ year }}[]" value="{{ items[term_index].id }}">
                                                 <input type="hidden" name="term_detail_{{ year }}[]" value="{{ items[term_index].term_detail }}">
@@ -365,7 +390,7 @@
                         <label class="form-label col-form-label col-md-4">Sponsor</label>
                         <div class="col-md-8">
 
-                            <select class="multiple-select2 form-control" multiple  name="employee" id="i_employee" >
+                            <select class="multiple-select2 form-control" multiple  name="employee" id="i_employee" disabled >
                                 {% for employee in employees %}
                                     <option value="{{employee.id}}" {% if employee.id in selected_employee  %} selected {% endif %}>{{employee.name}}</option>
                                 {% endfor %}
@@ -375,7 +400,7 @@
                     <div class="row mb-15px" hidden>
                         <label class="form-label col-form-label col-md-4">Supplier (organization)</label>
                         <div class="col-md-8">
-                            <select class="multiple-select2 form-control" multiple name="supplier" id="i_supplier" >
+                            <select class="multiple-select2 form-control" multiple name="supplier" id="i_supplier" disabled >
                                 {% for supplier in suppliers %}
                                     <option value="{{ supplier.id }}"
                                         {% if supplier.id in selected_suppliers  %} selected {% endif %}>
@@ -388,7 +413,7 @@
                     <div class="row mb-15px">
                         <label class="form-label col-form-label col-md-4">Oganization</label>
                         <div class="col-md-8">
-                            <select class="multiple-select2 form-control" multiple name="organization" id="i_organization">
+                            <select class="multiple-select2 form-control" multiple name="organization" id="i_organization" disabled>
                                 {% for organization in organizations %}
                                     <option value="{{organization.id}}" {% if organization.id in selected_organizations  %} selected {% endif %}>{{organization.name}}</option>
                                 {% endfor %}
@@ -403,7 +428,7 @@
                         <label class="form-label col-form-label col-md-4">University</label>
                         <div class="col-md-8">
                             <input  class="form-control" readonly  value="" hidden  display data-parsley-required="true"/>
-                            <select class="multiple-select2 form-control" multiple name="university" id="i_university" >
+                            <select class="multiple-select2 form-control" multiple name="university" id="i_university" disabled>
                                 {% for university in universitys %}
                                     <option value="{{university.id}}" {% if university.id in selected_agencys  %} selected {% endif %}>{{university.first_name}} {{university.last_name}}</option>
                                 {% endfor %}
@@ -414,7 +439,7 @@
                         <label class="form-label col-form-label col-md-4">Agency</label>
                         <div class="col-md-8">
                             <input  class="form-control" readonly  value="" hidden  display data-parsley-required="true"/>
-                            <select class="multiple-select2 form-control" multiple name="agency" id="i_agency" >
+                            <select class="multiple-select2 form-control" multiple name="agency" id="i_agency" disabled>
                                 {% for agency in agencys %}
                                     <option value="{{agency.id}}" {% if agency.id in selected_agencys  %} selected {% endif %}>{{agency.first_name}} {{agency.last_name}}</option>
                                 {% endfor %}
@@ -723,14 +748,14 @@ $(document).ready(function () {
                         <label class="form-label col-form-label col-md-4">จำนวนงวด ${i + 1}</label>
                         <div class="col-md-4">
                             <input type="text" class="form-control" name="term_id[]" hidden  value="${defaultID}" placeholder="รหัส">
-                            <input type="text" class="form-control" name="term_detail[]" value="${defaultDetail}" placeholder="รายละเอียด">
+                            <input type="text" class="form-control" name="term_detail[]" disabled value="${defaultDetail}" placeholder="รายละเอียด">
                         </div>
                         <div class="col-md-3 px-0">
-                            <input type="text" class="form-control price-input" name="installments[]" value="${formattedAmount}" oninput="formatNumberWithCommas(this)" placeholder="จำนวนงวด ${i + 1}">
+                            <input type="text" class="form-control price-input" name="installments[]" disabled value="${formattedAmount}" oninput="formatNumberWithCommas(this)" placeholder="จำนวนงวด ${i + 1}">
                         </div>
                         <div class="col-md-1" >
                             <input type="hidden" name="check_vat_${usedYear}[${i}]" value="0" />
-                            <input type="checkbox" class="form-check-input mt-2" name="check_vat_${usedYear}[${i}]" value="1" ${isChecked} ${style_check} >
+                            <input type="checkbox" class="form-check-input mt-2" name="check_vat_${usedYear}[${i}]" value="1" ${isChecked} ${style_check} disabled>
                         </div>
                     </div>
                 `;
@@ -1276,7 +1301,97 @@ function func_add_payment() {
     });
    */ 
 </script>
+<script>
+    
+// delete
+function post(path, params, method = "post") {
+    const form = document.createElement("form");
+    form.method = method;
+    form.action = path;
+    for (const key in params) {
+        if (params.hasOwnProperty(key)) {
+            const hiddenField = document.createElement("input");
+            hiddenField.type = "hidden";
+            hiddenField.name = key;
+            hiddenField.value = params[key];
+            form.appendChild(hiddenField);
+        }
+    }
+    document.body.appendChild(form);
+    form.submit();
+}
 
+
+
+function sweetAlertApprove(id) {
+    swal({
+        title: "ยืนยันอนุมัติสินค้า?",
+        icon: "warning",
+        buttons: {
+            cancel: { text: "Cancel", value: null, visible: true, className: "btn btn-default", closeModal: true },
+            confirm: { text: "OK", value: true, visible: true, className: "btn btn-warning", closeModal: true }
+        },
+    }).then((result) => {
+        if (result !== null) {
+            fetch("/product/change_status", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id: id, mode: "approve" })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) {
+                    swal("Error", data.error, "error");   // SweetAlert แสดง error
+                } else {
+                    swal("Success", data.message, "success")
+                    .then(() => {
+                        if (data.status === "approved") {
+                            window.location.href = "/product/EditProductSales/" + id;
+                        } else if (data.status === "rejected") {
+                            window.location.href = "/product/approve/" + id;
+                        }
+                    });
+                }
+            });
+        }
+    });
+}
+
+function sweetAlertReject(id) {
+    swal({
+        title: "ยืนยันปฏิเสธสินค้า?",
+        icon: "warning",
+        buttons: {
+            cancel: { text: "Cancel", value: null, visible: true, className: "btn btn-default", closeModal: true },
+            confirm: { text: "OK", value: true, visible: true, className: "btn btn-warning", closeModal: true }
+        },
+    }).then((result) => {
+        if (result !== null) {
+            fetch("/product/change_status", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id: id, mode: "reject" })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) {
+                    swal("Error", data.error, "error");   // SweetAlert แสดง error
+                } else {
+                    swal("Success", data.message, "success")
+                    .then(() => {
+                        if (data.status === "rejected") {
+                            window.location.href = "/product/approve/" + id;
+                        } 
+                    });
+                }
+            });
+        }
+    });
+}
+
+    
+   
+    </script>
 
 
 

@@ -216,7 +216,7 @@
                     <div class="row mb-3" >
                         <label class="form-label col-form-label col-md-4">Year</label>
                         <div class="col-md-4">
-                            <input  class="form-control"  hidden name="yearsss" id="i_yearsss"  value=""  display data-parsley-required="true"/>
+                            <input  class="form-control"   name="inputYearss" id="inputYearss"  value=""  hidden data-parsley-required="true"/>
 
                             <select name="inputYear" id="inputYear" class="default-select2 form-control">
                                 {% set this_year = this_year or 2025 %}
@@ -398,6 +398,8 @@ $(document).ready(function () {
         // ใส่ colgroup เข้าไปก่อน thead และ tbody
         $('#priceTable').prepend(colgroupHtml);
 
+        console.log(yearDataStore)
+
 
         if (!yearDataStore || typeof yearDataStore !== 'object') return;
 
@@ -558,7 +560,14 @@ $(document).ready(function () {
                     maximumFractionDigits: 2
                 })
                 : '';
-   
+                
+                const role_name = "{{ current_user.role.name or '' }}";   // ให้ role_name มีค่า string เสมอ
+                let style_check = "";   // กำหนดค่า default ไว้ก่อน
+
+                if (role_name != 'Admin') {
+                    console.log(role_name);
+                    style_check = "hidden";   // จะใส่ disabled แค่ไม่ใช่ Admin
+                }
                 //console.log(defaultID)
                 //console.log(`index ${i} — id: ${defaultID}, detail: ${defaultDetail}, amount: ${defaultAmount}`);
 
@@ -573,7 +582,7 @@ $(document).ready(function () {
                             <input type="text" class="form-control price-input" name="installments" value="${formattedAmount}" oninput="formatNumberWithCommas(this)" placeholder="จำนวนงวด ${i + 1}">
                         </div>
                         <div class="col-md-1" >
-                            <input type="checkbox" name="check_vat" ${(payments[i]?.check_vat == 1 || i === 0) ? 'checked' : ''} class="form-check-input mt-2"  />
+                            <input type="checkbox" name="check_vat" ${(payments[i]?.check_vat == 1 || i === 0) ? 'checked' : ''} class="form-check-input mt-2" ${style_check}  />
                         </div>
                     </div>
                 `;
@@ -739,7 +748,7 @@ $(document).ready(function () {
         });
 
        
-
+        console.log("year",year)
         // 🔸 ตรวจสอบว่ามีแถวปีนี้อยู่แล้วหรือยัง
         let $existingRow = $(`#tableBody tr[data-year="${year}"]`);
         if ($existingRow.length) {

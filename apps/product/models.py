@@ -119,6 +119,7 @@ class ProductForSalesModel(db.Model):
     country_id: int
     name: str   
     year: str   
+    status: str   
     # detail : str
     price: float  # ✅ เพิ่มฟิลด์ price 
     images: str
@@ -147,6 +148,8 @@ class ProductForSalesModel(db.Model):
     detail = db.Column(db.Text(),default=None)
     start_at = db.Column(db.DateTime,  default=None)
     end_at = db.Column(db.DateTime,  default=None)
+
+    status = db.Column(db.String(20), default="pending",nullable=True)  # pending, approved, rejected
 
     
     created_at = db.Column(db.DateTime,  default=db.func.current_timestamp())
@@ -212,4 +215,5 @@ class installmentsPaymentModel(db.Model):
     created_at = db.Column(db.DateTime,  default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime,  default=db.func.current_timestamp(),
                            onupdate=db.func.current_timestamp())
+    
     

@@ -1,0 +1,95 @@
+﻿{% extends "layouts/base-fullscreen.html" %}
+
+{% block title %} รอการอนุมัติสินค้า {% endblock %} 
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}
+ <link href="{{ config.ASSETS_ROOT }}/plugins/datatables.net-bs5/css/dataTables.bootstrap5.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/datatables.net-responsive-bs5/css/responsive.bootstrap5.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/select2/dist/css/select2.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/tag-it/css/jquery.tagit.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/select-picker/dist/picker.min.css" rel="stylesheet" />
+
+<style>
+    * {
+        font-family: 'Prompt', sans-serif;
+    }
+     body {
+      background-color:rgb(207, 211, 214);
+      
+    }
+    .card {
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      width: 100%;
+    }
+
+    
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+
+{% set bg_colors = {
+    "success": "#b3e6e6",
+    "danger": "#ffcecd",
+    "warning": "#fce1ba",
+    "info": "#17a2b8"
+} %}
+<div class="d-flex align-items-center justify-content-center min-vh-100">
+      <div class="col-xl-5 my-5">
+          
+          {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+                <div class="card shadow-md rounded-lg" style="background-color: {{ bg_colors.get(category, '#3d78ed') }};">
+                    <div class="row p-5">
+                        <!-- ฝั่งซ้าย (สีฟ้า) -->
+                        <div class="text-center text-white my-4">
+                            <h1 class="alert alert-{{ category }} mb-0">{{ message }}</h1>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                {% endif %}
+            {% endwith %}
+                      
+                            
+
+                      
+                      
+                  
+
+
+                 
+              
+      </div>
+  </div>    
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}
+<script>
+    function checkApprovalStatus() {
+        fetch('/check_user_status')
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success' && data.user_status === 'active') {
+                    // ล้าง session backend จะทำให้เองหลัง redirect
+                    window.location.href = "/login";
+                }
+            });
+    }
+
+    window.addEventListener('load', checkApprovalStatus);
+</script>
+<script>
+    // ป้องกันปุ่ม back
+    history.pushState(null, '', location.href);
+    window.onpopstate = function () {
+        history.pushState(null, '', location.href);
+    };
+</script>
+
+{% endblock javascripts %}
