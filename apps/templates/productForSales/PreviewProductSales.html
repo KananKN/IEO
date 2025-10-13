@@ -264,8 +264,23 @@
             <div class="row">
                 <div class="col-sm-6">
                     <h5>Price List</h5>
+                    <div class="row mb-3" >
+                        <label class="form-label col-form-label col-md-4">Year/Number</label>
+                        <div class="col-md-4">
+                            <select name="type_select" id="type_select" class="default-select2 form-control" disabled>
+                                <option value="number"{% if datas.type_select == "number" %}selected{% endif %}>Number</option>
+                                <option value="year" {% if datas.type_select == "year" %}selected{% endif %}>Year</option>
+                            </select>
+                        </div>
+                    </div>
                     <div class="row my-3" >
-                        <label class="form-label col-form-label col-md-4">Year</label>
+                        <label class="form-label col-form-label col-md-4">{% if datas.type_select == 'year' %}
+                            Year
+                        {% elif datas.type_select == 'number' %}
+                            Number
+                        {% else %}
+                            Year/Number
+                        {% endif %}</label>
                         <input type="hidden" id="paymentData" value='{{ grouped_payments | tojson }}'>
 
                         <div class="col-md-4">
@@ -508,22 +523,61 @@
     };
     //console.log("ปีและราคาใน yearPriceMap:", yearPriceMap);
     const selectedYear = {{ datas.year|tojson }};
+    const selectedType = {{ datas.type_select|tojson }};
+
+    //console.log("ปีที่เลือกตอนโหลดหน้า:", selectedYear,selectedType);
+
+
+
+    function updateYearOptions() {
+        const type = $('#type_select').val(); // ดึง type_select ของ product
+        const $yearSelect = $('#inputYear');
+        
+        $yearSelect.empty(); // ล้าง options เก่า
+    
+        const defaultYear = "{{ datas.year|default('') }}";   // ปีหรือเลขเริ่มต้น
+        const currentYear = new Date().getFullYear();
+    
+        if (type === 'year') {
+            // สร้างตัวเลือกปี เช่น ปีปัจจุบัน -5 ถึง +5
+            const years = Array.from({ length: 11 }, (_, i) => currentYear - 5 + i);
+            years.forEach(y => {
+                const selected = y == defaultYear ? 'selected' : '';
+                $yearSelect.append(`<option value="${y}" ${selected}>${y}</option>`);
+            });
+        } else if (type === 'number') {
+            // สร้างตัวเลือกเป็นตัวเลข 1-10
+            for (let i = 1; i <= 10; i++) {
+                const selected = i == defaultYear ? 'selected' : '';
+                $yearSelect.append(`<option value="${i}" ${selected}>${i}</option>`);
+            }
+        }
+    
+        // รีสตาร์ท select2 (ถ้าใช้ select2)
+        if ($yearSelect.hasClass('select2-hidden-accessible')) {
+            $yearSelect.select2('destroy').select2();
+        }
+    }
+
+//-----------------------------
+function formatNumberWithCommas(x) {
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
 $(document).ready(function () {
     sortTableByYear(true);  
 
    
-    //-----------------------------
-    function formatNumberWithCommas(x) {
-        return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-    }
+    
 
     let yearDataStore = {};
+    updateYearOptions();
     //let yearPriceMap = {};
     //let datas = {};
     function updatePriceByYear(selectedYear) {
         selectedYear = selectedYear?.trim?.() || null;
 
-        console.log("🟡 ปีที่ส่งเข้า updatePriceByYear:", selectedYear);
+        //console.log("🟡 ปีที่ส่งเข้า updatePriceByYear:", selectedYear);
 
         if (!selectedYear) {
             console.warn('❌ ไม่ได้ส่งปีที่ถูกต้องเข้ามา');
@@ -539,7 +593,7 @@ $(document).ready(function () {
         let price = parseFloat(priceStr);
         if (isNaN(price)) price = 0;
 
-        console.log("✅ ปีที่เลือก:", selectedYear, "ราคา:", price);
+        //console.log("✅ ปีที่เลือก:", selectedYear, "ราคา:", price);
 
         $('#i_prices').val(
             price.toLocaleString('en-US', {
@@ -548,6 +602,7 @@ $(document).ready(function () {
             })
         );
     }
+
 
     // ✅ 1. ตั้งค่าตอนโหลดหน้า
     const initialYear = $('#inputYear').val();
@@ -640,7 +695,7 @@ $(document).ready(function () {
             //let defaultYear = $('#defaultProductYear').val() || $('#inputYear').val();
             const defaultYear = sessionStorage.getItem('selectedYear') || $('#defaultProductYear').val();
 
-            console.log("years",years)
+            //console.log("years",years)
         years.forEach(y => {
             const checked = y === defaultYear ? 'checked' : '';
             selectRow += `<td class="text-center">
@@ -748,14 +803,14 @@ $(document).ready(function () {
                         <label class="form-label col-form-label col-md-4">จำนวนงวด ${i + 1}</label>
                         <div class="col-md-4">
                             <input type="text" class="form-control" name="term_id[]" hidden  value="${defaultID}" placeholder="รหัส">
-                            <input type="text" class="form-control" name="term_detail[]" disabled value="${defaultDetail}" placeholder="รายละเอียด">
+                            <input type="text" class="form-control" name="term_detail[]" value="${defaultDetail}" placeholder="รายละเอียด">
                         </div>
                         <div class="col-md-3 px-0">
-                            <input type="text" class="form-control price-input" name="installments[]" disabled value="${formattedAmount}" oninput="formatNumberWithCommas(this)" placeholder="จำนวนงวด ${i + 1}">
+                            <input type="text" class="form-control price-input" name="installments[]" value="${formattedAmount}" oninput="formatNumberWithCommas(this)" placeholder="จำนวนงวด ${i + 1}">
                         </div>
                         <div class="col-md-1" >
                             <input type="hidden" name="check_vat_${usedYear}[${i}]" value="0" />
-                            <input type="checkbox" class="form-check-input mt-2" name="check_vat_${usedYear}[${i}]" value="1" ${isChecked} ${style_check} disabled>
+                            <input type="checkbox" class="form-check-input mt-2" name="check_vat_${usedYear}[${i}]" value="1" ${isChecked} ${style_check} >
                         </div>
                     </div>
                 `;
@@ -783,7 +838,7 @@ $(document).ready(function () {
                 check_vat: check_vat  // เก็บ id ลงใน array ด้วย
             });
 
-            console.log(payments)
+            //console.log(payments)
         });
 
         return {
@@ -804,7 +859,7 @@ $(document).ready(function () {
             let check_vat = $(this).find('input[type="checkbox"]').is(':checked') ? 1 : 0;
             payments.push({ id: id, term_detail: detail, amount: amount, check_vat:check_vat });
 
-            console.log(payments)
+            //console.log(payments)
         });
         return payments;
     }
@@ -841,13 +896,13 @@ $(document).ready(function () {
         $('#extra-inputs').empty();
     }
     let groupedPayments = {{ grouped_payments|tojson|safe }};
-    console.log('Original groupedPayments:', groupedPayments);
+    //console.log('Original groupedPayments:', groupedPayments);
 
 
     // แปลงโครงสร้างข้อมูลให้ตรงกับที่ต้องการ
     for (let year in groupedPayments) {
         const paymentsArray = groupedPayments[year];
-        console.log("Before map:", paymentsArray);
+        //console.log("Before map:", paymentsArray);
     
         if (Array.isArray(paymentsArray) && paymentsArray.length > 0) {
             yearDataStore[year] = {
@@ -869,7 +924,7 @@ $(document).ready(function () {
         }
     }
 
-    console.log("Updated yearDataStore:", yearDataStore);
+    //console.log("Updated yearDataStore:", yearDataStore);
 
     //------------------ เปลี่ยนปี --------------------------------
     // โหลดข้อมูลปีเริ่มต้น
@@ -1231,8 +1286,8 @@ function func_add_payment() {
         product_id: product_id,
         terms: terms
     };
-    console.log("dataToSend")
-    console.log(dataToSend)
+    //console.log("dataToSend")
+    //console.log(dataToSend)
     return
     $.ajax({
         url: "/save_payment",
@@ -1257,6 +1312,7 @@ function func_add_payment() {
         $rows.sort(function(a, b) {
             let yearA = parseInt($(a).data('year'), 10);
             let yearB = parseInt($(b).data('year'), 10);
+            
             return ascending ? yearA - yearB : yearB - yearA;
         });
 
@@ -1301,97 +1357,6 @@ function func_add_payment() {
     });
    */ 
 </script>
-<script>
-    
-// delete
-function post(path, params, method = "post") {
-    const form = document.createElement("form");
-    form.method = method;
-    form.action = path;
-    for (const key in params) {
-        if (params.hasOwnProperty(key)) {
-            const hiddenField = document.createElement("input");
-            hiddenField.type = "hidden";
-            hiddenField.name = key;
-            hiddenField.value = params[key];
-            form.appendChild(hiddenField);
-        }
-    }
-    document.body.appendChild(form);
-    form.submit();
-}
-
-
-
-function sweetAlertApprove(id) {
-    swal({
-        title: "ยืนยันอนุมัติสินค้า?",
-        icon: "warning",
-        buttons: {
-            cancel: { text: "Cancel", value: null, visible: true, className: "btn btn-default", closeModal: true },
-            confirm: { text: "OK", value: true, visible: true, className: "btn btn-warning", closeModal: true }
-        },
-    }).then((result) => {
-        if (result !== null) {
-            fetch("/product/change_status", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ id: id, mode: "approve" })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.error) {
-                    swal("Error", data.error, "error");   // SweetAlert แสดง error
-                } else {
-                    swal("Success", data.message, "success")
-                    .then(() => {
-                        if (data.status === "approved") {
-                            window.location.href = "/product/EditProductSales/" + id;
-                        } else if (data.status === "rejected") {
-                            window.location.href = "/product/approve/" + id;
-                        }
-                    });
-                }
-            });
-        }
-    });
-}
-
-function sweetAlertReject(id) {
-    swal({
-        title: "ยืนยันปฏิเสธสินค้า?",
-        icon: "warning",
-        buttons: {
-            cancel: { text: "Cancel", value: null, visible: true, className: "btn btn-default", closeModal: true },
-            confirm: { text: "OK", value: true, visible: true, className: "btn btn-warning", closeModal: true }
-        },
-    }).then((result) => {
-        if (result !== null) {
-            fetch("/product/change_status", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ id: id, mode: "reject" })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.error) {
-                    swal("Error", data.error, "error");   // SweetAlert แสดง error
-                } else {
-                    swal("Success", data.message, "success")
-                    .then(() => {
-                        if (data.status === "rejected") {
-                            window.location.href = "/product/approve/" + id;
-                        } 
-                    });
-                }
-            });
-        }
-    });
-}
-
-    
-   
-    </script>
 
 
 

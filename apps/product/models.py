@@ -150,6 +150,7 @@ class ProductForSalesModel(db.Model):
     end_at = db.Column(db.DateTime,  default=None)
 
     status = db.Column(db.String(20), default="pending",nullable=True)  # pending, approved, rejected
+    type_select = db.Column(db.String(20), default="year",nullable=True,comment='year')  # pending, approved, rejected
 
     
     created_at = db.Column(db.DateTime,  default=db.func.current_timestamp())

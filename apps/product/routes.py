@@ -8,7 +8,9 @@ from apps.product.models import *
 from apps.supplier.models import *
 from apps.employee.models import *
 from apps.lead.models import *
+from apps.notification.models import *
 from apps.product.line_noti import send_line_message
+from apps.product.line_noti import send_line_message_by_id
 
 from apps import db
 from flask import render_template, request, redirect, url_for, flash, Markup, jsonify, abort, send_file, session
@@ -26,7 +28,7 @@ import os
 from datetime import datetime
 import uuid
 from sqlalchemy import and_, func, case, asc
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 
 from decimal import Decimal
 from urllib.parse import urlencode
@@ -444,7 +446,10 @@ def EditProductSales(id):
     grouped_payments = defaultdict(list)
     for p in payment:
         grouped_payments[p.year].append(p)
-    print(grouped_payments)
+    
+    grouped_payments = OrderedDict(sorted(grouped_payments.items(), key=lambda x: int(x[0])))
+
+    # print(grouped_payments)
 
     max_terms = 0
     if grouped_payments:
@@ -492,6 +497,7 @@ def PreviewProductSales(id):
     productAgency = ProductAgencyAssociation.query.filter_by(product_id=id).all()
     selected_agency = [e.agency_id for e in productAgency]
 
+    print(datas.status)
     if datas.status == "approved":
         # flash("✅ สินค้านี้ได้รับการอนุมัติเรียบร้อยแล้ว")
         return redirect(url_for("product_blueprint.approved_product",product_id=id))
@@ -504,6 +510,7 @@ def PreviewProductSales(id):
     grouped_payments = defaultdict(list)
     for p in payment:
         grouped_payments[p.year].append(p)
+    grouped_payments = OrderedDict(sorted(grouped_payments.items(), key=lambda x: int(x[0])))
     print(grouped_payments)
 
     max_terms = 0
@@ -520,12 +527,24 @@ def PreviewProductSales(id):
 @login_required
 def approved_product(product_id):
     product = ProductForSalesModel.query.filter_by(id=product_id).first()
-
     color = "#3d78ed"  
+
+    if not product:
+        flash("❌ ไม่พบข้อมูลสินค้า", "danger")
+        color = "#ffcecd"
+        return render_template('/productForSales/approved_product.html', segment='productSales',color=color  )
     # ตรวจสอบสิทธิ์ Admin
     if current_user.role.name != "Admin":
-        flash("⏳ สินค้านี้กำลังรอการอนุมัติ", "warning")
-        color = "#ffc107"
+        if product.status == "approved":
+            flash("✅ สินค้านี้ได้รับการอนุมัติเรียบร้อยแล้ว", "success")
+            color = "#28a745"
+            return redirect(url_for('product_blueprint.EditProductSales', id=product_id))
+        elif product.status == "rejected":
+            flash("❌ สินค้านี้ไม่ได้รับการอนุมัติ", "danger")
+            color = "#ffcecd"
+        else:
+            flash("⏳ สินค้านี้กำลังรอการอนุมัติ", "warning")
+            color = "#ffc107"
         return render_template('/productForSales/approved_product.html', segment='productSales'  )
 
 
@@ -534,6 +553,7 @@ def approved_product(product_id):
         if product.status == "approved":
             flash("✅ สินค้านี้ได้รับการอนุมัติเรียบร้อยแล้ว", "success")
             color = "#28a745"
+            return redirect(url_for('product_blueprint.EditProductSales', id=product_id))
         elif product.status == "rejected":
             flash("❌ สินค้านี้ไม่ได้รับการอนุมัติ", "danger")
             color = "#ffcecd"
@@ -581,7 +601,7 @@ def addProductSale():
     print(request.form)
     # รับค่าจาก request.form
     # ✅ ตรวจสอบค่าจาก request.form
-    name = request.form.get('name_product') or None
+    name = request.form.get('name_product') or ''
     year = request.form.get('selectedYear') or ''
     
     price = request.form.get('price') or None
@@ -591,6 +611,7 @@ def addProductSale():
     term_of_payment_id = request.form.get('term') or None
     detail = request.form.get('detail') or None
     inputYear = request.form.get('inputYear') or None
+    type_select = request.form.get('type_select') or None
     # start = datetime.strptime(request.form.get("start"), "%d-%m-%Y") if request.form["start"] else None 
     # end = datetime.strptime(request.form.get("end"), "%d-%m-%Y") if request.form["end"] else None 
     # ✅ ตรวจสอบว่า country_id และ period_id ได้ค่าที่ถูกต้อง (ต้องเป็นตัวเลข ไม่ใช่ function)
@@ -637,6 +658,7 @@ def addProductSale():
         period_id=period_id,  # ✅ แก้ไขให้ period_id เป็น int หรือ None
         term_of_payment_id=term_of_payment_id,
         detail=detail,
+        type_select=type_select,
         status="approved" if current_user.role.name == "Admin" else "pending"
         # start_at=start,
         # end_at=end,
@@ -883,7 +905,18 @@ def addProductSale():
 
         # ✅ ส่งแจ้งเตือนเข้า LINE ให้ admin ไปกด approve
         message = f"📝 มีสินค้าใหม่รออนุมัติ: {name}\nตรวจสอบที่: {login_url}"
-        send_line_message(message)
+        # ✅ ส่งแจ้งเตือนเข้า LINE ทุกกลุ่มที่มีในฐานข้อมูล
+        # all_configs = LineConfigModel.query.all()
+        config = LineConfigModel.query.filter_by(id=1,).first()
+        print(config)
+
+        if not config:
+            print("⚠️ ไม่มี LINE group ที่ตั้งค่าไว้")
+        else:
+            # for config in config:
+            print(f"➡️ ส่งไปยัง {config.name} ({config.group_id or config.user_id})")
+            # send_line_message(message, config.id)
+            send_line_message_by_id(config.id,message)
         flash("📝 สินค้านี้รอการอนุมัติจาก Admin", "info")
         return redirect(login_url)
 
@@ -920,6 +953,7 @@ def updateProductSale():
     id = request.form.get('id') or None
     name = request.form.get('name_product') or None
     year = request.form.get('selectedYear') or ''
+    type_select = request.form.get('type_select') or None
     # price = request.form.get('price') or None
     product_category_id = request.form.get('productCategory') or None
     country_id = request.form.get('country') or None
@@ -956,6 +990,7 @@ def updateProductSale():
     if thisItem:
         thisItem.name=name,
         thisItem.year=year,
+        thisItem.type_select=type_select,
         thisItem.price=price,
         thisItem.product_category_id=product_category_id,
         thisItem.country_id=country_id,  
