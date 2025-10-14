@@ -1356,6 +1356,74 @@ function func_add_payment() {
         updateCurrentYearData();
     });
    */ 
+
+
+function sweetAlertApprove(id) {
+    swal({
+        title: "ยืนยันอนุมัติสินค้า?",
+        icon: "warning",
+        buttons: {
+            cancel: { text: "Cancel", value: null, visible: true, className: "btn btn-default", closeModal: true },
+            confirm: { text: "OK", value: true, visible: true, className: "btn btn-warning", closeModal: true }
+        },
+    }).then((result) => {
+        if (result !== null) {
+            fetch("/product/change_status", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id: id, mode: "approve" })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) {
+                    swal("Error", data.error, "error");   // SweetAlert แสดง error
+                } else {
+                    swal("Success", data.message, "success")
+                    .then(() => {
+                        if (data.status === "approved") {
+                            window.location.href = "/product/EditProductSales/" + id;
+                        } else if (data.status === "rejected") {
+                            window.location.href = "/product/approve/" + id;
+                        }
+                    });
+                }
+            });
+        }
+    });
+}
+
+function sweetAlertReject(id) {
+    swal({
+        title: "ยืนยันปฏิเสธสินค้า?",
+        icon: "warning",
+        buttons: {
+            cancel: { text: "Cancel", value: null, visible: true, className: "btn btn-default", closeModal: true },
+            confirm: { text: "OK", value: true, visible: true, className: "btn btn-warning", closeModal: true }
+        },
+    }).then((result) => {
+        if (result !== null) {
+            fetch("/product/change_status", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id: id, mode: "reject" })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) {
+                    swal("Error", data.error, "error");   // SweetAlert แสดง error
+                } else {
+                    swal("Success", data.message, "success")
+                    .then(() => {
+                        if (data.status === "rejected") {
+                            window.location.href = "/product/approve/" + id;
+                        } 
+                    });
+                }
+            });
+        }
+    });
+}
+
 </script>
 
 
