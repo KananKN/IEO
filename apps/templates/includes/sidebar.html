@@ -388,32 +388,16 @@
                 </div>
             </div>
             {% endif %}
-            {% if current_user.has_permission('read_line')  %}
-            <div
-                class="menu-item has-sub {% if segment in ['line'] %} active {% endif %}"
-            >
-                <!-- <a href="javascript:;" class="menu-link">
-                    <div class="menu-icon">
-                        <i class="fa fa-bell" aria-hidden="true"></i>
+            {% if current_user.has_permission('read_line')%}
+            <div class="menu-item  {% if segment == 'line' %} active {% endif %}" >
+                 <a href="/organization" class="menu-link">
+                  <div class="menu-icon">
+                    <i class="fa fa-bell" aria-hidden="true"></i>
                     </div>
-                    <div class="menu-text">Notification</div>
-                    <div class="menu-caret"></div>
-                </a> -->
-                <!-- <div class="menu-submenu"> -->
-                    <div class="menu-item {% if segment == 'line' %} active {% endif %}">
-                        <a href="/notification/line" class="menu-link">                        
-                        <div class="menu-icon">
-                            <i class="fa fa-bell" aria-hidden="true"></i>
-                        </div>
-
-                       <div class="menu-text mt-1">จัดการ LINE Token</div></a>
-                    </div>
-                    
-                <!-- </div> -->
-                
+                    <div class="menu-text mt-1">จัดการ LINE แจ้งเตือนสินค้า</div></a>
             </div>
-
-            {% endif %}  
+             {% endif %}  
+            
            
             
             {% if current_user.has_permission('read_resource') or
