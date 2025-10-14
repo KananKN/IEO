@@ -390,11 +390,11 @@
             {% endif %}
             {% if current_user.has_permission('read_line')%}
             <div class="menu-item  {% if segment == 'line' %} active {% endif %}" >
-                 <a href="/organization" class="menu-link">
+                 <a href="/notification/line" class="menu-link">
                   <div class="menu-icon">
                     <i class="fa fa-bell" aria-hidden="true"></i>
                     </div>
-                    <div class="menu-text mt-1">จัดการ LINE แจ้งเตือนสินค้า</div></a>
+                    <div class="menu-text mt-1">ตั้งค่า LINE แจ้งเตือนสินค้า</div></a>
             </div>
              {% endif %}  
             

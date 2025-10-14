@@ -1,6 +1,6 @@
 {% extends "layouts/base.html" %}
 
-{% block title %} จัดการ LINE Token {% endblock %} 
+{% block title %} ตั้งค่า LINE แจ้งเตือนสินค้า {% endblock %} 
 
 <!-- Specific Page CSS goes HERE  -->
 {% block stylesheets %}
@@ -41,7 +41,7 @@
         <div class="col-xl-6">
             <div class="panel panel-inverse">
                 <div class="panel-heading">
-                    <h4 class="panel-title">จัดการ LINE Token</h4>
+                    <h4 class="panel-title">ตั้งค่า LINE แจ้งเตือนสินค้า</h4>
                     <div class="panel-heading-btn">
                         <a href="javascript:;" class="btn btn-xs btn-icon btn-default" data-toggle="panel-expand"><i class="fa fa-expand"></i></a>
                         <a href="javascript:;" class="btn btn-xs btn-icon btn-success" data-toggle="panel-reload"><i class="fa fa-redo"></i></a>
@@ -62,7 +62,7 @@
                         {% endif %}
                     {% endwith %}
                     <div class="container ">
-                        <h5 class=" mb-2">จัดการ LINE Token</h5>
+                        <h5 class=" mb-2" hidden>ตั้งค่า LINE แจ้งเตือนสินค้า</h5>
                         <form id="lineTokenForm">
 
                             <div class="row mb-3"  hidden> >
@@ -71,7 +71,7 @@
                                     <input type=""  class="form-control" name="id" id="id-update" value="{{data.id}}" data-parsley-required="true"/>
                                 </div>
                             </div>
-                            <div class="row mb-3">
+                            <div class="row my-3">
                                 <label class="form-label col-form-label col-md-4">Name Line<span class="text-danger">*</span></label>
                                 <div class="col-md-8">
                                     <input type="text" class="form-control" name="name_line" value="{{data.name}}" required>
