@@ -953,7 +953,9 @@ def updateProductSale():
     id = request.form.get('id') or None
     name = request.form.get('name_product') or None
     year = request.form.get('selectedYear') or ''
-    type_select = request.form.get('type_select') or None
+    # type_select = request.form.get('type_select') 
+    # print("type_select")
+    # print(type_select)
     # price = request.form.get('price') or None
     product_category_id = request.form.get('productCategory') or None
     country_id = request.form.get('country') or None
@@ -990,7 +992,7 @@ def updateProductSale():
     if thisItem:
         thisItem.name=name,
         thisItem.year=year,
-        thisItem.type_select=type_select,
+        # thisItem.type_select=type_select,
         thisItem.price=price,
         thisItem.product_category_id=product_category_id,
         thisItem.country_id=country_id,  
