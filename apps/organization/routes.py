@@ -92,7 +92,11 @@ def get_organization():
     total_records = query.count()
 
     # ดึงข้อมูลตามลำดับและช่วงที่กำหนด
-    organizations = query.order_by(column_order).offset(start).limit(length).all()
+    if length and length > 0:
+        organizations = query.order_by(column_order).offset(start).limit(length).all()
+    else:
+        # length = -1 -> show all
+        organizations = query.order_by(column_order).all()
     # แปลงข้อมูลเป็น JSON
     data = [{
         "id": index + 1,

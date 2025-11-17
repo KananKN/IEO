@@ -225,7 +225,11 @@ def get_listAgency():
     total_records = query.count()
 
     # ดึงข้อมูลตามลำดับและช่วงที่กำหนด
-    users = query.order_by(column_order).offset(start).limit(length).all()
+    if length and length > 0:
+        users = query.order_by(column_order).offset(start).limit(length).all()
+    else:
+        # length = -1 -> show all
+        users = query.order_by(column_order).all()
     
     # เก็บ referred_by_id ทั้งหมด
     referred_ids = [user.referred_by_id for user in users if user.referred_by_id]

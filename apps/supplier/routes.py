@@ -98,8 +98,11 @@ def get_fees():
     else:
         column_order = FeesModel.id.asc()  # เรียงตาม ID ถ้าไม่มี order
 
-    fees = query.order_by(column_order).offset(start).limit(length).all()
-
+    if length and length > 0:
+        fees = query.order_by(column_order).offset(start).limit(length).all()
+    else:
+        # length = -1 -> show all
+        fees = query.order_by(column_order).all()
     # นับจำนวนแถวทั้งหมด
     total_records = FeesModel.query.count()
 
@@ -247,8 +250,11 @@ def get_supplierType():
         column_order = SupplierTypeModel.id.asc()  # เรียงตาม ID ถ้าไม่มี order
         
     # ดึงข้อมูลตามลำดับและช่วงที่กำหนด
-    supplier_types = query.order_by(column_order).offset(start).limit(length).all()
-    
+    if length and length > 0:
+        supplier_types = query.order_by(column_order).offset(start).limit(length).all()
+    else:
+        # length = -1 -> show all
+        supplier_types = query.order_by(column_order).all()
     # นับจำนวนแถวทั้งหมด
     total_records = SupplierTypeModel.query.count()
 
@@ -409,7 +415,11 @@ def get_supplier():
 
     # Pagination
     total_records = query.count()
-    query = query.offset(start).limit(length)
+    if length and length > 0:
+        query = query.offset(start).limit(length)
+    else:
+        # length = -1 -> show all
+        query = query.offset(start)
     rows = query.all()
 
     # รวม product ด้วย supplier_id

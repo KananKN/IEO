@@ -91,7 +91,12 @@ def get_employee():
     total_records = query.count()
 
     # ดึงข้อมูลตามลำดับและช่วงที่กำหนด
-    employees = query.order_by(column_order).offset(start).limit(length).all()
+    if length and length > 0:
+        employees = query.order_by(column_order).offset(start).limit(length).all()
+    else:
+        # length = -1 -> show all
+        employees = query.order_by(column_order).all()
+    # employees = query.order_by(column_order).offset(start).limit(length).all()
     # แปลงข้อมูลเป็น JSON
     data = [{
         "id": index + 1,

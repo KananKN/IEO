@@ -263,7 +263,13 @@ def get_userRequest():
 
     total_records = query.count()
 
-    programs = query.order_by(column_order).offset(start).limit(length).all()
+    # ✅ Pagination
+    if length and length > 0:
+        programs = query.order_by(column_order).offset(start).limit(length).all()
+
+    else:
+        # length = -1 -> show all
+        programs = query.order_by(column_order).all()
 
     data = []
     for index, program in enumerate(programs):
