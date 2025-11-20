@@ -451,10 +451,10 @@ def order_update(id):
 
     
     
-    return render_template('order/order_update_new.html', segment='order' ,lead=lead, orderItem=orderItem, datas=data, payments=payments,product=product,members=member,orderTerms=orderTerm,term_payment_files_map=term_payment_files_map,
+    # return render_template('order/order_update_new.html', segment='order' ,lead=lead, orderItem=orderItem, datas=data, payments=payments,product=product,members=member,orderTerms=orderTerm,term_payment_files_map=term_payment_files_map,
+    #                        receipts=receipts,tax=tax, bank_list=bank_list)
+    return render_template('order/order_update.html', segment='order' ,lead=lead, orderItem=orderItem, datas=data, payments=payments,product=product,members=member,orderTerms=orderTerm,term_payment_files_map=term_payment_files_map,
                            receipts=receipts,tax=tax, bank_list=bank_list)
-    # return render_template('order/order_update.html', segment='order' ,lead=lead, orderItem=orderItem, datas=data, payments=payments,product=product,members=member,orderTerms=orderTerm,term_payment_files_map=term_payment_files_map,
-                        #    receipts=receipts,tax=tax, bank_list=bank_list)
 
 @blueprint.route("/check_statusLead", methods=["POST"])
 @login_required
