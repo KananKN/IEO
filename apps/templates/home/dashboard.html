@@ -1,0 +1,436 @@
+{% extends "layouts/base.html" %} {% block title %} Dashboard {% endblock %}
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}
+<!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"> -->
+<link href="{{ config.ASSETS_ROOT }}/plugins/datatables.net-bs5/css/dataTables.bootstrap5.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/datatables.net-responsive-bs5/css/responsive.bootstrap5.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/select2/dist/css/select2.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/tag-it/css/jquery.tagit.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/select-picker/dist/picker.min.css" rel="stylesheet" />
+
+<style>
+	/* ปรับให้ arrow อยู่ด้านขวาและกึ่งกลางแนวตั้ง */
+	table.dataTable th,
+	table.dataTable td {
+		vertical-align: middle;
+	}
+	
+	table.dataTable thead th {
+		position: relative;
+	}
+	
+	table.dataTable thead th.sorting:after,
+	table.dataTable thead th.sorting_asc:after,
+	table.dataTable thead th.sorting_desc:after {
+		top: 50%;
+		right: 8px; /* ระยะห่างจากขอบขวา */
+		transform: translateY(-50%);
+	}
+	#product-stats-table,
+	#contacts-table,
+    #revenue-product-table {
+        background: #fff !important;
+    }
+
+    #product-stats-table tbody tr,
+    #contacts-table tbody tr,
+    #revenue-product-table tbody tr {
+        background: #fff !important;
+    }
+
+    #product-stats-table thead tr,
+    #contacts-table thead tr,
+    #revenue-product-table thead tr {
+        background: #fff !important;
+    }
+	.dashboard-card {
+		background: #ffffff;
+		border-radius: 14px;
+		padding: 20px;
+		height: 100%;
+		box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+		border: 1px solid #f0f0f0;
+		transition: 0.25s;
+	}
+	
+	.dashboard-card:hover {
+		transform: translateY(-3px);
+		box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+	}
+	
+	.card-title-box {
+		font-size: 15px;
+		font-weight: 600;
+		color: #555;
+		margin-bottom: 8px;
+		border-left: 4px solid #007bff;
+		padding-left: 8px;
+	}
+	
+	.dashboard-card .value {
+		font-size: 32px;
+		font-weight: 700;
+		margin-bottom: 10px;
+		color: #007bff;
+	}
+	
+	.dashboard-card .subtext {
+		color: #999;
+		margin: 0;
+	}
+	
+	.col-md-6 {
+		background: #fff;
+		padding: 20px;
+		margin: 0 10px;            /* ซ้าย–ขวาห่าง 10px */
+		border-radius: 12px;
+		box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+		width: calc(50% - 20px);
+			
+		
+	}
+	.col-md-12 {
+		background: #fff;
+		padding: 20px;
+		margin: 0 10px;            /* ซ้าย–ขวาห่าง 10px */
+		border-radius: 12px;
+		box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+			
+		
+	}
+	
+	</style>
+	
+{% endblock stylesheets %} 
+{% block content %}
+
+<div id="content" class="app-content">
+    <!-- BEGIN panel -->
+    <div class="container mt-4">
+		<h2>Dashboard สรุปภาพรวมประจำเดือน</h2>
+	
+		<!-- Summary Cards -->
+		<div class="row g-3 mb-4">
+			<div class="col-md-4 d-flex">
+				<div class="dashboard-card flex-fill">
+					<div class="card-title-box">
+						ผู้สมัครเดือนนี้
+					</div>
+					<h3 id="current-month-count" class="value"></h3>
+					<p class="subtext">เดือนก่อน: <span id="last-month-count">0</span></p>
+				</div>
+			</div>
+		
+			<div class="col-md-4 d-flex">
+				<div class="dashboard-card flex-fill">
+					<div class="card-title-box">
+						ยอดชำระเงินแล้ว
+					</div>
+					<h3 id="paid-count" class="value"></h3>
+					<p class="subtext">ยังไม่ชำระ: <span id="unpaid-count">0</span></p>
+				</div>
+			</div>
+		
+			<div class="col-md-4 d-flex">
+				<div class="dashboard-card flex-fill">
+					<div class="card-title-box">
+						อัตราการชำระเงิน (%)
+					</div>
+					<h3 id="payment-rate" class="value"></h3>
+				</div>
+			</div>
+		</div>
+		
+		
+	
+		<!-- Charts -->
+		<div class="row mb-4">
+			<div class="col-md-6">
+				<div class="card">
+					<div class="card-header">แนวโน้มผู้สมัครรายเดือน</div>
+					<div class="card-body">
+						<canvas id="memberChart"></canvas>
+					</div>
+				</div>
+			</div>
+			<div class="col-md-6">
+				<div class="card">
+					<div class="card-header">รายได้รวมรายเดือน</div>
+					<div class="card-body">
+						<canvas id="revenueChart"></canvas>
+					</div>
+				</div>
+			</div>
+		</div>
+	
+		<!-- Tables -->
+		<div class="row mb-4">
+			<div class="col-md-6">
+				<h4>สถิติผู้สมัครตามสินค้า</h4>
+				<table id="product-stats-table" width="100%" class="table table-striped table-bordered align-middle text-nowrap">
+					<thead>
+						<tr>
+							<th>สินค้า</th><th>จำนวนผู้สมัคร</th>
+						</tr>
+					</thead>
+					<tbody>
+						
+					</tbody>
+				</table>
+				
+			</div>
+			<div class="col-md-6">
+				<h4>รายได้ตามสินค้า</h4>
+				<table width="100%" class="table table-striped table-bordered align-middle text-nowrap" id="revenue-product-table">
+					<thead>
+						<tr><th>สินค้า</th><th>รายได้</th></tr>
+					</thead>
+					<tbody></tbody>
+				</table>
+			</div>
+		</div>
+	
+		<div class="row mb-4">
+			<div class="col-md-12">
+				<h4>ข้อมูลติดต่อสมาชิก</h4>
+				<table width="100%" class="table table-striped table-bordered align-middle text-nowrap" id="contacts-table">
+					<thead>
+						<tr><th>ชื่อ</th><th>นามสกุล</th><th>Email</th><th>โทร</th></tr>
+					</thead>
+					<tbody></tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+		
+    <!-- END panel -->
+</div>
+
+<a
+    href="javascript:;"
+    class="btn btn-icon btn-circle btn-primary btn-scroll-to-top"
+    data-toggle="scroll-to-top"
+    ><i class="fa fa-angle-up"></i
+></a>
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}
+<script src="{{ config.ASSETS_ROOT }}/plugins/datatables.net/js/dataTables.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/datatables.net-bs5/js/dataTables.bootstrap5.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/datatables.net-responsive/js/dataTables.responsive.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/datatables.net-responsive-bs5/js/responsive.bootstrap5.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/js/demo/table-manage-responsive.demo.js"></script>
+
+<script src="{{ config.ASSETS_ROOT }}/plugins/moment/min/moment.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/bootstrap-daterangepicker/daterangepicker.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/select2/dist/js/select2.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/bootstrap-datepicker/dist/js/bootstrap-datepicker.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/bootstrap-timepicker/js/bootstrap-timepicker.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/ion-rangeslider/js/ion.rangeSlider.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/jquery.maskedinput/src/jquery.maskedinput.js"></script>
+
+<script src="{{ config.ASSETS_ROOT }}/plugins/parsleyjs/dist/parsley.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/@highlightjs/cdn-assets/highlight.min.js"></script>
+
+<script src="{{ config.ASSETS_ROOT }}/plugins/select2/dist/js/select2.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/jquery-migrate/dist/jquery-migrate.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/tag-it/js/tag-it.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/select-picker/dist/picker.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/sweetalert/dist/sweetalert.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+	
+	function thaiMonthShort(monthNumber) {
+		const thaiMonths = [
+			"ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.",
+			"ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."
+		];
+		return thaiMonths[monthNumber - 1];
+	}
+	function engMonthShort(monthNumber) {
+		const engMonths = [
+			"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+			"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+		];
+		return engMonths[monthNumber - 1];
+	}
+	
+	// --- โหลดข้อมูล Dashboard ---
+	async function loadDashboard() {
+		const res = await fetch("/dashboard/stats");
+		const data = await res.json();
+	
+		// Summary Cards
+		document.getElementById("current-month-count").textContent = data.current_month_count;
+		document.getElementById("last-month-count").textContent = data.last_month_count;
+		document.getElementById("paid-count").textContent = data.payment_summary.paid;
+		document.getElementById("unpaid-count").textContent = data.payment_summary.unpaid;
+		document.getElementById("payment-rate").textContent = data.payment_summary.rate_percent + "%";
+	
+		// Charts
+		// --- Member Chart (Line Chart) ---
+		//const memberLabels = data.member_monthly.map(item => "เดือน " + item.month);
+		const memberLabels = data.revenue_monthly.map(item => engMonthShort(item.month));
+		const memberData = data.member_monthly.map(item => item.total);
+
+		const ctxMember = document.getElementById('memberChart').getContext('2d');
+		const gradientMember = ctxMember.createLinearGradient(0, 0, 0, 400);
+		gradientMember.addColorStop(0, 'rgba(54, 162, 235, 0.4)');
+		gradientMember.addColorStop(1, 'rgba(54, 162, 235, 0)');
+
+		new Chart(ctxMember, {
+			type: 'line',
+			data: {
+				labels: memberLabels,
+				datasets: [{
+					label: 'จำนวนผู้สมัคร',
+					data: memberData,
+					borderColor: 'rgb(54, 162, 235)',
+					backgroundColor: gradientMember,
+					borderWidth: 3,
+					tension: 0.3,
+					fill: true,
+					pointRadius: 5,
+					pointHoverRadius: 7,
+					pointBackgroundColor: 'white',
+					pointBorderColor: 'rgb(54, 162, 235)',
+					
+				}]
+			},
+			options: {
+				responsive: true,
+				plugins: {
+					title: {
+						display: true,
+						text: `จำนวนผู้สมัคร ( ปี ${new Date().getFullYear()} )`,
+						font: { size: 16, weight: 'bold' },
+						padding: { bottom: 10 }
+					},
+					legend: { display: false },
+					tooltip: { mode: 'index', intersect: false }
+				},
+				scales: {
+					y: {
+						beginAtZero: true,
+						suggestedMin: 0,          // แนะนำให้เริ่มจาก 0
+						suggestedMax: 50,         // ปรับให้สูงกว่าค่าสูงสุดใน data เล็กน้อย
+						ticks: { 
+							stepSize: 50, 
+							color: '#333', 
+							font: { size: 12 } },
+						//grid: { display: false } // เอาเส้นแนวนอนออก
+						grid: { color: '#e0e0e0' }
+					},
+					x: {
+						grid: { display: false },
+						ticks: { color: '#333', font: { size: 12 } }
+					}
+				}
+			}
+		});
+
+		// --- Revenue Chart (Bar Chart) ---
+		//const revenueLabels = data.revenue_monthly.map(item => "เดือน " + item.month);
+		const revenueLabels = data.revenue_monthly.map(item => engMonthShort(item.month));
+		const revenueData = data.revenue_monthly.map(item => item.total);
+
+		const ctxRevenue = document.getElementById('revenueChart').getContext('2d');
+		const gradientRevenue = ctxRevenue.createLinearGradient(0, 0, 0, 400);
+		gradientRevenue.addColorStop(0, 'rgba(75, 192, 192, 0.8)');
+		gradientRevenue.addColorStop(1, 'rgba(75, 192, 192, 0.2)');
+
+		new Chart(ctxRevenue, {
+			type: 'bar',
+			data: {
+				labels: revenueLabels,
+				datasets: [{
+					label: 'รายได้รวม (บาท)',
+					data: revenueData,
+					backgroundColor: gradientRevenue,
+					borderRadius: 6,
+					borderSkipped: false
+				}]
+			},
+			options: {
+				responsive: true,
+				plugins: {
+					title: {
+						display: true,
+						text: `รายได้รวม ( ปี ${new Date().getFullYear()} )`,
+						font: { size: 16, weight: 'bold' },
+						padding: { bottom: 10 }
+					},
+					legend: { display: false },
+					tooltip: {
+						callbacks: {
+							label: function(context) {
+								return context.dataset.label + ': ' + context.raw.toLocaleString() + ' บาท';
+							}
+						}
+					}
+				},
+				scales: {
+					y: {
+						beginAtZero: true,
+						suggestedMin: 0,          // แนะนำให้เริ่มจาก 0
+						suggestedMax: 50, 
+						ticks: {
+							callback: value => value.toLocaleString(),
+							stepSize: 1000000, 
+							color: '#333',
+							font: { size: 12 }
+						},
+						grid: { color: '#e0e0e0' }
+					},
+					x: {
+						grid: { display: false },
+						ticks: { color: '#333', font: { size: 12 } }
+					}
+				}
+			}
+		});
+
+		// Tables
+		data.product_stats.forEach(row => row.product = row.product.trim());
+		console.log(data.product_stats);
+		$('#product-stats-table').DataTable({
+			data: data.product_stats,
+			destroy: true,
+			columns: [
+				{ data: 'product' },
+				{ data: 'count' }
+			],
+			order: [[0, 'asc']]
+		});
+		
+		data.revenue_by_product.forEach(row => row.product = row.product.trim());
+		$('#revenue-product-table').DataTable({
+			data: data.revenue_by_product,
+			destroy: true,
+			columns: [
+				{ data: 'product' },
+				{ data: 'amount',
+				render: $.fn.dataTable.render.number(',', '.', 2, '') // comma, 2 decimals
+			}
+			]
+		});
+	
+		$('#contacts-table').DataTable({
+			data: data.contacts,
+			destroy: true,
+			columns: [
+				{ data: 'first_name' },
+				{ data: 'last_name' },
+				{ data: 'email' },
+				{ data: 'phone' }
+			]
+		});
+	}
+	
+	loadDashboard();
+</script>
+{% endblock javascripts %}
