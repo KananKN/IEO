@@ -44,7 +44,7 @@
             </div>
             <div class="menu-header">Applications</div>
             <div
-                class="menu-item has-sub {% if segment == 'index' %} active {% endif %}"
+                class="menu-item has-sub {% if segment in ['index', 'dashboard'] %} active {% endif %}"
             >
                 <a href="javascript:;" class="menu-link">
                     <div class="menu-icon">
@@ -59,6 +59,13 @@
                     >
                         <a href="/" class="menu-link"
                             ><div class="menu-text">Main</div></a
+                        >
+                    </div>
+                    <div
+                        class="menu-item {% if segment == 'dashboard' %} active {% endif %}"
+                    >
+                        <a href="/dashboard" class="menu-link"
+                            ><div class="menu-text">Dashboard</div></a
                         >
                     </div>
                 </div>
