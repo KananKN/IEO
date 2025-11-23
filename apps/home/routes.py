@@ -20,7 +20,7 @@ def index():
 @blueprint.route("/dashboard")
 @login_required
 def dashboard_page():
-    return render_template("home/dashboard.html",segment='index')
+    return render_template("home/dashboard.html",segment='dashboard')
 
 @blueprint.route('/dashboard/stats')
 def dashboard_stats():
