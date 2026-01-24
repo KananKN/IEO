@@ -982,7 +982,7 @@ def save_staff_claim(claim, is_update=False):
     else:
         staff_claim = ExpenseClaimStaffModel(
             claim=claim,
-            staff_user_id=to_int(request.form.get('requester_user_id'))
+            staff_user_id=to_int(request.form.get('requester_user_id')),
         )
         db.session.add(staff_claim)
         db.session.flush()
@@ -991,6 +991,7 @@ def save_staff_claim(claim, is_update=False):
     staff_claim.expense_date = parse_date(request.form.get('expense_date'))
     staff_claim.expense_category_id = to_int(request.form.get('expense_category_id'))
     staff_claim.expense_subcategory_id = to_int(request.form.get('expense_subcategory_id'))
+    staff_claim.description = request.form.get('description_staff')
 
    
 
