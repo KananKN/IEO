@@ -1,0 +1,665 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} ฟอร์มตั้งเบิกค่าใช้จ่าย {% endblock %} 
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}
+
+<link href="{{ config.ASSETS_ROOT }}/plugins/datatables.net-bs5/css/dataTables.bootstrap5.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/datatables.net-responsive-bs5/css/responsive.bootstrap5.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/select2/dist/css/select2.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/tag-it/css/jquery.tagit.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/plugins/select-picker/dist/picker.min.css" rel="stylesheet" />
+
+<!-- ================== BEGIN core-css ================== -->
+<link href="{{ config.ASSETS_ROOT }}/css/vendor.min.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/css/material/app.min.css" rel="stylesheet" />
+<!-- ================== END core-css ================== -->
+
+<!-- ================== BEGIN page-css ================== -->
+<link href="{{ config.ASSETS_ROOT }}/plugins/jstree/dist/themes/default/style.min.css" rel="stylesheet" />
+<!-- ================== END page-css ================== -->
+<style>
+.expense-tree ul {
+    padding-left: 20px;
+}
+
+.expense-item {
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.expense-item:hover {
+    background-color: #f1f3f5;
+}
+
+.cursor-pointer { cursor: pointer; }
+.expense-leaf:hover {
+    background: #f1f3f5;
+    border-radius: 4px;
+}
+
+
+
+</style>
+    
+{% endblock stylesheets %}
+
+{% block content %}
+
+<div id="content" class="app-content">
+    <!-- BEGIN breadcrumb -->
+    <!-- <ol class="breadcrumb float-xl-end">
+        <li class="breadcrumb-item"><a href="javascript:;">Resource</a></li>
+    </ol>-->
+    <!-- END breadcrumb -->
+    <!-- BEGIN page-header -->
+        
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <!-- ฝั่งซ้าย: รายการอุปกรณ์ + ปุ่มบวก -->
+            <div class="d-flex align-items-center">
+                <h6 class="page-header m-0">ฟอร์มตั้งเบิกค่าใช้จ่าย</h6>
+                {% if current_user.has_permission('write_account') %}
+                     <!-- <a class="btn btn-success ms-3 shadow-sm  bg-gradient" href="/expense/expense_create_claims">
+                            <i class="fa fa-plus"></i> เพิ่ม
+                        </a>  -->
+                {% endif %}
+            </div>
+
+            
+        </div>
+
+    <form id="expenseForm" enctype="multipart/form-data">
+        <div class="row">
+            <div class="col-xl-12">
+                <div class="panel panel-inverse">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">ฟอร์มตั้งเบิกค่าใช้จ่าย</h4>
+                        <div class="panel-heading-btn">
+                            <a href="javascript:;" class="btn btn-xs btn-icon btn-default" data-toggle="panel-expand"><i class="fa fa-expand"></i></a>
+                            <a href="javascript:;" class="btn btn-xs btn-icon btn-success" data-toggle="panel-reload"><i class="fa fa-redo"></i></a>
+                            <a href="javascript:;" class="btn btn-xs btn-icon btn-warning" data-toggle="panel-collapse"><i class="fa fa-minus"></i></a>
+                            <a href="javascript:;" class="btn btn-xs btn-icon btn-danger" data-toggle="panel-remove"><i class="fa fa-times"></i></a>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                {% for categorie, message in messages %}
+                                    <div class="alert alert-{{categorie}} alert-dismissible fade show mb-2 mt-1">
+                                        {{ message }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    </div>
+                                {% endfor %}                    
+                            {% endif %}
+                        {% endwith %}
+    <!--                     
+                        <div class="card border-1">
+                            <div class="card-body">
+                                <h4 class="card-title">ข้อมูลผู้ขอเบิก</h4>
+                                <p class="card-text">This is a wider card with supporting text below as a natural lead-in to additional content. This card has even longer content than the first to show that equal height action.</p>
+                                <p class="card-text text-gray">Last updated 3 mins ago</p>
+                            </div>
+                        </div> -->
+
+                                            
+                        <div class="card mb-3">
+                            <div class="card-body row g-3">
+                                <div class="d-flex justify-content-between">
+                                    <h4 class="card-title my-2">ฟอร์มตั้งเบิก</h4>  
+                                    <div class="panel-heading-btn">
+                                        <div class="d-flex align-items-center">
+        
+                                            
+                                            <button type="button" class="btn btn-blue ms-3" onclick="validateForm()">Save</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <h4>ข้อมูลเอกสาร</h4>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="row mt-3">
+                                            <label class="form-label col-form-label col-md-4">วันที่จัดทำ<span class="text-danger">*</span></label>
+                                            <div class="col-md-8">
+                                                <div class="input-group ">
+                                                    <input type="text" 
+                                                        class="form-control install_date"  
+                                                        placeholder="เลือกวันที่" 
+                                                        name="creation_date"
+                                                        autocomplete="off"
+                                                        value="" 
+                                                        readonly />
+                                                    <span class="input-group-text"><i class="fa fa-calendar"></i></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row mt-3">
+                                            <label class="form-label col-form-label col-md-4">ชื่อ-นามสกุล<span class="text-danger">*</span></label>
+                                                <div class="col-lg-8">
+                                                    <select class="default-select2 form-control"  name="requester_user_id" id="requester_user_id" >
+                                                        <option value="">ไม่มี</option>
+                                                        {% for user in users %}
+                                                            <option value="{{user.id}}">{{user.username}} : {{user.profile.first_name}}{{user.profile.last_name}} </option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                        </div>
+                                        <!-- <div class="row mt-3">
+                                            <label class="form-label col-form-label col-md-4">Username</label>
+                                            <div class="col-md-8">
+                                                <input type="text" class="form-control-plaintext" placeholder="" name="username" id="username" data-parsley-required="true"/>
+                                            </div>
+                                        </div> -->
+                                        <div class="row mt-3">
+                                            <label class="form-label col-form-label col-md-4">เบอร์โทร</label>
+                                            <div class="col-md-8">
+                                                <input type="text" class="form-control-plaintext" placeholder="" name="phone" id="phone" data-parsley-required="true"/>
+                                            </div>
+                                        </div>
+                                        <div class="row mt-3">
+                                            <label class="form-label col-form-label col-md-4">E-mail</label>
+                                            <div class="col-md-8">
+                                                <input type="text" class="form-control-plaintext" placeholder="" name="email" id="email" data-parsley-required="true"/>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                                
+                            
+                            
+                            </div>
+                        </div>
+
+                        <div class="card mb-3">
+                            <div class="card-body row g-3">
+                                <h4>วัตถุประสงค์การตั้งเบิก
+                                    
+                                    <button type="button" href="#modal-dialog" data-bs-toggle="modal"  class="btn btn btn-sm " style="padding: 0.375rem 0.5rem;">
+                                        🔍
+                                    </button>
+                                </h4>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="row my-3 ">
+                                            <label class="col-md-4 col-form-label">เลือกผู้รับการเบิก<span class="text-danger">*</span></label>
+                                            <div class="col-md-8 pe-0">
+                                            <select class="form-select" id="claim_type" name="claim_type">
+                                                <option value="">-- เลือก --</option>
+                                                <option value="staff">Staff</option>
+                                                <option value="children">Children</option>
+                                            </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        
+                                    </div>
+
+                                </div>
+                                <div id="staffSection" class="d-none mt-0">
+                                    <div class="card-body border-0 m-0  p-0">
+                                        <div class="row mb-3">
+                                            <div class="col-md-6 my-3">
+                                                <div class="row mb-3">
+                                                    <label class=" col-md-4 col-form-label">ประเภทการเบิก<span class="text-danger">*</span></label>
+                                                    <div class="col-md-8">
+                                                        <input type="text"
+                                                        id="expense_claims"
+                                                        name="expense_claims"
+                                                        class="form-control"
+                                                        placeholder="เลือกประเภทการเบิก"
+                                                        readonly
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#expenseModal">
+                                                        <input type="hidden" name="expense_category_id" id="expense_category_id">
+                                                        <input type="hidden" name="expense_subcategory_id" id="expense_subcategory_id">
+                                                    </div>
+                                                </div>
+                                                <div class="row mb-3">
+                                                    <label class="form-label col-form-label col-md-4">วันที่จ่าย<span class="text-danger">*</span></label>
+                                                    <div class="col-md-8">
+                                                        <div class="input-group ">
+                                                            <input type="text" 
+                                                                class="form-control expense_date"  
+                                                                placeholder="เลือกวันที่" 
+                                                                name="expense_date"
+                                                                autocomplete="off"
+                                                                value="" 
+                                                                readonly />
+                                                            <span class="input-group-text"><i class="fa fa-calendar"></i></span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <label class=" col-md-4 col-form-label">เอกสารแนบ</label>
+                                                    <div class="col-md-8">
+                                                    <input type="file" name="staff_files[]" class="form-control" accept=".jpg, .jpeg, .png, .pdf"  onchange="validateFile(this)">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 my-3">
+                                                
+                                                <div class="row">
+                                                    <label class=" col-md-4 col-form-label">รายละเอียดวัตถุประสงค์</label>
+                                                    <div class="col-md-8">
+                                                        <textarea class="form-control" rows="4" id="description" name="description"></textarea>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <h5 class="fw-bold">รายละเอียดค่าใช้จ่าย (เจ้าหน้าที่)</h5>
+                                            <button class="btn btn-primary btn-sm" type="button" onclick="addStaffRow()">
+                                            + เพิ่มรายการ
+                                            </button>
+                                        </div>
+                                        <table class="table table-bordered">
+                                            <thead class="table-secondary text-center">
+                                            <tr>
+                                                <th width="10%">#</th>
+                                                <th>รายการ</th>
+                                                <th width="25%">จำนวนเงิน (บาท)</th>
+                                                <th width="10%">ลบ</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody id="staffTableBody"></tbody>
+                                            <tfoot>
+                                            <tr class="fw-bold">
+                                                <td colspan="2" class="text-end">ยอดรวม</td>
+                                                <td class="text-end text-success">
+                                                <span id="staffTotal">0.00</span>
+                                                <input type="hidden" id="staff_total_amount" name="staff_total_amount" placeholder="0.00" value="">
+                                                </td>
+                                                <td>บาท</td>
+                                            </tr>
+                                            </tfoot>
+                                        </table>
+                                
+                                    </div>
+                                </div>
+
+                                <div id="childrenSection" class="d-none mt-0">
+                                    <div class="card-body border-0 m-0  p-0">
+                                
+                                    <!-- <h5 class="mb-3">วัตถุประสงค์การตั้งเบิก (Children)</h5> -->
+                                        
+                                    <div class="row mb-3">
+                                        <div class="col-md-6 my-3">
+                                            <div class="row mb-3">
+                                                <label class="col-md-4 col-form-label">รายชื่อเด็ก</label>
+                                                <div class="col-md-8">
+                                                    <select class="default-select2 form-control" id="memberSelect" name="member_id">
+                                                        <option value="">เลือกชื่อเด็ก</option>
+                                                        {% for m in members %}
+                                                            <option value="{{ m.id }}">{{ m.first_name }} {{m.last_name}}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="row mb-3">
+                                                <label class="col-md-4 col-form-label">โครงการ</label>
+                                                <div class="col-md-8">
+                                                    <select class="default-select2 form-control" id="projectSelect" name="project_id" disabled>
+                                                        <option value="">กรุณาเลือกเด็กก่อน</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="row mb-3">
+                                                <label class="col-md-4 col-form-label">เอกสารแนบ</label>
+                                                <div class="col-md-8">
+                                                    <input type="file" name="children_files[]" class="form-control" accept=".jpg, .jpeg, .png, .pdf"  onchange="validateFile(this)">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 my-3">
+                                            <div class="row mb-3">
+                                                <label class="col-md-4 col-form-label">วันที่จ่าย</label>
+                                                <div class="col-md-8">
+                                                    <input type="text" class="form-control pay_date" name="pay_date">
+                                                </div>
+                                            </div>
+                                            <div class="row mb-3">
+                                                <label class=" col-md-4 col-form-label">รายละเอียดวัตถุประสงค์</label>
+                                                <div class="col-md-8">
+                                                    <textarea class="form-control" rows="6" name="description_children"></textarea>
+                                                </div>
+                                            </div>
+                                    
+                                        </div>
+
+                                        
+                                    </div>
+                                
+                                    
+                                
+                                    <!-- การ์ดรายการค่าใช้จ่าย -->
+                                    <div class="card mt-4  border-0  p-0">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <h5 class="fw-bold">รายละเอียดค่าใช้จ่าย (เด็ก / ผู้เรียน)</h5>
+                                            <button class="btn btn-primary" type="button" onclick="addExpenseItem()">+ เพิ่มรายการค่าใช้จ่าย</button>
+                                        </div>
+                                        <!-- container ของ card -->
+                                        <div id="expenseList"></div>
+                                        <div class="card shadow-sm mt-3">
+                                            <div class="card-body d-flex justify-content-between align-items-center">
+                                                <h5 class="mb-0">ยอดรวมค่าใช้จ่ายทั้งหมด</h5>
+                                                <h4 class="text-success mb-0">
+                                                <span id="totalAmount">0.00</span> บาท
+                                                </h4>
+                                                <input type="hidden" id="children_total_amount" name="children_total_amount" placeholder="0.00" value="">
+
+                                            </div>
+                                        </div>
+                                
+                                    </div>
+                                </div>
+                                
+                                
+                            
+                            
+                            </div>
+                        </div>
+                                            
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+    </form>
+
+<a href="javascript:;" class="btn btn-icon btn-circle btn-primary btn-scroll-to-top" data-toggle="scroll-to-top"><i class="fa fa-angle-up"></i></a>
+
+
+<div class="modal fade" id="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <form  method="POST" data-parsley-validate="true">
+                <div class="modal-header">
+                    <h4 class="modal-title">ข้อมูลบัญชีธนาคาร </h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3" hidden>
+                        <label class="form-label col-form-label col-md-4">id</label>
+                        <div class="col-md-8">
+                            <input type="hidden"  class="form-control" name="id" id="id-update" data-parsley-required="true"/>
+                        </div>
+                    </div>
+                    <h5 class="modal-title">ข้อมูลเจ้าหน้าที่ </h5>
+                    <table class="table table-bordered">
+                        <thead>
+                        <tr>
+                            <!-- <th>รายการ</th> -->
+                            <th>ชื่อบัญชีธนาคาร</th>
+                            <th>ธนาคาร</th>
+                            <th>เลขบัญชี</th>
+                        </tr>
+                        </thead>
+                        <tbody id="modal-user-tbody">
+                        
+                        <tr>
+                            <td id="modal-full-name"></td>
+                            <td id="modal-bank-account"></td>
+                            <td id="modal-bank-name"></td>
+                            <!-- <td id="modal-extra">
+                            </td> -->
+                        </tr>
+                        </tbody>
+                    </table>
+                    <!-- <div class="row mb-3">
+                        <label class="form-label col-form-label col-md-4">ชื่อ-นามสกุล<span class="text-danger"></span></label>
+                        <div class="col-md-8">
+                            <input type="text" class="form-control-plaintext" placeholder="" name="name" id="name" data-parsley-required="true"/>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <label class="form-label col-form-label col-md-4">เลขที่บัญชี<span class="text-danger"></span></label>
+                        <div class="col-md-8">
+                            <input type="text" class="form-control-plaintext" placeholder="" name="bank_account" id="bank_account" data-parsley-required="true"/>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <label class="form-label col-form-label col-md-4">ธนาคาร<span class="text-danger"></span></label>
+                        <div class="col-md-8">
+                            <input type="text" class="form-control-plaintext" placeholder="" name="bank_name" id="bank_name" data-parsley-required="true"/>
+                        </div>
+                    </div> -->
+                   
+                    
+                
+                   
+                </div>
+                <!-- <div class="modal-footer">
+                    <a href="javascript:;" class="btn btn-white" data-bs-dismiss="modal">Close</a>
+                    
+                </div> -->
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="expenseModal" tabindex="-1">
+    <div class="modal-dialog ">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">เลือกประเภทค่าใช้จ่าย</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <div id="breadcrumb" class="text-muted mb-2"></div>
+                <ul id="expenseTree" class="list-unstyled"></ul>
+
+                
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}
+<script src="{{ config.ASSETS_ROOT }}/plugins/datatables.net/js/dataTables.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/datatables.net-bs5/js/dataTables.bootstrap5.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/datatables.net-responsive/js/dataTables.responsive.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/datatables.net-responsive-bs5/js/responsive.bootstrap5.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/js/demo/table-manage-responsive.demo.js"></script>
+
+<script src="{{ config.ASSETS_ROOT }}/plugins/moment/min/moment.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/bootstrap-daterangepicker/daterangepicker.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/select2/dist/js/select2.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/bootstrap-datepicker/dist/js/bootstrap-datepicker.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/bootstrap-timepicker/js/bootstrap-timepicker.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/ion-rangeslider/js/ion.rangeSlider.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/jquery.maskedinput/src/jquery.maskedinput.js"></script>
+
+<script src="{{ config.ASSETS_ROOT }}/plugins/jquery-migrate/dist/jquery-migrate.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/tag-it/js/tag-it.min.js"></script>
+
+<script src="{{ config.ASSETS_ROOT }}/plugins/clipboard/dist/clipboard.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/spectrum-colorpicker2/dist/spectrum.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/select-picker/dist/picker.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/js/demo/form-plugins.demo.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/@highlightjs/cdn-assets/highlight.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/js/demo/render.highlight.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/sweetalert/dist/sweetalert.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="{{ config.ASSETS_ROOT }}/plugins/jstree/dist/jstree.min.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/js/demo/ui-tree.demo.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/js/account/main_expense_claims_create.js?v={{ config.ASSETS_VERSION }}"></script>
+
+<script>
+    $(document).on('click', '.expense-item', function () {
+    
+        const id = $(this).data('id');
+        const id_sub = $(this).data('id_sub');
+        const name = $(this).data('name');
+    
+        $('#expense_category_id').val(id);
+        $('#expense_subcategory_id').val(id_sub);
+        $('#expense_claims').val(name);
+    
+        $('#expenseModal').modal('hide');
+    });
+
+    $('input[name="creation_date"').datepicker({
+        format: 'dd/mm/yyyy',
+        autoclose: true,
+        todayHighlight: true,
+         
+    });
+
+    $('input[name="expense_date"').datepicker({
+        format: 'dd/mm/yyyy',
+        autoclose: true,
+        todayHighlight: true,
+         
+    });
+
+    $('input[name="pay_date"').datepicker({
+        format: 'dd/mm/yyyy',
+        autoclose: true,
+        todayHighlight: true,
+         
+    });
+
+    
+    
+    
+</script>
+
+<script>
+/* ---------- CHILD ---------- */
+//let expenseIndex = 1;
+function addExpenseItem() {
+    let index = $('.expense-item').length + 1;
+
+    let $tpl = $($('#expenseTemplate').html());
+    $tpl.find('.expense-index').text(index);
+
+    $('#expenseList').append($tpl);
+
+    let $newSelect = $('#expenseList')
+        .find('.expense-name-select')
+        .last();
+
+    initExpenseSelect($newSelect);
+
+    let $newDate = $('#expenseList')
+        .find('input[name^="expense_date["]')
+        .last();
+
+    initExpenseDatepicker($newDate);
+    
+    let $newDate_Children = $('#expenseList')
+        .find('input[name^="pay_date["]')
+        .last();
+
+    initExpenseDatepicker($newDate_Children);
+    
+    
+}
+
+
+</script>
+<script type="text/template" id="expenseTemplate">
+    <div class="card mb-3 shadow-sm expense-item border-0 m-0  p-0">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="fw-bold">รายการที่ <span class="expense-index"></span></span>
+        <button class="btn btn-sm btn-outline-danger btn-remove-expense"
+                onclick="removeExpenseItem(this)">ลบ</button>
+      </div>
+    
+      <div class="card-body">
+        <div class="row g-3">
+    
+          <div class="col-md-6">
+            <label class="form-label">รายชื่อ Supplier<span class="text-danger">*</span></label>
+            <select class="default-select2 form-control expense-name-select" name="receiver[]">
+                <option value="">-- เลือกผู้รับเงิน --</option>
+            
+                {% set groups = data_supplier | groupby('type') %}
+                {% for type, items in groups %}
+                    <optgroup label="{{ type }}">
+                        {% for item in items %}
+                            <option value="{{ item.value }}">
+                                {{ item.name }}
+                            </option>
+                        {% endfor %}
+                    </optgroup>
+                {% endfor %}
+            </select>
+
+            
+          </div>
+    
+          <div class="col-md-6">
+            <!-- <label class="form-label">วันที่จ่าย</label>
+            <input type="text" class="form-control pay_date" name="pay_date[]"> -->
+            <!-- <input type="text" class="form-control pay_date" name="pay_date[]" value=  -->
+            <label class="form-label">จำนวนเงิน<span class="text-danger">*</span></label>
+            <input type="text" class="form-control text-end amount number-comma"
+                   name="amount[]" step="0.01"
+                   onblur="formatToTwoDecimal(this)"
+                   placeholder="0.00" oninput="handleNumberInput(this);  calculateTotal()">
+            <small class="text-muted">กรอกจำนวนเงินก่อนแลก</small>
+          </div>
+    
+          <!-- <div class="col-md-3">
+            <label class="form-label">จำนวนเงิน</label>
+            <input type="number" class="form-control text-end amount"
+                   name="amount[]" step="0.01"
+                   placeholder="0.00" oninput="calculateTotal()">
+            <small class="text-muted">กรอกจำนวนเงินก่อนแลก</small>
+          </div> -->
+    
+          <div class="col-md-4">
+            <label class="form-label">Ref.</label>
+            <input type="text" class="form-control text-end amount_before_exchange number-comma"
+                   name="ref_amount[]" onblur="formatToTwoDecimal(this)"
+                   placeholder="0.00" oninput="handleNumberInput(this);  calculateTotal()" >
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">สกุลเงิน</label>
+            <select class="form-select" name="currency_id[]">
+                {% for c in currency %}
+                    <option value="{{ c.id }}"
+                        {% if c.code == 'THA' %}selected{% endif %}>
+                        {{ c.code }} - {{ c.name }}
+                    </option>
+                {% endfor %}
+            </select>
+          </div>
+    
+          <div class="col-md-4">
+            <label class="form-label">อัตราการแลกเปลี่ยน (Exc.)</label>
+            <input type="text" class="form-control text-end number-comma" name="exchange_rate[]" step="0.01"
+            onblur="formatToTwoDecimal(this)"
+            placeholder="0.00" oninput="handleNumberInput(this);  calculateTotal()" >
+          </div>
+    
+          <div class="col-md-12">
+            <label class="form-label">หมายเหตุ</label>
+            <textarea class="form-control" rows="4"
+              name="remark[]"></textarea>
+          </div>
+    
+        </div>
+      </div>
+    </div>
+</script>
+    
+    
+
+{% endblock javascripts %}

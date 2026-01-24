@@ -69,7 +69,14 @@
                                     <td>{{data.role.name}}</td>
                                     <td  class="with-btn">
                                         {% if current_user.has_permission('write_user') %}
-                                            <a href="#modal-dialog-update" data-bs-toggle="modal" onclick='setEditValue({{data.id}},"{{data.username}}",{{data.role_id}})' class=" btn btn-dark btn-icon btn-circle btn-lg">
+                                            <!-- <a href="#modal-dialog-update" data-bs-toggle="modal" onclick='setEditValue({{data.id}},"{{data.username}}",{{data.role_id}}),' class=" btn btn-dark btn-icon btn-circle btn-lg">
+                                                <i class="fa fa-pencil-alt"></i>
+                                            </a> -->
+                                            <a href="#modal-dialog-update"
+                                                data-bs-toggle="modal"
+                                                class="btn btn-dark btn-icon btn-circle btn-lg"
+                                                data-user='{{ data.to_dict() | tojson }}'
+                                                onclick="setEditValue(this,'{{data.role.id}}')">
                                                 <i class="fa fa-pencil-alt"></i>
                                             </a>
                                         {% endif %}
@@ -123,6 +130,47 @@
                             </select>
                         </div>
                     </div>
+
+                    <h3>ข้อมูลธนาคาร</h3>
+                    
+                    <div class="row mb-3">
+                        <label class="form-label col-form-label col-md-4">ชื่อ</label>
+                        <div class="col-md-8">
+                            <input type="text" class="form-control" placeholder="ชื่อ" name="first_name" data-parsley-required="true"/>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <label class="form-label col-form-label col-md-4">นามสกุล</label>
+                        <div class="col-md-8">
+                            <input type="text" class="form-control" placeholder="นามสกุล" name="last_name" data-parsley-required="true"/>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <label class="form-label col-form-label col-md-4">เบอร์โทร</label>
+                        <div class="col-md-8">
+                            <input type="text" class="form-control" placeholder="เบอร์โทร" name="phone" data-parsley-required="true"/>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <label class="form-label col-form-label col-md-4">E-mail</label>
+                        <div class="col-md-8">
+                            <input type="text" class="form-control" placeholder="E-mail" name="email" data-parsley-required="true"/>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <label class="form-label col-form-label col-md-4">ธนาคาร</label>
+                        <div class="col-md-8">
+                            <input type="text" class="form-control" placeholder="ธนาคาร" name="bank_name" data-parsley-required="true"/>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <label class="form-label col-form-label col-md-4">เลขที่บัญชี</label>
+                        <div class="col-md-8">
+                            <input type="text" class="form-control" placeholder="เลขที่บัญชี" name="bank_account" data-parsley-required="true"/>
+                        </div>
+                    </div>
+
                 </div>
                 <div class="modal-footer">
                     <a href="javascript:;" class="btn btn-white" data-bs-dismiss="modal">Close</a>
@@ -165,6 +213,46 @@
                             </select>
                         </div>
                     </div>
+
+                    <h3>ข้อมูลธนาคาร</h3>
+                    
+                    <div class="row mb-3">
+                        <label class="form-label col-form-label col-md-4">ชื่อ</label>
+                        <div class="col-md-8">
+                            <input type="text" class="form-control" placeholder="ชื่อ" name="first_name" id="first_name" data-parsley-required="true" />
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <label class="form-label col-form-label col-md-4">นามสกุล</label>
+                        <div class="col-md-8">
+                            <input type="text" class="form-control" placeholder="นามสกุล" name="last_name" id="last_name" data-parsley-required="true"/>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <label class="form-label col-form-label col-md-4">เบอร์โทร</label>
+                        <div class="col-md-8">
+                            <input type="text" class="form-control" placeholder="เบอร์โทร" name="phone" id="phone" data-parsley-required="true"/>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <label class="form-label col-form-label col-md-4">E-mail</label>
+                        <div class="col-md-8">
+                            <input type="text" class="form-control" placeholder="E-mail" name="email" id="email" data-parsley-required="true"/>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <label class="form-label col-form-label col-md-4">ธนาคาร</label>
+                        <div class="col-md-8">
+                            <input type="text" class="form-control" placeholder="ธนาคาร" name="bank_name" id="bank_name" data-parsley-required="true"/>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <label class="form-label col-form-label col-md-4">เลขที่บัญชี</label>
+                        <div class="col-md-8">
+                            <input type="text" class="form-control" placeholder="เลขที่บัญชี" name="bank_account" id="bank_account" data-parsley-required="true"/>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <input type="hidden" class="form-control" name="id" id="id-update" data-parsley-required="true"/>
@@ -196,7 +284,7 @@
 <script src="{{ config.ASSETS_ROOT }}/plugins/select-picker/dist/picker.min.js"></script>
 <script src="{{ config.ASSETS_ROOT }}/plugins/sweetalert/dist/sweetalert.min.js"></script>
 
-<script src="{{ config.ASSETS_ROOT }}/js/user/main.js"></script>
+<script src="{{ config.ASSETS_ROOT }}/js/user/main.js?v={{ config.ASSETS_VERSION }}"></script>
 <script>
 
 </script>

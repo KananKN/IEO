@@ -30,6 +30,13 @@ class UserModel(db.Model, UserMixin):
     back_populates='user',
     foreign_keys='AgencyModel.user_id',
     uselist=False)
+
+    profile = db.relationship(
+        'UserProfileModel',
+        backref='user',
+        uselist=False,
+        cascade='all, delete-orphan'
+    )
     
     
     # oauth_github  = db.Column(db.String(100), nullable=True)
@@ -68,6 +75,12 @@ class UserModel(db.Model, UserMixin):
             'id': self.id,
             'username': self.username,
             'status': self.status,
+            "first_name": self.profile.first_name if self.profile else "",
+            "last_name": self.profile.last_name if self.profile else "",
+            "phone": self.profile.phone if self.profile else "",
+            "email": self.profile.email if self.profile else "",
+            "bank_name": self.profile.bank_name if self.profile else "",
+            "bank_account": self.profile.bank_account if self.profile else ""
             # เพิ่มเฉพาะ field ที่ต้องการส่งกลับ
         }
     
@@ -240,7 +253,28 @@ class ProductAgencyAssociation(db.Model):
     product = db.relationship('ProductForSalesModel', backref='agency_links')
     employee = db.relationship('AgencyModel', backref='product_links')    
     
-    
+@dataclass
+class UserProfileModel(db.Model):
+    __tablename__ = 'user_profiles'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey('user.id', ondelete='CASCADE'),
+        nullable=False,
+        unique=True
+    )
+
+    first_name = db.Column(db.String(100), nullable=False)
+    last_name = db.Column(db.String(100), nullable=False)
+
+    phone = db.Column(db.String(20))
+    email = db.Column(db.String(150))
+
+    bank_name = db.Column(db.String(100))
+    bank_account = db.Column(db.String(50))
+   
    
 
 
