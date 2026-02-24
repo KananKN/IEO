@@ -24,33 +24,28 @@ def dashboard_page():
 
 @blueprint.route('/dashboard/stats')
 def dashboard_stats():
+    year = request.args.get("year", type=int)
+    if not year:
+        year = datetime.today().year
+
+    start_date = datetime(year, 1, 1)
+    end_date = datetime(year, 12, 31)
+
     today = datetime.today()
 
-    # --- จำนวนผู้สมัครเดือนนี้ / เดือนก่อน ---
-    current_month_count = MemberModel.query.filter(
-        func.date_trunc('month', MemberModel.created_at) == func.date_trunc('month', today)
-    ).count()
+   
+    member_query = MemberModel.query.filter(
+        MemberModel.created_at.between(start_date, end_date)
+    )
+
+    current_month_count = member_query.count()
 
     last_month = (today.replace(day=1) - timedelta(days=1))
     last_month_count = MemberModel.query.filter(
+        MemberModel.created_at.between(start_date, end_date),
         func.date_trunc('month', MemberModel.created_at) == func.date_trunc('month', last_month)
     ).count()
 
-    # --- สมาชิกที่ชำระเงินแล้ว / ยังไม่ชำระ ---
-    # paid_subquery = (
-    #     db.session.query(OrderModel.member_id)
-    #     .join(PaymentModel)
-    #     .filter(PaymentModel.amount > 0)
-    #     .distinct()
-    # ).subquery()
-
-    # paid_members = db.session.query(func.count(MemberModel.id)).filter(MemberModel.id.in_(paid_subquery)).scalar()
-    # unpaid_members = db.session.query(func.count(MemberModel.id)).filter(~MemberModel.id.in_(paid_subquery)).scalar()
-
-    # payment_summary = {"paid": paid_members, "unpaid": unpaid_members}
-    # total_members = MemberModel.query.count()
-    # payment_summary["rate_percent"] = round((paid_members / total_members) * 100, 2) if total_members else 0
-    # --- สมาชิกที่ชำระเงินแล้ว / ยังไม่ชำระ (รูปแบบใหม่แบบ GROUP BY) ---
     excluded = ["cancelled", "pending"]
     results = (
         db.session.query(
@@ -58,6 +53,7 @@ def dashboard_stats():
             func.array_agg(OrderModel.status).label("statuses")
         )
         .outerjoin(OrderModel, OrderModel.member_id == MemberModel.id)
+        .filter(MemberModel.created_at.between(start_date, end_date))  # ✅ เพิ่มตรงนี้
         .group_by(MemberModel.id)
         .all()
     )
@@ -72,7 +68,9 @@ def dashboard_stats():
         else:
             paid_members += 1
 
-    total_members = MemberModel.query.count()
+    total_members = MemberModel.query.filter(
+                        MemberModel.created_at.between(start_date, end_date)
+                    ).count()
 
     payment_summary = {
         "paid": paid_members,
@@ -93,7 +91,8 @@ def dashboard_stats():
             ProductForSalesModel.name,
             func.count(func.distinct(OrderModel.member_id))
         )
-        .join(OrderModel, OrderModel.product_id == ProductForSalesModel.id)
+        .join(OrderModel, OrderModel.product_id == ProductForSalesModel.id)\
+        .filter(OrderModel.created_at.between(start_date, end_date))  # ✅ เพิ่ม
         .group_by(ProductForSalesModel.name)
         .order_by(ProductForSalesModel.name.asc())  # ✅ เรียง A → Z
         .all()
@@ -107,12 +106,42 @@ def dashboard_stats():
         ProductForSalesModel.name,
         func.coalesce(func.sum(PaymentModel.amount),0)
     ).join(PaymentModel, PaymentModel.product_id == ProductForSalesModel.id)\
-     .group_by(ProductForSalesModel.name).all()
+    .filter(PaymentModel.payment_date.between(start_date, end_date)).group_by(ProductForSalesModel.name).all()# ✅ เพิ่ม
     revenue_product_data = [{"product": p, "amount": float(a)} for p, a in revenue_by_product]
 
     # --- ข้อมูลติดต่อสมาชิก ---
-    contacts = db.session.query(MemberModel.first_name, MemberModel.last_name, MemberModel.email, MemberModel.phone).all()
-    contacts_data = [{"first_name": f, "last_name": l, "email": e, "phone": p} for f,l,e,p in contacts]
+    # contacts = db.session.query(
+    #     MemberModel.first_name,
+    #     MemberModel.last_name,
+    #     MemberModel.email,
+    #     MemberModel.phone
+    # ).filter(
+    #     MemberModel.created_at.between(start_date, end_date)
+    # ).all()    
+    # contacts_data = [{"first_name": f, "last_name": l, "email": e, "phone": p} for f,l,e,p in contacts]
+    contacts = db.session.query(
+        MemberModel.first_name,
+        MemberModel.last_name,
+        MemberModel.email,
+        MemberModel.phone
+    ).filter(
+        MemberModel.created_at.between(start_date, end_date)
+    ).order_by(
+        MemberModel.created_at.desc()   # เรียงล่าสุดขึ้นก่อน
+    ).all()
+
+    contacts_data = [
+        {
+            "no": idx + 1,
+            "first_name": f,
+            "last_name": l,
+            "email": e,
+            "phone": p
+        }
+        for idx, (f, l, e, p) in enumerate(contacts)
+    ]
+
+    total_contacts = len(contacts_data)
 
     # # --- กราฟแนวโน้ม 6 เดือนล่าสุด ---
     # member_monthly = []
@@ -126,13 +155,15 @@ def dashboard_stats():
     #         .filter(func.date_trunc('month', PaymentModel.payment_date) == func.date_trunc('month', month_start)).scalar()
     #     member_monthly.append({"month": month_start.month, "total": count})
     #     revenue_monthly.append({"month": month_start.month, "total": float(revenue)})
-    current_year = today.year
-    current_month = datetime.now().month
+    current_year = year
+    current_month = 12 
+    # current_month = datetime.now().month
 
     member_monthly = []
     revenue_monthly = []
 
-    for month in range(1, current_month + 1):
+    # for month in range(1, current_month + 1):
+    for month in range(1, 13):
         count = MemberModel.query.filter(
             func.extract('year', MemberModel.created_at) == current_year,
             func.extract('month', MemberModel.created_at) == month
@@ -148,10 +179,11 @@ def dashboard_stats():
         member_monthly.append({"month": month, "total": count})
         revenue_monthly.append({"month": month, "total": float(revenue)})
     # # --- Total revenue เดือนนี้ ---
-    total_revenue = db.session.query(func.coalesce(func.sum(PaymentModel.amount),0))\
-        .filter(func.date_trunc('month', PaymentModel.payment_date) == func.date_trunc('month', today))\
-        .scalar()
-    
+    total_revenue = db.session.query(
+        func.coalesce(func.sum(PaymentModel.amount),0)
+    ).filter(
+        PaymentModel.payment_date.between(start_date, end_date)
+    ).scalar()
         
 
 
@@ -162,10 +194,23 @@ def dashboard_stats():
         "product_stats": product_stats_data,
         "revenue_by_product": revenue_product_data,
         "contacts": contacts_data,
+        "total_contacts": total_contacts,
         "total_revenue": float(total_revenue),
         "member_monthly": member_monthly,
         "revenue_monthly": revenue_monthly
     })
+
+@blueprint.route('/dashboard/years')
+def dashboard_years():
+    years = db.session.query(
+        func.extract('year', MemberModel.created_at).label('year')
+    ).distinct().order_by(
+        func.extract('year', MemberModel.created_at).desc()
+    ).all()
+
+    year_list = [int(y.year) for y in years if y.year]
+
+    return jsonify(year_list)
 
 
 @blueprint.route('/dashboard/statsV1')

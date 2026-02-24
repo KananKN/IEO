@@ -109,6 +109,19 @@
     <!-- BEGIN panel -->
     <div class="container mt-4">
 		<h2>Dashboard สรุปภาพรวม</h2>
+
+		<div class="row mb-4">
+			<div class="col-md-3">
+				<label>เลือกปี</label>
+				<select id="yearFilter" class="form-select">
+				</select>
+			</div>
+			<div class="col-md-2 d-flex align-items-end">
+				<button id="btnApplyYear" class="btn btn-primary">
+					🔍  ค้นหา
+				</button>
+			</div>
+		</div>
 	
 		<!-- Summary Cards -->
 		<div class="row g-3 mb-4">
@@ -243,6 +256,37 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
+	/*function initYearFilter() {
+		const select = document.getElementById("yearFilter");
+		const currentYear = new Date().getFullYear();
+	
+		for (let y = currentYear; y >= currentYear - 5; y--) {
+			const option = document.createElement("option");
+			option.value = y;
+			option.textContent = y;
+			if (y === currentYear) option.selected = true;
+			select.appendChild(option);
+		}
+	}*/
+	async function initYearFilter() {
+		const select = document.getElementById("yearFilter");
+	
+		const res = await fetch("/dashboard/years");
+		const years = await res.json();
+	
+		select.innerHTML = "";
+	
+		years.forEach((year, index) => {
+			const option = document.createElement("option");
+			option.value = year;
+			option.textContent = year;
+	
+			// เลือกปีล่าสุดเป็น default
+			if (index === 0) option.selected = true;
+	
+			select.appendChild(option);
+		});
+	}
 	
 	function thaiMonthShort(monthNumber) {
 		const thaiMonths = [
@@ -258,10 +302,15 @@
 		];
 		return engMonths[monthNumber - 1];
 	}
-	
+	let memberChartInstance;
+	let revenueChartInstance;
+	const selectedYear = document.getElementById("yearFilter").value;
+
 	// --- โหลดข้อมูล Dashboard ---
 	async function loadDashboard() {
-		const res = await fetch("/dashboard/stats");
+		//const res = await fetch("/dashboard/stats");
+		const year = document.getElementById("yearFilter").value;
+		const res = await fetch(`/dashboard/stats?year=${year}`);
 		const data = await res.json();
 	
 		// Summary Cards
@@ -282,7 +331,11 @@
 		gradientMember.addColorStop(0, 'rgba(54, 162, 235, 0.4)');
 		gradientMember.addColorStop(1, 'rgba(54, 162, 235, 0)');
 
-		new Chart(ctxMember, {
+		if (memberChartInstance) {
+			memberChartInstance.destroy();
+		}
+		
+		memberChartInstance = new Chart(ctxMember, {
 			type: 'line',
 			data: {
 				labels: memberLabels,
@@ -306,7 +359,8 @@
 				plugins: {
 					title: {
 						display: true,
-						text: `จำนวนผู้สมัคร ( ปี ${new Date().getFullYear()} )`,
+						//text: `จำนวนผู้สมัคร ( ปี ${new Date().getFullYear()} )`,
+						text: `จำนวนผู้สมัคร ( ปี ${selectedYear} )`,
 						font: { size: 16, weight: 'bold' },
 						padding: { bottom: 10 }
 					},
@@ -343,7 +397,11 @@
 		gradientRevenue.addColorStop(0, 'rgba(75, 192, 192, 0.8)');
 		gradientRevenue.addColorStop(1, 'rgba(75, 192, 192, 0.2)');
 
-		new Chart(ctxRevenue, {
+		if (revenueChartInstance) {
+			revenueChartInstance.destroy();
+		}
+		
+		revenueChartInstance = new Chart(ctxRevenue, {
 			type: 'bar',
 			data: {
 				labels: revenueLabels,
@@ -360,7 +418,8 @@
 				plugins: {
 					title: {
 						display: true,
-						text: `รายได้รวม ( ปี ${new Date().getFullYear()} )`,
+						//text: `รายได้รวม ( ปี ${new Date().getFullYear()} )`,
+						text: `จำนวนผู้สมัคร ( ปี ${selectedYear} )`,
 						font: { size: 16, weight: 'bold' },
 						padding: { bottom: 10 }
 					},
@@ -431,6 +490,15 @@
 		});
 	}
 	
-	loadDashboard();
+	//loadDashboard();
+	document.getElementById("btnApplyYear").addEventListener("click", function () {
+		loadDashboard();
+	});
+	(async function() {
+		await initYearFilter();
+		loadDashboard();
+	})();
+	//initYearFilter();
+	//loadDashboard();
 </script>
 {% endblock javascripts %}
