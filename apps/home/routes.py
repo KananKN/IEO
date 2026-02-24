@@ -162,22 +162,46 @@ def dashboard_stats():
     member_monthly = []
     revenue_monthly = []
 
-    # for month in range(1, current_month + 1):
-    for month in range(1, 13):
-        count = MemberModel.query.filter(
-            func.extract('year', MemberModel.created_at) == current_year,
-            func.extract('month', MemberModel.created_at) == month
-        ).count()
+    current = start_date.replace(day=1)
+    member_rows = db.session.query(
+        func.extract('month', MemberModel.created_at).label('month'),
+        func.count(MemberModel.id)
+    ).filter(
+        MemberModel.created_at.between(start_date, end_date)
+    ).group_by(
+        func.extract('month', MemberModel.created_at)
+    ).all()
 
-        revenue = db.session.query(
-            func.coalesce(func.sum(PaymentModel.amount), 0)
-        ).filter(
-            func.extract('year', PaymentModel.payment_date) == current_year,
-            func.extract('month', PaymentModel.payment_date) == month
-        ).scalar()
+    member_dict = {int(m): c for m, c in member_rows}
+    
+    revenue_rows = db.session.query(
+        func.extract('month', PaymentModel.payment_date).label('month'),
+        func.coalesce(func.sum(PaymentModel.amount), 0)
+    ).filter(
+        PaymentModel.payment_date.between(start_date, end_date)
+    ).group_by(
+        func.extract('month', PaymentModel.payment_date)
+    ).all()
 
-        member_monthly.append({"month": month, "total": count})
-        revenue_monthly.append({"month": month, "total": float(revenue)})
+    revenue_dict = {int(m): float(a) for m, a in revenue_rows}
+
+    while current <= end_date:
+        m = current.month
+
+        member_monthly.append({
+            "month": m,
+            "total": member_dict.get(m, 0)
+        })
+
+        revenue_monthly.append({
+            "month": m,
+            "total": revenue_dict.get(m, 0)
+        })
+
+        if current.month == 12:
+            current = current.replace(year=current.year + 1, month=1)
+        else:
+            current = current.replace(month=current.month + 1)
     # # --- Total revenue เดือนนี้ ---
     total_revenue = db.session.query(
         func.coalesce(func.sum(PaymentModel.amount),0)
