@@ -34,6 +34,15 @@
         visibility: hidden;
       }
     
+    .print-slot {
+        width: 40px;      /* fix ช่อง icon */
+        min-width: 40px;
+        text-align: center;
+    }
+    
+    .invisible-icon {
+        visibility: hidden;   /* ซ่อนแต่ยังจองพื้นที่ */
+    }
 </style>
 
 {% endblock stylesheets %}
@@ -299,13 +308,18 @@
                                                                             value="{{ '{:,.2f}'.format(term.outstanding_amount or 0)}}" oninput="formatInputNumberWithCommas(this)" readonly placeholder="ยอดค้างชำระ">
                                                                              
                                                                     </div>
-                                                                    {% if (term.outstanding_amount or 0) == 0 %}
-                                                                        <div class="mx-1 mt-1">
+                                                                    <div class="mx-1 mt-1 print-slot">
+                                                                        {% if (term.outstanding_amount or 0) == 0 %}
                                                                             <a class="pt-2 pe-2 print-receipt-btn" data-term-id="{{ term.id }}">
-                                                                            <i class="material-icons">print</i>
+                                                                                <i class="material-icons">print</i>
                                                                             </a>
-                                                                        </div>
-                                                                    {% endif %}
+                                                                        {% else %}
+                                                                            <span class="invisible-icon">
+                                                                                <i class="material-icons">print</i>
+                                                                            </span>
+                                                                        {% endif %}
+                                                                    </div>
+                                                                    
                                                                     
                                                                   
                                 
@@ -622,7 +636,6 @@
 <script src="{{ config.ASSETS_ROOT }}/plugins/@highlightjs/cdn-assets/highlight.min.js"></script>
 <script src="{{ config.ASSETS_ROOT }}/js/demo/render.highlight.js"></script>
 
-<script src="{{ config.ASSETS_ROOT }}/js/supplier/main_supplier.js?v1.0"></script>
 <script>
     class ReceiptPrinter {
         constructor(receiptElement, invoiceElement = null) {
