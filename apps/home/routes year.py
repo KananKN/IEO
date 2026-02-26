@@ -10,7 +10,6 @@ import requests
 from datetime import datetime, timedelta, date
 from sqlalchemy import text, extract, func, or_
 from apps import db, login_manager
-from dateutil.relativedelta import relativedelta
 
 
 @blueprint.route('/home')
@@ -26,47 +25,24 @@ def dashboard_page():
 @blueprint.route('/dashboard/stats')
 def dashboard_stats():
     year = request.args.get("year", type=int)
-    month_from = request.args.get("month_from", type=int)
-    month_to = request.args.get("month_to", type=int)
-
     if not year:
         year = datetime.today().year
-    
-    if not month_from:
-        month_from = 1
 
-    if not month_to:
-        month_to = 12
-
-    start_date = datetime(year, month_from, 1)
-
-    end_date = (
-        datetime(year, month_to, 1)
-        + relativedelta(months=1)
-    )
+    start_date = datetime(year, 1, 1)
+    end_date = datetime(year, 12, 31)
 
     today = datetime.today()
 
    
     member_query = MemberModel.query.filter(
-        MemberModel.created_at >= start_date,
-        MemberModel.created_at < end_date,
+        MemberModel.created_at.between(start_date, end_date)
     )
 
-    if year == today.year:
-        latest_month = today.month
-
-        current_month_count = MemberModel.query.filter(
-            MemberModel.created_at >= datetime(year, latest_month, 1),
-            MemberModel.created_at < datetime(year, latest_month, 1) + relativedelta(months=1)
-        ).count()
-    else:
-        current_month_count = member_query.count()
+    current_month_count = member_query.count()
 
     last_month = (today.replace(day=1) - timedelta(days=1))
     last_month_count = MemberModel.query.filter(
-        MemberModel.created_at >= start_date,
-        MemberModel.created_at < end_date,
+        MemberModel.created_at.between(start_date, end_date),
         func.date_trunc('month', MemberModel.created_at) == func.date_trunc('month', last_month)
     ).count()
 
@@ -77,8 +53,7 @@ def dashboard_stats():
             func.array_agg(OrderModel.status).label("statuses")
         )
         .outerjoin(OrderModel, OrderModel.member_id == MemberModel.id)
-        .filter(MemberModel.created_at >= start_date,
-        MemberModel.created_at < end_date)  # ✅ เพิ่มตรงนี้
+        .filter(MemberModel.created_at.between(start_date, end_date))  # ✅ เพิ่มตรงนี้
         .group_by(MemberModel.id)
         .all()
     )
@@ -94,8 +69,7 @@ def dashboard_stats():
             paid_members += 1
 
     total_members = MemberModel.query.filter(
-                        MemberModel.created_at >= start_date,
-                        MemberModel.created_at < end_date
+                        MemberModel.created_at.between(start_date, end_date)
                     ).count()
 
     payment_summary = {
@@ -104,7 +78,14 @@ def dashboard_stats():
         "rate_percent": round((paid_members / total_members) * 100, 2) if total_members else 0
     }
 
-    
+    # --- สถิติผู้สมัครแยกตามสินค้า ---
+    # product_stats = db.session.query(
+    #     ProductForSalesModel.name,
+    #     func.count(LeadProgram.id)
+    # ).join(LeadProgram, LeadProgram.product_id == ProductForSalesModel.id)\
+    #  .group_by(ProductForSalesModel.name).all()
+    # product_stats_data = [{"product": p, "count": c} for p, c in product_stats]
+
     product_stats = (
         db.session.query(
             ProductForSalesModel.name,
@@ -125,8 +106,7 @@ def dashboard_stats():
         ProductForSalesModel.name,
         func.coalesce(func.sum(PaymentModel.amount),0)
     ).join(PaymentModel, PaymentModel.product_id == ProductForSalesModel.id)\
-    .filter(PaymentModel.payment_date >= start_date,
-            PaymentModel.payment_date < end_date).group_by(ProductForSalesModel.name).all()# ✅ เพิ่ม
+    .filter(PaymentModel.payment_date.between(start_date, end_date)).group_by(ProductForSalesModel.name).all()# ✅ เพิ่ม
     revenue_product_data = [{"product": p, "amount": float(a)} for p, a in revenue_by_product]
 
     # --- ข้อมูลติดต่อสมาชิก ---
@@ -163,7 +143,18 @@ def dashboard_stats():
 
     total_contacts = len(contacts_data)
 
-    
+    # # --- กราฟแนวโน้ม 6 เดือนล่าสุด ---
+    # member_monthly = []
+    # revenue_monthly = []
+    # for i in range(6,-1,-1):
+    #     month_start = (today.replace(day=1) - timedelta(days=30*i)).replace(day=1)
+    #     count = MemberModel.query.filter(
+    #         func.date_trunc('month', MemberModel.created_at) == func.date_trunc('month', month_start)
+    #     ).count()
+    #     revenue = db.session.query(func.coalesce(func.sum(PaymentModel.amount),0))\
+    #         .filter(func.date_trunc('month', PaymentModel.payment_date) == func.date_trunc('month', month_start)).scalar()
+    #     member_monthly.append({"month": month_start.month, "total": count})
+    #     revenue_monthly.append({"month": month_start.month, "total": float(revenue)})
     current_year = year
     current_month = 12 
     # current_month = datetime.now().month
@@ -194,18 +185,23 @@ def dashboard_stats():
 
     revenue_dict = {int(m): float(a) for m, a in revenue_rows}
 
-    
-    for month in range(month_from, month_to + 1):
+    while current <= end_date:
+        m = current.month
 
         member_monthly.append({
-            "month": month,
-            "total": member_dict.get(month, 0)
+            "month": m,
+            "total": member_dict.get(m, 0)
         })
 
         revenue_monthly.append({
-            "month": month,
-            "total": revenue_dict.get(month, 0)
+            "month": m,
+            "total": revenue_dict.get(m, 0)
         })
+
+        if current.month == 12:
+            current = current.replace(year=current.year + 1, month=1)
+        else:
+            current = current.replace(month=current.month + 1)
     # # --- Total revenue เดือนนี้ ---
     total_revenue = db.session.query(
         func.coalesce(func.sum(PaymentModel.amount),0)

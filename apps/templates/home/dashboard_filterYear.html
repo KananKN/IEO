@@ -109,40 +109,19 @@
     <!-- BEGIN panel -->
     <div class="container mt-4">
 		<h2>Dashboard สรุปภาพรวม</h2>
-		<div class="row mb-3 align-items-end">
 
-			<div class="col-md-2">
-				<label for="yearFilter" class="form-label fw-bold">
-					เลือกปี
-				</label>
-				<select id="yearFilter" class="form-select"></select>
+		<div class="row mb-4">
+			<div class="col-md-3">
+				<label>เลือกปี</label>
+				<select id="yearFilter" class="form-select">
+				</select>
 			</div>
-		
-			<div class="col-md-2">
-				<label for="monthFrom" class="form-label fw-bold">
-					เริ่มต้น
-				</label>
-				<select id="monthFrom" class="form-select"></select>
-			</div>
-		
-			<div class="col-md-2">
-				<label for="monthTo" class="form-label fw-bold">
-					สิ้นสุด
-				</label>
-				<select id="monthTo" class="form-select"></select>
-			</div>
-		
-			<div class="col-md-2">
-				<label class="form-label d-block invisible">
-					ค้นหา
-				</label>
-				<button class="btn btn-primary " onclick="loadDashboard()">
-					🔍 ค้นหา
+			<div class="col-md-2 d-flex align-items-end">
+				<button id="btnApplyYear" class="btn btn-primary">
+					🔍  ค้นหา
 				</button>
 			</div>
-		
 		</div>
-
 	
 		<!-- Summary Cards -->
 		<div class="row g-3 mb-4">
@@ -289,7 +268,6 @@
 			select.appendChild(option);
 		}
 	}*/
-	
 	async function initYearFilter() {
 		const select = document.getElementById("yearFilter");
 	
@@ -324,43 +302,15 @@
 		];
 		return engMonths[monthNumber - 1];
 	}
-
-	function initMonthFilter() {
-
-		const monthFrom = document.getElementById("monthFrom");
-		const monthTo = document.getElementById("monthTo");
-	
-		for (let i = 1; i <= 12; i++) {
-	
-			const name = engMonthShort(i);
-	
-			monthFrom.innerHTML += `<option value="${i}">${name}</option>`;
-			monthTo.innerHTML += `<option value="${i}">${name}</option>`;
-		}
-	
-		monthFrom.value = 1;
-		monthTo.value = new Date().getMonth() + 1;
-	}
-	
-
 	let memberChartInstance;
 	let revenueChartInstance;
-	//const selectedYear = document.getElementById("yearFilter").value;
+	const selectedYear = document.getElementById("yearFilter").value;
 
 	// --- โหลดข้อมูล Dashboard ---
 	async function loadDashboard() {
 		//const res = await fetch("/dashboard/stats");
 		const year = document.getElementById("yearFilter").value;
-		const monthFrom =
-			document.getElementById("monthFrom").value || 1;
-
-		const monthTo =
-			document.getElementById("monthTo").value || 12;
-
-		const res = await fetch(
-			`/dashboard/stats?year=${year}&month_from=${monthFrom}&month_to=${monthTo}`
-		);
-		//const res = await fetch(`/dashboard/stats?year=${year}`);
+		const res = await fetch(`/dashboard/stats?year=${year}`);
 		const data = await res.json();
 	
 		// Summary Cards
@@ -409,7 +359,8 @@
 				plugins: {
 					title: {
 						display: true,
-						text: `จำนวนผู้สมัคร ( ปี ${year} )`,
+						//text: `จำนวนผู้สมัคร ( ปี ${new Date().getFullYear()} )`,
+						text: `จำนวนผู้สมัคร ( ปี ${selectedYear} )`,
 						font: { size: 16, weight: 'bold' },
 						padding: { bottom: 10 }
 					},
@@ -468,7 +419,7 @@
 					title: {
 						display: true,
 						//text: `รายได้รวม ( ปี ${new Date().getFullYear()} )`,
-						text: `จำนวนผู้สมัคร ( ปี ${year} )`,
+						text: `จำนวนผู้สมัคร ( ปี ${selectedYear} )`,
 						font: { size: 16, weight: 'bold' },
 						padding: { bottom: 10 }
 					},
@@ -540,14 +491,11 @@
 	}
 	
 	//loadDashboard();
-	/*
 	document.getElementById("btnApplyYear").addEventListener("click", function () {
 		loadDashboard();
 	});
-	*/
 	(async function() {
 		await initYearFilter();
-		initMonthFilter();
 		loadDashboard();
 	})();
 	//initYearFilter();
