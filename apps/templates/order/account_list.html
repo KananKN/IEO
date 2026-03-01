@@ -29,6 +29,12 @@
         font-size: 18px;
         line-height: 1;
       }
+
+      .text-wrap {
+        white-space: normal !important;
+        word-break: break-word;
+        max-width: 250px;
+    }
   </style>
 {% endblock stylesheets %}
 
@@ -488,8 +494,8 @@ function loadDataTable() {
               } 
             },*/
             { data: "customer_name" },
-            { data: "product_name" },
-            { data: "bank_name" },
+            { data: "product_name" ,className: "text-wrap"},
+            { data: "bank_name" ,className: "text-wrap" },
             { data: "discount", render: data => parseFloat(data).toLocaleString("en-US", { minimumFractionDigits: 2 }) },
             { data: "amount", render: data => parseFloat(data).toLocaleString("en-US", { minimumFractionDigits: 2 }) },
             { 

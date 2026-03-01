@@ -9,6 +9,14 @@
 <link href="{{ config.ASSETS_ROOT }}/plugins/select2/dist/css/select2.min.css" rel="stylesheet" />
 <link href="{{ config.ASSETS_ROOT }}/plugins/tag-it/css/jquery.tagit.css" rel="stylesheet" />
 <link href="{{ config.ASSETS_ROOT }}/plugins/select-picker/dist/picker.min.css" rel="stylesheet" />
+
+<style>
+    .text-wrap {
+        white-space: normal !important;
+        word-break: break-word;
+        max-width: 300px;
+    }
+</style>
 {% endblock stylesheets %}
 
 {% block content %}
@@ -382,8 +390,10 @@ function loadDataTable() {
                     return `<a href="/order/order_update/${row.data_user.id}">${data}</a>`;
                 }
             },
-            { data: "customer_name"} ,
-            { data: "product_name" },
+            {   data: "customer_name",
+                className: "text-wrap"
+            } ,
+            { data: "product_name",className: "text-wrap"},
             { data: "price",
                 render: function(data, type, row) {
                     if (type === 'display' || type === 'filter') {
@@ -450,7 +460,8 @@ function loadDataTable() {
                 }
             }
         ],
-        order: [[0, "asc"]],  // เรียงลำดับจาก ID
+        order: [[0, "desc"]],  // เรียงลำดับจาก ID
+        //lengthMenu: [[10, 25, 50, -1], [10, 25, 50]],
         lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
         pageLength: 10
     });

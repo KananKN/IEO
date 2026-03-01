@@ -28,6 +28,11 @@
         font-size: 18px;
         line-height: 1;
       }
+      .text-wrap {
+        white-space: normal !important;
+        word-break: break-word;
+        max-width: 250px;
+      }
       
   </style>
 {% endblock stylesheets %}
@@ -107,8 +112,8 @@
                                 <th class="text-nowrap ">เลขที่</th>
                                 <!-- <th class="text-nowrap ">รหัส Order</th> -->
                                 <th class="text-nowrap">ชื่อลูกค้า</th>
-                                <th class="text-nowrap">โปรแกรม</th>
-                                <th class="text-nowrap">ธนาคาร</th>
+                                <th class="text-nowrap w-300px">โปรแกรม</th>
+                                <th class="text-nowrap w-300px">ธนาคาร</th>
                                 <!-- <th class="text-nowrap w-150px">รวมเป็นเงิน</th>
                                 <th class="text-nowrap">ส่วนลด</th> -->
                                 <th class="text-nowrap w-150px">จำนวนเงินรวมทั้งสิ้น</th>
@@ -639,8 +644,8 @@ function loadDataTable() {
             },
             */
             { data: "customer_name" },
-            { data: "product_name" },
-            { data: "bank_name" },
+            { data: "product_name" ,className: "text-wrap"},
+            { data: "bank_name",className: "text-wrap"},
             //{ data: "amount", className: "text-end", render: data => parseFloat(data).toLocaleString("en-US", { minimumFractionDigits: 2 }) },
             //{ data: "discount", className: "text-end", render: data => parseFloat(data).toLocaleString("en-US", { minimumFractionDigits: 2 }) },
             { data: "net_price", className: "text-end", render: data => parseFloat(data).toLocaleString("en-US", { minimumFractionDigits: 2 }) },

@@ -216,7 +216,9 @@ def get_order():
     search_value = request_data.get("search", {}).get("value", "")
 
     
-
+    date_expr = func.to_char(
+                    OrderModel.created_at + text("interval '543 year'"),
+                    "DD/FMMM/YYYY")
     # Mapping คอลัมน์จาก DataTable ไปยัง Database
     column_map = {
         0: OrderModel.id,
@@ -264,8 +266,9 @@ def get_order():
                 leadModel.first_name.ilike(search),
                 ProductForSalesModel.name.ilike(search),
                 func.to_char(OrderModel.net_price, 'FM999999999.00').ilike(search),
-                func.to_char(OrderModel.created_at, 'DD/MM/YYYY').ilike(search),
+                # func.to_char(OrderModel.created_at, 'DD/MM/YYYY').ilike(search),
                 status_label_expr.ilike(search),  # ✅ เพิ่มตรงนี้
+                date_expr.ilike(f"%{search_value}%")
             )
         )
 
@@ -1486,10 +1489,23 @@ def get_account():
         .join(OrderModel.product) \
         .options(
             joinedload(ReceiptModel.member),
+
             joinedload(ReceiptModel.terms)
                 .joinedload(OrderTermModel.order)
-                .joinedload(OrderModel.product)
+                .joinedload(OrderModel.product),
+
+            joinedload(ReceiptModel.terms)
+                .joinedload(OrderTermModel.order)
+                .joinedload(OrderModel.payments)
+                .joinedload(PaymentModel.bank_account)
         ).distinct()
+        # .options(
+        #     joinedload(ReceiptModel.member),
+        #     joinedload(ReceiptModel.terms)
+        #         .joinedload(OrderTermModel.order)
+        #         .joinedload(OrderModel.product)
+        # )
+        
 
     # === Filter search ===
     if search_value:
@@ -1557,9 +1573,21 @@ def get_account():
         # Default sort by receipt_no (latest month + largest running number)
         column_order = [prefix_expr.desc(), suffix_expr.desc()]
 
-    total_records = base_query.count()
-    total_amount = base_query.with_entities(func.sum(ReceiptModel.amount)).scalar() or 0
+    # total_records = base_query.count()
+    count_query = db.session.query(
+        func.count(func.distinct(ReceiptModel.id))
+    ).select_from(ReceiptModel)
 
+    total_records = count_query.scalar()
+    # total_amount = base_query.with_entities(func.sum(ReceiptModel.amount)).scalar() or 0
+    receipt_subq = base_query.with_entities(
+        ReceiptModel.id,
+        ReceiptModel.amount
+    ).distinct().subquery()
+
+    total_amount = db.session.query(
+        func.sum(receipt_subq.c.amount)
+    ).scalar() or 0
 
     # === Pagination + Order ===
     receipts = base_query.order_by(*column_order).offset(start).limit(length).all()
@@ -1577,7 +1605,13 @@ def get_account():
                 if p.sequence == term.sequence and p.payment_date  # ✅ กรองเฉพาะ sequence เดียวกัน
             ]
             if payments_filtered:
-                latest_payment = max(payments_filtered, key=lambda p: p.payment_date)
+                # latest_payment = max(payments_filtered, key=lambda p: p.payment_date)
+                latest_payment = max(
+                                    (p for p in order_model.payments
+                                    if p.sequence == term.sequence),
+                                    key=lambda p: p.payment_date,
+                                    default=None
+                                )
 
 
         payment_ts = to_bangkok_timestamp(latest_payment.payment_date) if latest_payment else 0
