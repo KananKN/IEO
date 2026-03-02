@@ -39,9 +39,9 @@ from decimal import Decimal, InvalidOperation
 
 UPLOAD_FOLDER = 'uploads/expense'
 
-read_permission = Permission(RoleNeed("read_account"))
-write_permission = Permission(RoleNeed("write_account"))
-delete_permission = Permission(RoleNeed("delete_account"))
+read_permission = Permission(RoleNeed("read_expense claims"))
+write_permission = Permission(RoleNeed("write_expense claims"))
+delete_permission = Permission(RoleNeed("delete_expense claims"))
 
 @blueprint.route('/expense_categories')
 @login_required
@@ -1163,11 +1163,212 @@ def save_staff_claim1(claim: ExpenseClaim):
 
 def save_children_claim(claim, is_update=False):
 
+    # ===============================
+    # ===== HEADER ===================
+    # ===============================
+    member_id = to_int(request.form.get('member_id'))
+    project_id = to_int(request.form.get('project_id'))
+    description_children = request.form.get('description_children')
+    total_amount = request.form.get('children_total_amount')
+    expense_date_str = request.form.get('pay_date')
+
+    expense_date = (
+        datetime.strptime(expense_date_str, '%d/%m/%Y').date()
+        if expense_date_str else None
+    )
+
+    if not member_id or not project_id:
+        return jsonify({
+            "status": "error",
+            "message": "กรุณาเลือกสมาชิกและโครงการให้ครบ"
+        }), 400
+
+
+    # ===============================
+    # ===== CREATE / UPDATE ==========
+    # ===============================
+    if is_update:
+        children_claim = ExpenseClaimChildrenModel.query.filter_by(
+            expense_claim_id=claim.id
+        ).first()
+
+        if not children_claim:
+            children_claim = ExpenseClaimChildrenModel(
+                expense_claim_id=claim.id
+            )
+            db.session.add(children_claim)
+            db.session.flush()
+
+        children_claim.member_id = member_id
+        children_claim.project_id = project_id
+        children_claim.description = description_children
+        children_claim.expense_date = expense_date
+
+    else:
+        children_claim = ExpenseClaimChildrenModel(
+            expense_claim_id=claim.id,
+            member_id=member_id,
+            project_id=project_id,
+            description=description_children,
+            expense_date=expense_date,
+        )
+        db.session.add(children_claim)
+        db.session.flush()
+
+    print("children_claim ID:", children_claim.id)
+
+
+    # ===============================
+    # ===== FORM LIST =================
+    # ===============================
+    item_ids = request.form.getlist('expense_item_id[]')
+    receivers = request.form.getlist('receiver[]')
+    currency_ids = request.form.getlist('currency_id[]')
+    amounts = request.form.getlist('amount[]')
+    ref_amounts = request.form.getlist('ref_amount[]')
+    exchange_rates = request.form.getlist('exchange_rate[]')
+    remarks = request.form.getlist('remark[]')
+
+    print("receivers:", receivers)
+    print("item_ids:", item_ids)
+
+    # ===============================
+    # ===== EXISTING ITEMS ==========
+    # ===============================
+    existing_items = {
+        item.id: item
+        for item in ExpenseChildrenItemModel.query.filter_by(
+            expense_claim_children_id=children_claim.id
+        ).all()
+    }
+
+    submitted_ids = set()
+
+    # ✅ ใช้ receivers เป็น master row
+    loop_len = len(receivers)
+    print("loop_len:", loop_len)
+
+
+    # ===============================
+    # ===== INSERT / UPDATE =========
+    # ===============================
+    for i in range(loop_len):
+
+        receiver = receivers[i]
+        if not receiver:
+            continue
+
+        receiver_type, receiver_id = receiver.split(':')
+
+        item_id = to_int(item_ids[i]) if i < len(item_ids) else None
+        currency_id = to_int(currency_ids[i]) if i < len(currency_ids) else None
+        amount = Decimal(amounts[i] or 0) if i < len(amounts) else Decimal(0)
+        ref_amount = (
+            Decimal(ref_amounts[i] or 0)
+            if i < len(ref_amounts) else None
+        )
+        exchange_rate = (
+            Decimal(exchange_rates[i] or 1)
+            if i < len(exchange_rates) else None
+        )
+        remark = remarks[i] if i < len(remarks) else None
+
+
+        # ---------- UPDATE ----------
+        if item_id:
+            submitted_ids.add(item_id)
+            item = existing_items.get(item_id)
+
+            if not item:
+                continue
+
+        # ---------- INSERT ----------
+        else:
+            item = ExpenseChildrenItemModel(
+                expense_claim_children_id=children_claim.id
+            )
+            db.session.add(item)
+
+
+        # ---------- COMMON SAVE ----------
+        item.receiver_type = receiver_type
+        item.receiver_id = to_int(receiver_id)
+        item.currency_id = currency_id
+        item.amount = amount
+        item.ref_amount = ref_amount
+        item.exchange_rate = exchange_rate
+        item.remark = remark
+
+
+    # ===============================
+    # ===== DELETE REMOVED ==========
+    # ===============================
+    for item_id, item in existing_items.items():
+        if item_id not in submitted_ids:
+            db.session.delete(item)
+
+
+    # ===============================
+    # ===== FILE UPLOAD =============
+    # ===============================
+    BASE_UPLOAD_PATH = os.path.join(
+        current_app.root_path,
+        "static",
+        "assets",
+        "files",
+        "expense"
+    )
+
+    children_files = request.files.getlist('children_files[]')
+
+    children_folder = os.path.join(BASE_UPLOAD_PATH, 'children')
+    os.makedirs(children_folder, exist_ok=True)
+
+    existing_count = ExpenseClaimFileModel.query.filter_by(
+        claim_id=claim.id,
+        claim_type='children'
+    ).count()
+
+    counter = existing_count + 1
+
+    for f in children_files:
+        if not f or not f.filename:
+            continue
+
+        ext = os.path.splitext(f.filename)[1]
+        filename = f"{claim.claim_number}_{counter}{ext}"
+
+        filepath = os.path.join(children_folder, filename)
+        f.save(filepath)
+
+        db.session.add(
+            ExpenseClaimFileModel(
+                claim_id=claim.id,
+                claim_type='children',
+                filename=filename,
+                filepath=f"static/assets/files/expense/children/{filename}"
+            )
+        )
+
+        counter += 1
+
+
+    # ===============================
+    # ===== COMMIT ==================
+    # ===============================
+    db.session.commit()
+
+    print("✅ Children claim saved successfully")
+
+def save_children_claim_3(claim, is_update=False):
+
     # ===== header =====
     member_id = to_int(request.form.get('member_id'))
     project_id = to_int(request.form.get('project_id'))
     description_children = request.form.get('description_children')
+    total_amount = request.form.get('children_total_amount')
     expense_date_str = request.form.get('pay_date')
+    
     expense_date = (
         datetime.strptime(expense_date_str, '%d/%m/%Y').date()
         if expense_date_str else None
@@ -1312,6 +1513,7 @@ def save_children_claim(claim, is_update=False):
         if item_id not in submitted_ids:
             db.session.delete(item)
 
+    db.session.commit()
 
 def save_children_claim2(claim, is_update=False):
     """

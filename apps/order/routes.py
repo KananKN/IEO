@@ -242,9 +242,21 @@ def get_order():
     # 🔐 กรอง agency ถ้าไม่ใช่ admin
     role = RoleModel.query.get(current_user.role_id)
     # if role and role.name.lower() != 'admin':
-    if role and role.name.lower() not in ['admin', 'STAFF']:
+    # if role and role.name.lower() not in ['admin', 'STAFF']:
+    #     if current_user.agency:
+    #         base_query = base_query.filter(OrderModel.agency_id == current_user.agency.id)
+    #     else:
+    #         return Response(json.dumps({
+    #             "draw": draw,
+    #             "recordsTotal": 0,
+    #             "recordsFiltered": 0,
+    #             "data": []
+    #         }), content_type="application/json")
+    if role and role.name.lower() == 'agency':
         if current_user.agency:
-            base_query = base_query.filter(OrderModel.agency_id == current_user.agency.id)
+            base_query = base_query.filter(
+                OrderModel.agency_id == current_user.agency.id
+            )
         else:
             return Response(json.dumps({
                 "draw": draw,
@@ -1489,16 +1501,22 @@ def get_account():
         .join(OrderModel.product) \
         .options(
             joinedload(ReceiptModel.member),
-
             joinedload(ReceiptModel.terms)
                 .joinedload(OrderTermModel.order)
-                .joinedload(OrderModel.product),
-
-            joinedload(ReceiptModel.terms)
-                .joinedload(OrderTermModel.order)
-                .joinedload(OrderModel.payments)
-                .joinedload(PaymentModel.bank_account)
+                .joinedload(OrderModel.product)
         ).distinct()
+        # .options(
+        #     joinedload(ReceiptModel.member),
+
+        #     joinedload(ReceiptModel.terms)
+        #         .joinedload(OrderTermModel.order)
+        #         .joinedload(OrderModel.product),
+
+        #     joinedload(ReceiptModel.terms)
+        #         .joinedload(OrderTermModel.order)
+        #         .joinedload(OrderModel.payments)
+        #         .joinedload(PaymentModel.bank_account)
+        # ).distinct()
         # .options(
         #     joinedload(ReceiptModel.member),
         #     joinedload(ReceiptModel.terms)
@@ -1573,12 +1591,12 @@ def get_account():
         # Default sort by receipt_no (latest month + largest running number)
         column_order = [prefix_expr.desc(), suffix_expr.desc()]
 
-    # total_records = base_query.count()
-    count_query = db.session.query(
-        func.count(func.distinct(ReceiptModel.id))
-    ).select_from(ReceiptModel)
+    total_records = base_query.count()
+    # count_query = db.session.query(
+    #     func.count(func.distinct(ReceiptModel.id))
+    # ).select_from(ReceiptModel)
 
-    total_records = count_query.scalar()
+    # total_records = count_query.scalar()
     # total_amount = base_query.with_entities(func.sum(ReceiptModel.amount)).scalar() or 0
     receipt_subq = base_query.with_entities(
         ReceiptModel.id,
