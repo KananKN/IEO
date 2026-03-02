@@ -39,9 +39,9 @@ from decimal import Decimal, InvalidOperation
 
 UPLOAD_FOLDER = 'uploads/expense'
 
-read_permission = Permission(RoleNeed("read_expense claims"))
-write_permission = Permission(RoleNeed("write_expense claims"))
-delete_permission = Permission(RoleNeed("delete_expense claims"))
+read_permission = Permission(RoleNeed("read_account"))
+write_permission = Permission(RoleNeed("write_account"))
+delete_permission = Permission(RoleNeed("delete_account"))
 
 @blueprint.route('/expense_categories')
 @login_required
