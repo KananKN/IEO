@@ -320,7 +320,7 @@
             {% endif %}  
             {% if current_user.has_permission('read_account')  %}
             <div
-                class="menu-item has-sub {% if segment in ['account','invoice', 'expense_categories', 'currencies', 'expense_claims' ] %} active {% endif %}"
+                class="menu-item has-sub {% if segment in ['account','invoice'] %} active {% endif %}"
             >
                 <a href="javascript:;" class="menu-link">
                     <div class="menu-icon">
@@ -338,6 +338,26 @@
                         <a href="/order/invoice" class="menu-link">
                        <div class="menu-text mt-1">Tax Invoice</div></a>
                     </div>
+                    
+                </div>
+                
+                
+            </div>
+
+            {% endif %}  
+            {% if current_user.has_permission('read_expense claims')  %}
+            <div
+                class="menu-item has-sub {% if segment in ['expense_categories', 'currencies', 'expense_claims' ] %} active {% endif %}"
+            >
+                <a href="javascript:;" class="menu-link">
+                    <div class="menu-icon">
+                        <i class="material-icons">description</i>
+                    </div>
+                    <div class="menu-text">ระบบตั้งเบิกค่าใช้จ่าย</div>
+                    <div class="menu-caret"></div>
+                </a>
+                <div class="menu-submenu">
+
                     <div class="menu-item {% if segment == 'expense_categories' %} active {% endif %}">
                         <a href="/account/expense_categories" class="menu-link">
                        <div class="menu-text mt-1">ประเภทค่าใช้จ่าย</div></a>

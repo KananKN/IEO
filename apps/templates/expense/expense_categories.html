@@ -26,7 +26,7 @@
             <!-- ฝั่งซ้าย: รายการอุปกรณ์ + ปุ่มบวก -->
             <div class="d-flex align-items-center">
                 <h6 class="page-header m-0">หมวดหมู่ประเภทค่าใช้จ่าย</h6>
-                {% if current_user.has_permission('write_account') %}
+                {% if current_user.has_permission('write_expense claims') %}
                      <a class="btn btn-success ms-3 shadow-sm  bg-gradient" onclick="func_modal('add')">
                             <i class="fa fa-plus"></i> เพิ่ม
                         </a> 
@@ -67,7 +67,9 @@
                                 <th class="text-center" width="1%"></th>
                                 <th class="text-nowrap"width="40%">ชื่อหมวดหมู่ประเภทค่าใช้จ่าย
                                 </th>
-                               
+                                {% if current_user.role.name == 'Admin' %}
+                                    <th class="text-center" width="1%">สิทธิ์การมองเห็น</th>
+                                {% endif %}
                                 <th class="text-nowrap text-center"  width="10%">Action</th>
                             </tr>
                         </thead>
@@ -76,9 +78,17 @@
                                 <tr class="odd gradeX">
                                     <td width="1%" class="fw-bold text-dark">{{loop.index}}</td>
                                     <td width="40%">{{data.name}}</td>
-                                   
+                                    {% if current_user.role.name == 'Admin' %}
+                                        <td class="text-center">
+                                            {% if data.admin_only %}
+                                                <span class="badge bg-danger">Admin</span>
+                                            {% else %}
+                                                <span class="badge bg-success">All</span>
+                                            {% endif %}
+                                        </td>
+                                    {% endif %}
                                     <td  class="with-btn text-center" width="10%">
-                                        {% if current_user.has_permission('write_account') %}
+                                        {% if current_user.has_permission('write_expense claims') %}
                                             <a  class=" btn btn-dark btn-icon btn-circle btn-lg" onclick='func_modal("edit",{{datas_json[loop.index0] | tojson }})' >
                                                 <i class="fa fa-pencil-alt"></i>
                                             </a>
@@ -90,7 +100,7 @@
                                             </a>
                                             
                                         {% endif %}
-                                        {% if current_user.has_permission('delete_account') %}
+                                        {% if current_user.has_permission('delete_expense claims') %}
                                             <a  onclick="sweetAlertDel({{ data.id }},$(this))" class=" btn btn-danger btn-icon btn-circle btn-lg">
                                                 <i class="fa fa-trash"></i>
                                             </a>
@@ -130,6 +140,17 @@
                             <input type="text" class="form-control" placeholder="" name="name_expense" data-parsley-required="true"/>
                         </div>
                     </div>
+                    {% if current_user.role.name == 'Admin' %}
+
+                    <div class="row mb-3">
+                        <label class="form-label col-form-label col-md-4">แสดงเฉพาะ Admin<span class="text-danger">*</span></label>
+                        <div class="col-md-8">
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" type="checkbox" name="admin_only" value="1">
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
                    
                     
                 

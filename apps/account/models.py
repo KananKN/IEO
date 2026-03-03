@@ -23,7 +23,7 @@ class ExpenseCategoryModel(db.Model):
     
 
     is_active = db.Column(db.Boolean, default=True)
-
+    admin_only = db.Column(db.Boolean,default=False)
     created_at = db.Column(db.DateTime,  default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime,  default=db.func.current_timestamp(),
                            onupdate=db.func.current_timestamp())
@@ -43,6 +43,7 @@ class ExpenseCategoryModel(db.Model):
         return {
             "id": self.id,
             "name": self.name,
+            "admin_only": self.admin_only,
             
         }
 
@@ -130,6 +131,7 @@ class ExpenseClaim(db.Model):
     description = db.Column(db.Text)
     date_created = db.Column(db.Date, default=db.func.current_date())
 
+    # admin_only = db.Column(db.Boolean,default=False)
 
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(),

@@ -26,7 +26,7 @@
             <!-- ฝั่งซ้าย: รายการอุปกรณ์ + ปุ่มบวก -->
             <div class="d-flex align-items-center">
                 <h6 class="page-header m-0">รายการตั้งเบิกค่าใช้จ่าย</h6>
-                {% if current_user.has_permission('write_account') %}
+                {% if current_user.has_permission('write_expense claims') %}
                      <a class="btn btn-success ms-3 " href="/account/expense_create_claims" style="border-color: #50cd89;
     background-color:#50cd89">
                             <i class="fa fa-plus"></i> เพิ่ม
@@ -90,13 +90,13 @@
                                     <td width=""> {{ data.paid_date.strftime('%d/%m/%Y') if data.paid_date else '-' }}</td>
                                    
                                     <td  class="with-btn text-center" >
-                                        {% if current_user.has_permission('write_account') %}
+                                        {% if current_user.has_permission('write_expense claims') %}
                                             <a  class=" btn btn-dark btn-icon btn-circle btn-lg" href="/account/expense_upgrade_claims/{{data.id}}" >
                                                 <i class="fa fa-pencil-alt"></i>
                                             </a>
                                             
                                         {% endif %}
-                                        {% if current_user.has_permission('delete_account') %}
+                                        {% if current_user.has_permission('delete_expense claims') %}
                                             <a  onclick="sweetAlertDel({{ data.id }},$(this))" class=" btn btn-danger btn-icon btn-circle btn-lg">
                                                 <i class="fa fa-trash"></i>
                                             </a>
@@ -189,7 +189,12 @@
 <script src="{{ config.ASSETS_ROOT }}/plugins/sweetalert/dist/sweetalert.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="{{ config.ASSETS_ROOT }}/js/account/main_expense_claims_list.js?v={{ config.ASSETS_VERSION }}"></script>
-
+<script>
+    $(document).ready(function() {
+        var table = $('#data-table-responsive').DataTable();
+        table.order([0, 'desc']).draw();
+    });
+</script>
 
 
 {% endblock javascripts %}

@@ -100,6 +100,7 @@ function func_modal(mode, data) {
         $('.c_edit').hide()
         $('.modal-title').html('Add');
         $('[name="name_expense"]').val('');
+        $('[name="admin_only"]').prop('checked', false);
        
 
 
@@ -111,6 +112,7 @@ function func_modal(mode, data) {
 
         $('[name="id"]').val(data.id);
         $('[name="name_expense"]').val(data.name);
+        $('[name="admin_only"]').prop('checked', data.admin_only === true);
        
         
     }
@@ -121,10 +123,11 @@ function func_save(mode, x) {
 
     console.log(mode)
     x.attr('disabled', true);
+    const adminOnly = $('[name="admin_only"]').is(':checked');
 
     let details = {
         'name': $('[name="name_expense"]').val(),
-        
+        'adminOnly' : adminOnly
     }
     if (details['name'].trim() == '') {
         check_fail('กรุณากรอกชื่อหมวดหมู่ประเภทค่าใช้จ่าย');
@@ -141,6 +144,8 @@ function func_save(mode, x) {
                     body: JSON.stringify({
 
                         name: $('[name="name_expense"]').val(),
+                        admin_only: $('[name="admin_only"]').prop('checked')
+                        
                     
                     }),
                 })
@@ -180,7 +185,7 @@ function func_save(mode, x) {
                 body: JSON.stringify({
                     id: $('[name="id"]').val(),
                     name: $('[name="name_expense"]').val(),
-                  
+                    admin_only: $('[name="admin_only"]').prop('checked')                  
                 }),
             })
             .then((response) => response.json())

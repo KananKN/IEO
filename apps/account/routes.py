@@ -39,16 +39,26 @@ from decimal import Decimal, InvalidOperation
 
 UPLOAD_FOLDER = 'uploads/expense'
 
-read_permission = Permission(RoleNeed("read_account"))
-write_permission = Permission(RoleNeed("write_account"))
-delete_permission = Permission(RoleNeed("delete_account"))
+read_permission = Permission(RoleNeed("read_expense claims"))
+write_permission = Permission(RoleNeed("write_expense claims"))
+delete_permission = Permission(RoleNeed("delete_expense claims"))
 
 @blueprint.route('/expense_categories')
 @login_required
 @read_permission.require(http_exception=403)
 def expense_categories():
-    datas = ExpenseCategoryModel.query.all()
-    print(datas)
+    # datas = ExpenseCategoryModel.query.all()
+    if current_user.role.name == 'Admin':
+        # ✅ Admin เห็นทั้งหมด
+        datas = ExpenseCategoryModel.query.all()
+    else:
+        # ✅ User เห็นเฉพาะที่ไม่ admin_only
+        datas = ExpenseCategoryModel.query.filter(
+            or_(
+                ExpenseCategoryModel.admin_only == False,
+                ExpenseCategoryModel.admin_only.is_(None)
+            )
+        ).all()
     datas_dict = [d.to_dict() for d in datas]
 
     # return jsonify([
@@ -73,8 +83,13 @@ def add_expense():
     data = request.get_json()
     print(data)
     try:
+        if 'admin_only' in data:
+            admin_only = data['admin_only']
+        else:
+            admin_only = False
         new_expense = ExpenseCategoryModel(
             name=data['name'],
+                admin_only = admin_only
             # description=data.get('description', ''),
             # parent_id=data.get('parent_id', None),
             # is_active=True
@@ -98,6 +113,12 @@ def edit_expense():
             return jsonify({'status': 'error', 'message': 'Expense category not found.'}), 404
 
         expense.name = data['name']
+        # expense.admin_only = data['admin_only']
+       
+        # ✅ update เฉพาะตอนมีค่าเข้ามา
+        if 'admin_only' in data:
+            expense.admin_only = data['admin_only']
+
         # expense.description = data.get('description', expense.description)
         # expense.parent_id = data.get('parent_id', expense.parent_id)
 
@@ -157,6 +178,7 @@ def add_subexpense():
     data = request.get_json()
     print(data)
     try:
+       
         new_expense = ExpenseSubCategoryModel(
             expense_category_id=data['id_cat'],
             name=data['name'],
@@ -178,7 +200,9 @@ def add_subexpense():
 def edit_subexpense():
     data = request.get_json()
     print(data)
+
     try:
+        # admin_only = data.get("admin_only", False)
         expense_sub = ExpenseSubCategoryModel.query.get(data['id'])
         if not expense_sub:
             return jsonify({'status': 'error', 'message': 'expense_sub category not found.'}), 404
@@ -384,10 +408,41 @@ def delete_currencies(currency_id):
 @login_required 
 @read_permission.require(http_exception=403)
 def expense_claims_list():  
-    data = ExpenseClaim.query.all()
+    # data = ExpenseClaim.query.all()
+    query = ExpenseClaim.query\
+        .outerjoin(
+            ExpenseClaimStaffModel,
+            ExpenseClaimStaffModel.claim_id == ExpenseClaim.id
+        )\
+        .outerjoin(
+            ExpenseCategoryModel,
+            ExpenseClaimStaffModel.expense_category_id == ExpenseCategoryModel.id
+        )
+
+    if current_user.role.name != 'Admin':
+        query = query.filter(
+            or_(
+                ExpenseCategoryModel.admin_only == False,
+                ExpenseCategoryModel.admin_only.is_(None)
+            )
+        )
+
+
+    # ✅ ถ้าไม่ใช่ Admin
+    if current_user.role.name != 'Admin':
+        query = query.filter(
+            or_(
+                ExpenseCategoryModel.admin_only == False,
+                ExpenseCategoryModel.admin_only.is_(None)
+            )
+        )
+    query = query.order_by(ExpenseClaim.claim_number.desc()).distinct()
+
+
+    data = query.all()
     
     datas_dict = [d.to_dict() for d in data]
-    
+    print(datas_dict)
     # return jsonify([
     #     d.to_dict() for d in datas
     # ])
@@ -402,7 +457,19 @@ def expense_create_claims():
     .all())
 
     users = UserModel.query.all()
-    categories = ExpenseCategoryModel.query.all()
+    # categories = ExpenseCategoryModel.query.all()
+    if current_user.role.name == 'Admin':
+        # ✅ Admin เห็นทั้งหมด
+        categories = ExpenseCategoryModel.query.all()
+    else:
+        # ✅ User เห็นเฉพาะที่ไม่ admin_only
+        categories = ExpenseCategoryModel.query.filter(
+            or_(
+                ExpenseCategoryModel.admin_only == False,
+                ExpenseCategoryModel.admin_only.is_(None)
+            )
+        ).all()
+
     currency = CurrencyModel.query.order_by(CurrencyModel.code.asc()).all()
 
 
@@ -736,7 +803,20 @@ def get_user(user_id):
 @blueprint.route('/expense_categories/tree')
 @login_required
 def expense_category_tree():
-    categories = ExpenseCategoryModel.query.filter_by(is_active=True).all()
+    # categories = ExpenseCategoryModel.query.filter_by(is_active=True).all()
+    if current_user.role.name == 'Admin':
+        categories = ExpenseCategoryModel.query\
+            .filter_by(is_active=True)\
+            .all()
+    else:
+        categories = ExpenseCategoryModel.query\
+            .filter(
+                ExpenseCategoryModel.is_active == True,
+                or_(
+                    ExpenseCategoryModel.admin_only == False,
+                    ExpenseCategoryModel.admin_only.is_(None)
+                )
+            ).all()
 
     data = []
     for cat in categories:
