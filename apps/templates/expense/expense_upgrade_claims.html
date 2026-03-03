@@ -60,7 +60,7 @@
             <!-- ฝั่งซ้าย: รายการอุปกรณ์ + ปุ่มบวก -->
             <div class="d-flex align-items-center">
                 <h6 class="page-header m-0">ฟอร์มตั้งเบิกค่าใช้จ่าย</h6>
-                {% if current_user.has_permission('write_account') %}
+                {% if current_user.has_permission('write_expense claims') %}
                      <!-- <a class="btn btn-success ms-3 shadow-sm  bg-gradient" href="/expense/expense_create_claims">
                             <i class="fa fa-plus"></i> เพิ่ม
                         </a>  -->
@@ -140,7 +140,14 @@
                                                     <select class="default-select2 form-control"  name="requester_user_id" id="requester_user_id" >
                                                         <option value="">ไม่มี</option>
                                                         {% for user in users %}
-                                                            <option {% if claim.requester_user_id |int == user.id %} selected {% endif %} value="{{user.id}}">{{user.username}} : {{user.profile.first_name}}{{user.profile.last_name}}</option>
+                                                            <option {% if claim.requester_user_id |int == user.id %} selected {% endif %} value="{{user.id}}">{{ user.username }} :
+                                                                {% if user.role and user.role.name.lower() == 'agency' and user.agency %}
+                                                                    {{ user.agency.first_name or '' }} {{ user.agency.last_name or '' }}
+                                                                {% elif user.profile %}
+                                                                    {{ user.profile.first_name or '' }} {{ user.profile.last_name or '' }}
+                                                                {% else %}
+                                                                    -
+                                                                {% endif %}</option>
                                                         {% endfor %}
                                                     </select>
                                                 </div>
@@ -467,20 +474,55 @@
                         </thead>
                         <tbody>
                         
-                        <tr>
-                            <td id="modal-full-name">
-                                {{ claim.requester.profile.first_name or '-'}} {{ claim.requester.profile.last_name }}
-                            </td>
-                            <td id="modal-bank-account">
-                                {{ claim.requester.profile.bank_account or '-' }}
-                            </td>
-                            <td id="modal-bank-name">
-                                {{ claim.requester.profile.bank_name or '-' }}
-                            </td>
-                            <!-- <td id="modal-extra">
-                                {{ claim.requester.profile.bank_name or '-' }}
-                            </td> -->
-                        </tr>
+                            <tr>
+                                <td id="modal-full-name">
+                                    {% if claim.requester %}
+                                        
+                                        {% if claim.requester.role and claim.requester.role.name.lower() == 'agency' and claim.requester.agency %}
+                                            {{ claim.requester.agency.account_name or '-' }}
+                                        {% elif claim.requester.profile %}
+                                            {{ claim.requester.profile.bank_name or '-' }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                            
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                            
+                                <td id="modal-bank-account">
+                                    {% if claim.requester %}
+                                        
+                                        {% if claim.requester.role and claim.requester.role.name.lower() == 'agency' and claim.requester.agency %}
+                                            {{ claim.requester.agency.account_account or '-' }}
+                                        {% elif claim.requester.profile %}
+                                            {{ claim.requester.profile.bank_account or '-' }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                            
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                            
+                                <td id="modal-bank-name">
+                                    {% if claim.requester %}
+                                        
+                                        {% if claim.requester.role and claim.requester.role.name.lower() == 'agency' and claim.requester.agency %}
+                                            {{ claim.requester.agency.bank or '-' }}
+                                        {% elif claim.requester.profile %}
+                                            {{ claim.requester.profile.bank_name or '-' }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                            
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                     

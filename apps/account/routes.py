@@ -767,13 +767,53 @@ def expense_upgrade_claims(claim_id):
                     , users=users, categories=categories, data_supplier=data_supplier, currency=currency , claim=claim,staff_items=items,
                     children_item=children_item,receiver_detail=receiver_detail,children_files=children_files, staff_files=staff_files)
 
+# @blueprint.route('/get_user/<int:user_id>')
+# @login_required
+# def get_user(user_id):
+
+#     # result = (
+#     #     db.session.query(UserModel, UserProfileModel)
+#     #     .outerjoin(UserProfileModel, UserProfileModel.user_id == UserModel.id)
+#     #     .filter(UserModel.id == user_id)
+#     #     .first()
+#     # )
+#     result = (
+#         db.session.query(UserModel, UserProfileModel, AgencyModel)
+#         .outerjoin(UserProfileModel, UserProfileModel.user_id == UserModel.id)
+#         .outerjoin(AgencyModel, AgencyModel.user_id == UserModel.id)
+#         .filter(UserModel.id == user_id)
+#         .first()
+#     )
+
+#     if not result:
+#         return jsonify({'status': 'error', 'message': 'User not found'}), 404
+
+#     user, profile, agency = result   # 👈 สำคัญมาก
+
+#     return jsonify({
+#         'status': 'success',
+#         'data': {
+#             'id': user.id,
+#             'username': user.username,
+#             'email': profile.email if profile and profile.email else '',
+#             'phone': profile.phone if profile and profile.phone else '',
+#             'bank_name': profile.bank_name if profile else '',
+#             'bank_account': profile.bank_account if profile else '',
+#             'full_name': (
+#                 f"{profile.first_name} {profile.last_name}"
+#                 if profile and profile.first_name
+#                 else user.username
+#             )
+#         }
+#     })
 @blueprint.route('/get_user/<int:user_id>')
 @login_required
 def get_user(user_id):
 
     result = (
-        db.session.query(UserModel, UserProfileModel)
+        db.session.query(UserModel, UserProfileModel, AgencyModel)
         .outerjoin(UserProfileModel, UserProfileModel.user_id == UserModel.id)
+        .outerjoin(AgencyModel, AgencyModel.user_id == UserModel.id)
         .filter(UserModel.id == user_id)
         .first()
     )
@@ -781,25 +821,37 @@ def get_user(user_id):
     if not result:
         return jsonify({'status': 'error', 'message': 'User not found'}), 404
 
-    user, profile = result   # 👈 สำคัญมาก
+    user, profile, agency = result
+
+    if user.role and user.role.name.lower() == "agency" and agency:
+        # full_name = f"{agency.first_name or ''} {agency.last_name or ''}".strip()
+        full_name = agency.account_name or ""
+        bank_name = agency.bank or ""
+        bank_account = agency.account_number or ""
+        email = agency.email or ""
+        phone = agency.tel or ""
+    else:
+        full_name = (
+            f"{profile.first_name or ''} {profile.last_name or ''}".strip()
+            if profile else user.username
+        )
+        bank_name = profile.bank_name if profile else ""
+        bank_account = profile.bank_account if profile else ""
+        email = profile.email if profile else ""
+        phone = profile.phone if profile else ""
 
     return jsonify({
         'status': 'success',
         'data': {
             'id': user.id,
             'username': user.username,
-            'email': profile.email if profile and profile.email else '',
-            'phone': profile.phone if profile and profile.phone else '',
-            'bank_name': profile.bank_name if profile else '',
-            'bank_account': profile.bank_account if profile else '',
-            'full_name': (
-                f"{profile.first_name} {profile.last_name}"
-                if profile and profile.first_name
-                else user.username
-            )
+            'email': email,
+            'phone': phone,
+            'bank_name': bank_name,
+            'bank_account': bank_account,
+            'full_name': full_name
         }
     })
-
 @blueprint.route('/expense_categories/tree')
 @login_required
 def expense_category_tree():

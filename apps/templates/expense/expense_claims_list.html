@@ -79,9 +79,27 @@
                                 <tr class="odd gradeX">
                                     <td width="1%" class="fw-bold text-dark">{{data.claim_number}}</td>
                                     <td >{{ data.requester.username if data.requester else '-' }}</td>
-                                    <td >
+                                    <td>
                                         {% if data.requester %}
-                                            {{ data.requester.profile.first_name }} {{ data.requester.profile.last_name }}
+                                            
+                                            {% if data.requester.role and data.requester.role.name.lower() == 'agency' %}
+                                                
+                                                {% if data.requester.agency %}
+                                                    {{ data.requester.agency.first_name }} {{ data.requester.agency.last_name }}
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                    
+                                            {% else %}
+                                                
+                                                {% if data.requester.profile %}
+                                                    {{ data.requester.profile.first_name }} {{ data.requester.profile.last_name }}
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                    
+                                            {% endif %}
+                                    
                                         {% else %}
                                             -
                                         {% endif %}
