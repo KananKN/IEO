@@ -413,10 +413,6 @@ function loadDataTable() {
             },
             {
                 data: "status_label",
-                visible: false // ให้ filter ได้ แต่ไม่ต้องแสดง
-            },
-            {
-                data: "status_label",
                 render: function(status_label, type, row) {
                     let status = row.status;
                     let color_text = '';

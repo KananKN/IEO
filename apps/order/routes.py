@@ -220,13 +220,33 @@ def get_order():
                     OrderModel.created_at + text("interval '543 year'"),
                     "DD/FMMM/YYYY")
     # Mapping คอลัมน์จาก DataTable ไปยัง Database
+    status_order_expr = case(
+        # pending มาก่อน
+        (OrderModel.status == 'pending', 0),
+
+        # installment_X → ดึงเลข X มาเรียงตามจริง
+        (
+            OrderModel.status.like('installment_%'),
+            cast(func.split_part(OrderModel.status, '_', 2), Integer)
+        ),
+
+        # completed หลังงวดทั้งหมด
+        (OrderModel.status == 'completed', 100),
+
+        # cancelled ท้ายสุด
+        (OrderModel.status == 'cancelled', 101),
+
+        else_=999
+    )
     column_map = {
         0: OrderModel.id,
         1: OrderModel.order_number,
         2: leadModel.first_name,  # ปรับชื่อให้ตรงกับ model
         3: ProductForSalesModel.name,
         4: ProductForSalesModel.price,
-        6: OrderModel.created_at,
+        5: OrderModel.created_at,
+        6: status_order_expr
+
     }
 
     # ✅ Base query with joins for filtering and eager loading
