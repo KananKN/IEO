@@ -456,7 +456,9 @@ def expense_create_claims():
     .distinct().order_by(MemberModel.first_name.asc())  # 🔤 เรียงตามชื่อ
     .all())
 
-    users = UserModel.query.all()
+    users =  UserModel.query.filter(
+                UserModel.role.has(name='agency')
+            ).all()
     # categories = ExpenseCategoryModel.query.all()
     if current_user.role.name == 'Admin':
         # ✅ Admin เห็นทั้งหมด
@@ -596,7 +598,10 @@ def expense_upgrade_claims(claim_id):
     .distinct().order_by(MemberModel.first_name.asc())  # 🔤 เรียงตามชื่อ
     .all())
 
-    users = UserModel.query.all()
+    # users = UserModel.query.all()
+    users =  UserModel.query.filter(
+                UserModel.role.has(name='agency')
+            ).all()
     categories = ExpenseCategoryModel.query.all()
     currency = CurrencyModel.query.order_by(CurrencyModel.code.asc()).all()
 
@@ -1072,6 +1077,7 @@ def save_expense_claim():
             requester_user_id=requester_user_id,
             date_created=creation_date,
             # total_amount=staff_total_amount,
+            created_by=current_user.id,
         )
         
         db.session.add(claim)
@@ -1083,6 +1089,7 @@ def save_expense_claim():
     claim.claim_type = claim_type
     claim.requester_user_id = requester_user_id
     claim.date_created = creation_date
+    claim.created_by=current_user.id,
 
     if is_update and old_claim_type != claim_type:
 

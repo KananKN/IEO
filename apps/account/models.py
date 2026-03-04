@@ -124,7 +124,10 @@ class ExpenseClaim(db.Model):
     claim_type = db.Column(db.String(20), nullable=True)  # staff | children
 
     requester_user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    requester = db.relationship('UserModel', backref='expense_claims')
+    requester = db.relationship('UserModel', backref='expense_claims',foreign_keys=[requester_user_id])
+    created_by = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
+    created_user = db.relationship("UserModel", foreign_keys=[created_by])
+
 
     total_amount = db.Column(db.Numeric(12,2))
     status = db.Column(db.String(20), default='draft')
