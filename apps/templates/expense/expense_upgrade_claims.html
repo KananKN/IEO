@@ -135,6 +135,14 @@
                                             </div>
                                         </div>
                                         <div class="row mt-3">
+                                            <label class="form-label col-form-label col-md-4">Product for Sales<span class="text-danger">*</span></label>
+                                                <div class="col-lg-8">
+                                                    <select class="default-select2 form-control"  name="product_id" id="product_id" >
+                                                        
+                                                    </select>
+                                                </div>
+                                        </div>
+                                        <!-- <div class="row mt-3">
                                             <label class="form-label col-form-label col-md-4">ชื่อ-นามสกุล Agency<span class="text-danger">*</span></label>
                                                 <div class="col-lg-8">
                                                     <select class="default-select2 form-control"  name="requester_user_id" id="requester_user_id" >
@@ -151,7 +159,7 @@
                                                         {% endfor %}
                                                     </select>
                                                 </div>
-                                        </div>
+                                        </div> -->
                                         <!-- <div class="row mt-3">
                                             <label class="form-label col-form-label col-md-4">Username</label>
                                             <div class="col-md-8">
@@ -287,6 +295,7 @@
                                             <thead class="table-secondary text-center">
                                             <tr>
                                                 <th width="10%">#</th>
+                                                <th>รายชื่อ Supplier</th>
                                                 <th>รายการ</th>
                                                 <th width="25%">จำนวนเงิน (บาท)</th>
                                                 <th width="10%">ลบ</th>
@@ -640,6 +649,14 @@
     
         $('#expenseModal').modal('hide');
     });
+
+    let product_id = "{{ claim.product_id }}"
+    let product_name = "{{ claim.product.name if claim.product else '' }}"
+
+    if (product_id) {
+        let option = new Option(product_name, product_id, true, true)
+        $('#product_id').append(option).trigger('change')
+    }
 
     $('input[name="creation_date"').datepicker({
         format: 'dd/mm/yyyy',

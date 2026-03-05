@@ -129,13 +129,26 @@
                                                         placeholder="เลือกวันที่" 
                                                         name="creation_date"
                                                         autocomplete="off"
-                                                        value="" 
+                                                        value="{{ datetime.utcnow().strftime('%d/%m/%Y') }}"
                                                         readonly />
                                                     <span class="input-group-text"><i class="fa fa-calendar"></i></span>
                                                 </div>
                                             </div>
                                         </div>
                                         <div class="row mt-3">
+                                            <label class="form-label col-form-label col-md-4">Product for Sales<span class="text-danger">*</span></label>
+                                                <div class="col-lg-8">
+                                                    <select class="default-select2 form-control"  name="product_id" id="product_id" >
+                                                        <option value="">ไม่มี</option>
+                                                            {% for p in products %}
+                                                                <option value="{{p.id}}">
+                                                                    {{p.name}}
+                                                                </option>
+                                                            {% endfor %}
+                                                    </select>
+                                                </div>
+                                        </div>
+                                        <!-- <div class="row mt-3">
                                             <label class="form-label col-form-label col-md-4">ชื่อ-นามสกุล Agency<span class="text-danger">*</span></label>
                                                 <div class="col-lg-8">
                                                     <select class="default-select2 form-control"  name="requester_user_id" id="requester_user_id" >
@@ -154,7 +167,7 @@
                                                         {% endfor %}
                                                     </select>
                                                 </div>
-                                        </div>
+                                        </div> -->
                                         <!-- <div class="row mt-3">
                                             <label class="form-label col-form-label col-md-4">Username</label>
                                             <div class="col-md-8">
@@ -270,6 +283,7 @@
                                             <thead class="table-secondary text-center">
                                             <tr>
                                                 <th width="10%">#</th>
+                                                <th>รายชื่อ Supplier</th>
                                                 <th>รายการ</th>
                                                 <th width="25%">จำนวนเงิน (บาท)</th>
                                                 <th width="10%">ลบ</th>
@@ -278,7 +292,7 @@
                                             <tbody id="staffTableBody"></tbody>
                                             <tfoot>
                                             <tr class="fw-bold">
-                                                <td colspan="2" class="text-end">ยอดรวม</td>
+                                                <td colspan="3" class="text-end">ยอดรวม</td>
                                                 <td class="text-end text-success">
                                                 <span id="staffTotal">0.00</span>
                                                 <input type="hidden" id="staff_total_amount" name="staff_total_amount" placeholder="0.00" value="">
@@ -595,18 +609,7 @@ function addExpenseItem() {
           <div class="col-md-6">
             <label class="form-label">รายชื่อ Supplier<span class="text-danger">*</span></label>
             <select class="default-select2 form-control expense-name-select" name="receiver[]">
-                <option value="">-- เลือกผู้รับเงิน --</option>
-            
-                {% set groups = data_supplier | groupby('type') %}
-                {% for type, items in groups %}
-                    <optgroup label="{{ type }}">
-                        {% for item in items %}
-                            <option value="{{ item.value }}">
-                                {{ item.name }}
-                            </option>
-                        {% endfor %}
-                    </optgroup>
-                {% endfor %}
+                
             </select>
 
             

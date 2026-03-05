@@ -66,8 +66,8 @@
                         <thead>
                             <tr>
                                 <th class="text-center" width="1%">รหัส PR</th>
-                                <th class="text-nowrap"width="20%">User ที่ตั้งเบิก</th>
-                                <th class="text-nowrap"width="30%">โครงการ</th>
+                                <th class="text-nowrap"width="20%">Username</th>
+                                <th class="text-nowrap"width="30%">ชื่อ-นามสกุล</th>
                                 <th class="text-nowrap"width="">ยอดเบิก</th>
                                 <th class="text-nowrap"width="">วันที่จ่าย</th>
                                
@@ -78,10 +78,28 @@
                             {% for data in datas %}
                                 <tr class="odd gradeX">
                                     <td width="1%" class="fw-bold text-dark">{{data.claim_number}}</td>
-                                    <td >{{ data.created_user.username if data.created_user else '-' }}</td>
+                                    <td >{{ data.requester.username if data.requester else '-' }}</td>
                                     <td>
-                                        {% if data.product %}
-                                            {{ data.product.name }} 
+                                        {% if data.requester %}
+                                            
+                                            {% if data.requester.role and data.requester.role.name.lower() == 'agency' %}
+                                                
+                                                {% if data.requester.agency %}
+                                                    {{ data.requester.agency.first_name }} {{ data.requester.agency.last_name }}
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                    
+                                            {% else %}
+                                                
+                                                {% if data.requester.profile %}
+                                                    {{ data.requester.profile.first_name }} {{ data.requester.profile.last_name }}
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                    
+                                            {% endif %}
+                                    
                                         {% else %}
                                             -
                                         {% endif %}

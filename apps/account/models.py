@@ -128,6 +128,13 @@ class ExpenseClaim(db.Model):
     created_by = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
     created_user = db.relationship("UserModel", foreign_keys=[created_by])
 
+    product_id = db.Column(
+        db.Integer,
+        db.ForeignKey("product_for_sales.id", ondelete="CASCADE"),
+        nullable=True
+    )
+    product = db.relationship("ProductForSalesModel", backref="expense_claims")
+
 
     total_amount = db.Column(db.Numeric(12,2))
     status = db.Column(db.String(20), default='draft')
@@ -248,7 +255,14 @@ class ExpenseStaffItemModel(db.Model):
 
     expense_claim_staff = db.relationship('ExpenseClaimStaffModel', back_populates='expense_staff_items')
 
-    
+    receiver_type = db.Column(db.String(30),  # employee / supplier / organization / agency
+        nullable=True
+    )
+
+    receiver_id = db.Column(
+        db.Integer,
+        nullable=True
+    )
 
     item_name = db.Column(db.String(255), nullable=True)
     amount = db.Column(db.Numeric(12,2), nullable=True)

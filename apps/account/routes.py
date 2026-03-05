@@ -475,57 +475,88 @@ def expense_create_claims():
     currency = CurrencyModel.query.order_by(CurrencyModel.code.asc()).all()
 
 
+
+
     # datas_members_dict = [d.to_dict() for d in members]
 
     data_supplier = []
 
-    employees = EmployeeModel.query.all()
-    organizations = OrganizationModel.query.all()
-    agencies = AgencyModel.query.filter(AgencyModel.org_type == 'agency').all()
-    university = AgencyModel.query.filter(AgencyModel.org_type == 'university').all()
-    suppliers = SupplierModel.query.all()
+    # employees = EmployeeModel.query.all()
+    # organizations = OrganizationModel.query.all()
+    # agencies = AgencyModel.query.filter(AgencyModel.org_type == 'agency').all()
+    # university = AgencyModel.query.filter(AgencyModel.org_type == 'university').all()
+    # suppliers = SupplierModel.query.all()
 
-    for e in employees:
-        data_supplier.append({
-            "value": f"employee:{e.id}",
-            "name": e.name,
-            "type": "Employee"
-        })
+    # for e in employees:
+    #     data_supplier.append({
+    #         "value": f"employee:{e.id}",
+    #         "name": e.name,
+    #         "type": "Employee"
+    #     })
 
-    for o in organizations:
-        data_supplier.append({
-            "value": f"organization:{o.id}",
-            "name": o.name,
-            "type": "Organization"
-        })
+    # for o in organizations:
+    #     data_supplier.append({
+    #         "value": f"organization:{o.id}",
+    #         "name": o.name,
+    #         "type": "Organization"
+    #     })
 
-    for a in agencies:
-        data_supplier.append({
-            "value": f"agency:{a.id}",
-            "name": f"{a.first_name} {a.last_name}",
-            "type": "Agency"
-        })
+    # for a in agencies:
+    #     data_supplier.append({
+    #         "value": f"agency:{a.id}",
+    #         "name": f"{a.first_name} {a.last_name}",
+    #         "type": "Agency"
+    #     })
 
-    for u in university:
-        data_supplier.append({
-            "value": f"agency:{a.id}",
-            "name": f"{a.first_name} {a.last_name}",
-            "type": "University"
-        })
+    # for u in university:
+    #     data_supplier.append({
+    #         "value": f"agency:{a.id}",
+    #         "name": f"{a.first_name} {a.last_name}",
+    #         "type": "University"
+    #     })
 
-    for s in suppliers:
-        data_supplier.append({
-            "value": f"supplier:{s.id}",
-            "name": s.name,
-            "type": "Supplier"
-        })
+    # for s in suppliers:
+    #     data_supplier.append({
+    #         "value": f"supplier:{s.id}",
+    #         "name": s.name,
+    #         "type": "Supplier"
+    #     })
 
-    # 🔤 เรียงตัวอักษร
-    data_supplier = sorted(data_supplier, key=lambda x: x["name"].lower())
+    # # 🔤 เรียงตัวอักษร
+    # data_supplier = sorted(data_supplier, key=lambda x: x["name"].lower())
     
     return render_template('expense/expense_create_claims.html', segment='expense_claims' ,members=members
-                    , users=users, categories=categories, data_supplier=data_supplier, currency=currency)
+                    , users=users, categories=categories, currency=currency,datetime=datetime)
 
+@blueprint.route('/api/products')
+@login_required
+def api_products():
+
+    products = (
+        db.session.query(
+            ProductForSalesModel.id,
+            ProductForSalesModel.name,
+            ProductForSalesModel.year,
+            ProductCategoryModel.name.label("category")
+        )
+        .outerjoin(
+            ProductCategoryModel,
+            ProductCategoryModel.id == ProductForSalesModel.product_category_id
+        )
+        .order_by(ProductCategoryModel.name.asc(), ProductForSalesModel.name.asc())
+        .all()
+    )
+
+    data = []
+
+    for p in products:
+        data.append({
+            "id": p.id,
+            "name": f"{p.name} ({p.year})",
+            "category": p.category or "Other"
+        })
+
+    return jsonify(data)
 
 def get_receiver_detail(receiver_type, receiver_id):
 
@@ -599,9 +630,9 @@ def expense_upgrade_claims(claim_id):
     .all())
 
     # users = UserModel.query.all()
-    users =  UserModel.query.filter(
-                UserModel.role.has(name='agency')
-            ).all()
+    # users =  UserModel.query.filter(
+    #             UserModel.role.has(name='agency')
+    #         ).all()
     categories = ExpenseCategoryModel.query.all()
     currency = CurrencyModel.query.order_by(CurrencyModel.code.asc()).all()
 
@@ -669,7 +700,11 @@ def expense_upgrade_claims(claim_id):
             {
                 "id": i.id,
                 "item_name": i.item_name,
-                "amount": float(i.amount or 0)
+                "amount": float(i.amount or 0),
+                "receiver_id": i.receiver_id,
+                "receiver_type": i.receiver_type,
+                "receiver_name": get_receiver_name(i.receiver_type, i.receiver_id)
+
             }
             for i in claim.staff_claim.expense_staff_items
         ]if claim.staff_claim and claim.staff_claim.expense_staff_items else []
@@ -702,6 +737,7 @@ def expense_upgrade_claims(claim_id):
                                 "ref_amount": j.ref_amount,
                                 "exchange_rate": j.exchange_rate,
                                 "remark": j.remark,
+
                                 # "receiver_detail": get_receiver_detail(
                                 #         j.receiver_type,
                                 #         j.receiver_id
@@ -769,9 +805,28 @@ def expense_upgrade_claims(claim_id):
    
     
     return render_template('expense/expense_upgrade_claims.html', segment='expense_claims' ,members=members
-                    , users=users, categories=categories, data_supplier=data_supplier, currency=currency , claim=claim,staff_items=items,
+                    , categories=categories, data_supplier=data_supplier, currency=currency , claim=claim,staff_items=items,
                     children_item=children_item,receiver_detail=receiver_detail,children_files=children_files, staff_files=staff_files)
 
+def get_receiver_name(type, id):
+
+    if type == "employee":
+        e = EmployeeModel.query.get(id)
+        return e.name if e else ""
+
+    if type == "supplier":
+        s = SupplierModel.query.get(id)
+        return s.name if s else ""
+
+    if type == "organization":
+        o = OrganizationModel.query.get(id)
+        return o.name if o else ""
+
+    if type in ("agency","university"):
+        a = AgencyModel.query.get(id)
+        return f"{a.first_name} {a.last_name}" if a else ""
+
+    return ""
 # @blueprint.route('/get_user/<int:user_id>')
 # @login_required
 # def get_user(user_id):
@@ -923,7 +978,10 @@ def get_expense_receivers():
 
     employees = EmployeeModel.query.all()
     # coordinators = CoordinatorModel.query.all()
-    organizations = OrganizationModel.query.all()
+    organizations = db.session.query(
+        OrganizationModel.id,
+        OrganizationModel.name
+    ).all()
     agencies = AgencyModel.query.all()
     suppliers = SupplierModel.query.all()
 
@@ -934,12 +992,7 @@ def get_expense_receivers():
             "type": "employee"
         })
 
-    # for c in coordinators:
-    #     data.append({
-    #         "id": c.id,
-    #         "name": c.name,
-    #         "type": "coordinator"
-    #     })
+
 
     for o in organizations:
         data.append({
@@ -951,7 +1004,7 @@ def get_expense_receivers():
     for a in agencies:
         data.append({
             "id": a.id,
-            "name": a.first_name + " " + a.last_name,   
+            "name": f"{a.first_name or ''} {a.last_name or ''}".strip(), 
             "type": "agency"
         })
 
@@ -1049,18 +1102,19 @@ def save_expense_claim():
     print(request.form)
     claim_id = request.form.get('claim_id')
     claim_type = request.form.get('claim_type')
+    product_id = request.form.get('product_id')
 
-    requester_user_id = request.form.get('requester_user_id', type=int)
+    # requester_user_id = request.form.get('requester_user_id', type=int)
 
-    if not requester_user_id:
-        abort(400, 'Requester is required')
+    # if not requester_user_id:
+    #     abort(400, 'Requester is required')
 
-    requester = UserModel.query.get(requester_user_id)
-    if not requester:
-        return jsonify({
-            "status": "error",
-            "message": "กรุณาเลือกชื่อ - นามสกุล"
-        }), 400
+    # requester = UserModel.query.get(requester_user_id)
+    # if not requester:
+    #     return jsonify({
+    #         "status": "error",
+    #         "message": "กรุณาเลือกชื่อ - นามสกุล"
+    #     }), 400
     #     abort(400, 'Invalid requester user')
     # expense_categories = request.form.get('expense_category_id')
     creation_date_str = request.form.get('creation_date')
@@ -1074,10 +1128,12 @@ def save_expense_claim():
         claim = ExpenseClaim(
             claim_number=generate_pr_number(),
             claim_type=claim_type,
-            requester_user_id=requester_user_id,
+            # requester_user_id=requester_user_id,
+            requester_user_id=current_user.id,
             date_created=creation_date,
             # total_amount=staff_total_amount,
             created_by=current_user.id,
+            product_id=product_id,
         )
         
         db.session.add(claim)
@@ -1087,9 +1143,11 @@ def save_expense_claim():
     old_claim_type = claim.claim_type
 
     claim.claim_type = claim_type
-    claim.requester_user_id = requester_user_id
+    # claim.requester_user_id = requester_user_id
+    # claim.requester_user_id = current_user.id,
     claim.date_created = creation_date
-    claim.created_by=current_user.id,
+    claim.created_by=current_user.id
+    claim.product_id=product_id
 
     if is_update and old_claim_type != claim_type:
 
@@ -1114,6 +1172,7 @@ def save_expense_claim():
     return jsonify({'status': 'success'})
 
 def save_staff_claim(claim, is_update=False):
+    receivers = request.form.getlist('receiver_staff[]')
 
     # ===== header =====
     if is_update and claim.staff_claim:
@@ -1121,7 +1180,8 @@ def save_staff_claim(claim, is_update=False):
     else:
         staff_claim = ExpenseClaimStaffModel(
             claim=claim,
-            staff_user_id=to_int(request.form.get('requester_user_id')),
+            # staff_user_id=to_int(request.form.get('requester_user_id')),
+            staff_user_id=current_user.id,
         )
         db.session.add(staff_claim)
         db.session.flush()
@@ -1131,6 +1191,7 @@ def save_staff_claim(claim, is_update=False):
     staff_claim.expense_category_id = to_int(request.form.get('expense_category_id'))
     staff_claim.expense_subcategory_id = to_int(request.form.get('expense_subcategory_id'))
     staff_claim.description = request.form.get('description_staff')
+    # staff_claim.receiver_id = request.form.get('receiver_staff')
 
    
 
@@ -1138,7 +1199,6 @@ def save_staff_claim(claim, is_update=False):
     item_ids = request.form.getlist('expense_staff_items_id[]')   # 👈 สำคัญ
     item_names = request.form.getlist('item_name[]')
     amounts = request.form.getlist('staff_amount[]')
-
     # item เดิมทั้งหมด
     existing_items = {
         item.id: item
@@ -1153,6 +1213,14 @@ def save_staff_claim(claim, is_update=False):
         # item_id = item_ids[i] if i < len(item_ids) else None
         # item_id = to_int(item_ids[i])
         item_id = to_int(item_ids[i]) if i < len(item_ids) else None
+        receiver = receivers[i] if i < len(receivers) else None
+
+        receiver_type = None
+        receiver_id = None
+
+        if receiver and ':' in receiver:
+            receiver_type, receiver_id = receiver.split(':')
+            receiver_id = int(receiver_id)
 
 
 
@@ -1169,12 +1237,16 @@ def save_staff_claim(claim, is_update=False):
 
             item.item_name = name
             item.amount = amount or 0
+            item.receiver_type = receiver_type
+            item.receiver_id = receiver_id
 
         else:  # ===== insert =====
             item = ExpenseStaffItemModel(
                 expense_claim_staff_id=staff_claim.id,
                 item_name=name,
-                amount=amount or 0
+                amount=amount or 0,
+                receiver_type=receiver_type,
+                receiver_id=receiver_id
             )
             db.session.add(item)
 

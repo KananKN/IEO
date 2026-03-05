@@ -259,6 +259,49 @@ $(document).ready(function () {
         }
     });
 
+    $('#product_id').select2({
+
+        placeholder: 'เลือกสินค้า',
+        allowClear: true,
+        width: '100%',
+    
+        ajax: {
+            url: '/account/api/products',
+            dataType: 'json',
+            delay: 250,
+    
+            processResults: function (data) {
+    
+                let grouped = {};
+    
+                data.forEach(function(item){
+    
+                    if(!grouped[item.category]){
+                        grouped[item.category] = [];
+                    }
+    
+                    grouped[item.category].push({
+                        id: item.id,
+                        text: item.name
+                    });
+    
+                });
+    
+                let results = [];
+    
+                Object.keys(grouped).forEach(function(cat){
+                    results.push({
+                        text: cat,
+                        children: grouped[cat]
+                    });
+                });
+    
+                return { results: results };
+    
+            }
+        }
+    
+    });
    
     addExpenseItem(); 
     //initExpenseSelect($('.expense-name-select').first());
@@ -299,6 +342,11 @@ function addStaffRow() {
     <tr>
       <td class="text-center">${staffIndex}</td>
       <td>
+       <select class="form-control expense-name-select" name="receiver_staff[]">
+           <option value="">-- เลือกผู้รับเงิน --</option>
+       </select>
+     </td>
+      <td>
         <input type="text" class="form-control" name="item_name[]">
       </td>
       <td>
@@ -313,6 +361,9 @@ function addStaffRow() {
     </tr>
   `;
   document.getElementById('staffTableBody').insertAdjacentHTML('beforeend', row);
+
+  const $newSelect = $('#staffTableBody').find('.expense-name-select').last();
+  initExpenseSelect($newSelect);
 }
 
 
@@ -573,21 +624,44 @@ let treeData = [];
             placeholder: '-- เลือกผู้รับเงิน --',
             allowClear: true,
             width: '100%',
-            minimumResultsForSearch: 0,
-            // ajax: {
-            //     url: '/account/expense/receivers',
-            //     dataType: 'json',
-            //     delay: 250,
-            //     processResults: function (data) {
-            //         return {
-            //             results: data.map(item => ({
-            //                 id: item.type + ':' + item.id,
-            //                 text: item.name
-            //             }))
-            //         };
-            //     }
-            // }
+    
+            ajax: {
+                url: '/account/expense/receivers',
+                dataType: 'json',
+                delay: 250,
+                processResults: function (data) {
+    
+                    let groups = {};
+    
+                    data.forEach(function(item){
+    
+                        if(!groups[item.type]){
+                            groups[item.type] = [];
+                        }
+    
+                        groups[item.type].push({
+                            id: item.type + ':' + item.id,
+                            text: item.name
+                        });
+    
+                    });
+    
+                    let results = [];
+    
+                    Object.keys(groups).forEach(function(type){
+    
+                        results.push({
+                            text: type.charAt(0).toUpperCase() + type.slice(1),
+                            children: groups[type]
+                        });
+    
+                    });
+    
+                    return { results: results };
+                }
+            }
         });
+    
     }
         
     
@@ -656,6 +730,8 @@ function validateForm() {
     let creationDate = $('input[name="creation_date"]').val();
     let subcategory = $('input[name="expense_subcategory_id"]').val();
     let expense_date = $('input[name="expense_date"]').val();
+    let product_id = $('#product_id').val();
+
     // let totalAmount = parseFloat($('#total_amount').val() || 0);
 
      // 2) ตรวจวันที่
@@ -667,14 +743,22 @@ function validateForm() {
         });
         return;
     }
+     if (!product_id) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'ข้อมูลไม่ครบ',
+            text: 'กรุณาเลือกสินค้า'
+        });
+        return;
+    }
     
 
    
-    // 3) เลือก staff
-    if (!requester_user) {
-        check_fail_claim('กรุณาเลือกผู้ขอเบิก');
-        return;
-    }
+    // // 3) เลือก staff
+    // if (!requester_user) {
+    //     check_fail_claim('กรุณาเลือกผู้ขอเบิก');
+    //     return;
+    // }
     // 1) ตรวจประเภท
     if (!claimType) {
         check_fail_claim('กรุณาเลือกผู้รับการเบิก');
@@ -700,6 +784,7 @@ function validateForm() {
 
         let hasAmount = false;
         let hasInvalid = false;
+        let hasInvalidReceiver = false;
 
         // ===== check amount =====
         $('input[name="item_name[]"]').each(function () {
@@ -717,6 +802,15 @@ function validateForm() {
             }
         });
 
+        $('select[name="receiver_staff[]"]').each(function () {
+            if (!this.value) {
+                hasInvalidReceiver = true;
+                $(this).addClass('is-invalid'); // 🔥 highlight ช่องผิด
+            } else {
+                $(this).removeClass('is-invalid');
+            }
+        });
+
         if (hasInvalid) {
             Swal.fire({
                 icon: 'warning',
@@ -731,6 +825,14 @@ function validateForm() {
                 icon: 'warning',
                 title: 'ข้อมูลไม่ครบ',
                 text: 'กรุณากรอกจำนวนเงิน'
+            });
+            return;
+        }
+        if (hasInvalidReceiver) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'ข้อมูลไม่ครบ',
+                text: 'กรุณาเลือก Supplier ให้ครบทุกแถว'
             });
             return;
         }
