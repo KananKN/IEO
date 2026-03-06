@@ -485,12 +485,12 @@
                         
                             <tr>
                                 <td id="modal-full-name">
-                                    {% if claim.requester %}
+                                    {% if claim.created_user %}
                                         
-                                        {% if claim.requester.role and claim.requester.role.name.lower() == 'agency' and claim.requester.agency %}
-                                            {{ claim.requester.agency.account_name or '-' }}
-                                        {% elif claim.requester.profile %}
-                                            {{ claim.requester.profile.bank_name or '-' }}
+                                        {% if claim.created_user.role and claim.created_user.role.name.lower() == 'agency' and claim.created_user.agency %}
+                                            {{ claim.created_user.agency.account_name or '-' }}
+                                        {% elif claim.created_user.profile %}
+                                            {{ claim.created_user.profile.bank_name or '-' }}
                                         {% else %}
                                             -
                                         {% endif %}
@@ -501,12 +501,12 @@
                                 </td>
                             
                                 <td id="modal-bank-account">
-                                    {% if claim.requester %}
+                                    {% if claim.created_user %}
                                         
-                                        {% if claim.requester.role and claim.requester.role.name.lower() == 'agency' and claim.requester.agency %}
-                                            {{ claim.requester.agency.account_account or '-' }}
-                                        {% elif claim.requester.profile %}
-                                            {{ claim.requester.profile.bank_account or '-' }}
+                                        {% if claim.created_user.role and claim.created_user.role.name.lower() == 'agency' and claim.created_user.agency %}
+                                            {{ claim.created_user.agency.account_account or '-' }}
+                                        {% elif claim.created_user.profile %}
+                                            {{ claim.created_user.profile.bank_account or '-' }}
                                         {% else %}
                                             -
                                         {% endif %}
@@ -517,12 +517,12 @@
                                 </td>
                             
                                 <td id="modal-bank-name">
-                                    {% if claim.requester %}
+                                    {% if claim.created_user %}
                                         
-                                        {% if claim.requester.role and claim.requester.role.name.lower() == 'agency' and claim.requester.agency %}
-                                            {{ claim.requester.agency.bank or '-' }}
-                                        {% elif claim.requester.profile %}
-                                            {{ claim.requester.profile.bank_name or '-' }}
+                                        {% if claim.created_user.role and claim.created_user.role.name.lower() == 'agency' and claim.created_user.agency %}
+                                            {{ claim.created_user.agency.bank or '-' }}
+                                        {% elif claim.created_user.profile %}
+                                            {{ claim.created_user.profile.bank_name or '-' }}
                                         {% else %}
                                             -
                                         {% endif %}
