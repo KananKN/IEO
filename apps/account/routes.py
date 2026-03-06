@@ -863,197 +863,197 @@ def expense_upgrade_claims(claim_id):
         staff_files=staff_files
     )
 
-# @blueprint.route('/expense_upgrade_claims1/<int:claim_id>')
-# @login_required 
-# @read_permission.require(http_exception=403)
-# def expense_upgrade_claims1(claim_id):  
-#     members = (MemberModel.query.join(MemberModel.orders)
-#     .distinct().order_by(MemberModel.first_name.asc())  # 🔤 เรียงตามชื่อ
-#     .all())
+@blueprint.route('/expense_upgrade_claims1/<int:claim_id>')
+@login_required 
+@read_permission.require(http_exception=403)
+def expense_upgrade_claims1(claim_id):  
+    members = (MemberModel.query.join(MemberModel.orders)
+    .distinct().order_by(MemberModel.first_name.asc())  # 🔤 เรียงตามชื่อ
+    .all())
 
-#     # users = UserModel.query.all()
-#     # users =  UserModel.query.filter(
-#     #             UserModel.role.has(name='agency')
-#     #         ).all()
-#     categories = ExpenseCategoryModel.query.all()
-#     currency = CurrencyModel.query.order_by(CurrencyModel.code.asc()).all()
+    # users = UserModel.query.all()
+    # users =  UserModel.query.filter(
+    #             UserModel.role.has(name='agency')
+    #         ).all()
+    categories = ExpenseCategoryModel.query.all()
+    currency = CurrencyModel.query.order_by(CurrencyModel.code.asc()).all()
 
     
 
-#     # datas_members_dict = [d.to_dict() for d in members]
+    # datas_members_dict = [d.to_dict() for d in members]
 
-#     data_supplier = []
+    data_supplier = []
 
 
-#     #---- ดึงข้อมูลเดิม ----
-#     claim = ExpenseClaim.query.get(claim_id)
-#     receiver_detail = []
-#     children_files = []
-#     staff_files = []
+    #---- ดึงข้อมูลเดิม ----
+    claim = ExpenseClaim.query.get(claim_id)
+    receiver_detail = []
+    children_files = []
+    staff_files = []
 
-#     items = []
+    items = []
 
-#     # กรณี STAFF
-#     if claim.staff_claim:
-#         items = [
-#             {
-#                 "id": i.id,
-#                 "item_name": i.item_name,
-#                 "amount": float(i.amount or 0),
-#                 "receiver_id": i.receiver_id,
-#                 "receiver_type": i.receiver_type,
-#                 "receiver_name": get_receiver_name(i.receiver_type, i.receiver_id)
+    # กรณี STAFF
+    if claim.staff_claim:
+        items = [
+            {
+                "id": i.id,
+                "item_name": i.item_name,
+                "amount": float(i.amount or 0),
+                "receiver_id": i.receiver_id,
+                "receiver_type": i.receiver_type,
+                "receiver_name": get_receiver_name(i.receiver_type, i.receiver_id)
 
-#             }
-#             for i in claim.staff_claim.expense_staff_items
-#         ]if claim.staff_claim and claim.staff_claim.expense_staff_items else []
-#         # 🔵 เพิ่มตรงนี้
-#         for i in claim.staff_claim.expense_staff_items:
+            }
+            for i in claim.staff_claim.expense_staff_items
+        ]if claim.staff_claim and claim.staff_claim.expense_staff_items else []
+        # 🔵 เพิ่มตรงนี้
+        for i in claim.staff_claim.expense_staff_items:
 
-#             detail = {
-#                 "receiver_type": i.receiver_type,
-#                 "receiver_id": i.receiver_id,
-#                 "name": None,
-#                 "bank_name": None,
-#                 "bank_account": None,
-#             }
+            detail = {
+                "receiver_type": i.receiver_type,
+                "receiver_id": i.receiver_id,
+                "name": None,
+                "bank_name": None,
+                "bank_account": None,
+            }
 
-#             if i.receiver_type == 'employee':
-#                 e = EmployeeModel.query.get(i.receiver_id)
-#                 if e:
-#                     detail.update({
-#                         "name": e.account_name,
-#                         "bank_name": e.bank,
-#                         "bank_account": e.account_number,
-#                     })
+            if i.receiver_type == 'employee':
+                e = EmployeeModel.query.get(i.receiver_id)
+                if e:
+                    detail.update({
+                        "name": e.account_name,
+                        "bank_name": e.bank,
+                        "bank_account": e.account_number,
+                    })
 
-#             elif i.receiver_type == 'supplier':
-#                 s = SupplierModel.query.get(i.receiver_id)
-#                 if s:
-#                     detail.update({
-#                         "name": s.account_name,
-#                         "bank_name": s.bank,
-#                         "bank_account": s.account_number,
-#                     })
+            elif i.receiver_type == 'supplier':
+                s = SupplierModel.query.get(i.receiver_id)
+                if s:
+                    detail.update({
+                        "name": s.account_name,
+                        "bank_name": s.bank,
+                        "bank_account": s.account_number,
+                    })
 
-#             elif i.receiver_type in ('agency', 'university'):
-#                 a = AgencyModel.query.get(i.receiver_id)
-#                 if a:
-#                     detail.update({
-#                         "name": f"{a.first_name} {a.last_name}",
-#                         "bank_name": a.bank,
-#                         "bank_account": a.account_number,
-#                     })
+            elif i.receiver_type in ('agency', 'university'):
+                a = AgencyModel.query.get(i.receiver_id)
+                if a:
+                    detail.update({
+                        "name": f"{a.first_name} {a.last_name}",
+                        "bank_name": a.bank,
+                        "bank_account": a.account_number,
+                    })
 
-#             elif i.receiver_type == 'organization':
-#                 o = OrganizationModel.query.get(i.receiver_id)
-#                 if o:
-#                     detail.update({
-#                         "name": o.account_name,
-#                         "bank_name": o.bank,
-#                         "bank_account": o.account_number,
-#                     })
+            elif i.receiver_type == 'organization':
+                o = OrganizationModel.query.get(i.receiver_id)
+                if o:
+                    detail.update({
+                        "name": o.account_name,
+                        "bank_name": o.bank,
+                        "bank_account": o.account_number,
+                    })
 
-#             receiver_detail.append(detail)
+            receiver_detail.append(detail)
 
-#         staff_files = ExpenseClaimFileModel.query.filter_by(
-#             claim_id=claim_id,
-#             claim_type='staff'
-#         ).all()
-#     # กรณี CHILDREN
-#     elif claim.children_claim:
-#         children_files = ExpenseClaimFileModel.query.filter_by(
-#             claim_id=claim_id,
-#             claim_type='children'
-#         ).all()
-#         items = [
-#                     {
-#                         "project_name": child.project.name,
-#                         "project_id": child.project_id,
-#                         "member_id": child.member_id,
-#                         "expense_date": child.expense_date,
-#                         "description": child.description,
+        staff_files = ExpenseClaimFileModel.query.filter_by(
+            claim_id=claim_id,
+            claim_type='staff'
+        ).all()
+    # กรณี CHILDREN
+    elif claim.children_claim:
+        children_files = ExpenseClaimFileModel.query.filter_by(
+            claim_id=claim_id,
+            claim_type='children'
+        ).all()
+        items = [
+                    {
+                        "project_name": child.project.name,
+                        "project_id": child.project_id,
+                        "member_id": child.member_id,
+                        "expense_date": child.expense_date,
+                        "description": child.description,
 
-#                         "expense_items": [   # 👈 j อยู่ใน list นี้
-#                             {
-#                                 "id": j.id,
-#                                 "currency": j.currency_id,
-#                                 "amount": float(j.amount or 0),
-#                                 "receiver_id": j.receiver_id,
-#                                 "receiver_type": j.receiver_type,
-#                                 "ref_amount": j.ref_amount,
-#                                 "exchange_rate": j.exchange_rate,
-#                                 "remark": j.remark,
-#                                 "receiver_name": get_receiver_name(
-#                                         j.receiver_type,
-#                                         j.receiver_id
-#                                     )
-#                             }
-#                             for j in child.expense_children_items
-#                         ]
+                        "expense_items": [   # 👈 j อยู่ใน list นี้
+                            {
+                                "id": j.id,
+                                "currency": j.currency_id,
+                                "amount": float(j.amount or 0),
+                                "receiver_id": j.receiver_id,
+                                "receiver_type": j.receiver_type,
+                                "ref_amount": j.ref_amount,
+                                "exchange_rate": j.exchange_rate,
+                                "remark": j.remark,
+                                "receiver_name": get_receiver_name(
+                                        j.receiver_type,
+                                        j.receiver_id
+                                    )
+                            }
+                            for j in child.expense_children_items
+                        ]
                         
-#                     }
-#                     for child in claim.children_claim
-#                 ]
+                    }
+                    for child in claim.children_claim
+                ]
         
-#         for child in claim.children_claim:
-#             for j in child.expense_children_items:
+        for child in claim.children_claim:
+            for j in child.expense_children_items:
 
-#                 detail = {
-#                     "receiver_type": j.receiver_type,
-#                     "receiver_id": j.receiver_id,
-#                     "name": None,
-#                     "bank_name": None,
-#                     "bank_account": None,
-#                 }
+                detail = {
+                    "receiver_type": j.receiver_type,
+                    "receiver_id": j.receiver_id,
+                    "name": None,
+                    "bank_name": None,
+                    "bank_account": None,
+                }
 
-#                 if j.receiver_type == 'employee':
-#                     e = EmployeeModel.query.get(j.receiver_id)
-#                     if e:
-#                         detail.update({
-#                             "name": e.account_name,
-#                             "bank_name": e.bank,
-#                             "bank_account": e.account_number,
-#                         })
+                if j.receiver_type == 'employee':
+                    e = EmployeeModel.query.get(j.receiver_id)
+                    if e:
+                        detail.update({
+                            "name": e.account_name,
+                            "bank_name": e.bank,
+                            "bank_account": e.account_number,
+                        })
 
-#                 elif j.receiver_type == 'supplier':
-#                     s = SupplierModel.query.get(j.receiver_id)
-#                     if s:
-#                         detail.update({
-#                             "name": s.account_name,
-#                             "bank_name": s.bank,
-#                             "bank_account": s.account_number,
-#                         })
+                elif j.receiver_type == 'supplier':
+                    s = SupplierModel.query.get(j.receiver_id)
+                    if s:
+                        detail.update({
+                            "name": s.account_name,
+                            "bank_name": s.bank,
+                            "bank_account": s.account_number,
+                        })
 
-#                 elif j.receiver_type in ('agency', 'university'):
-#                     a = AgencyModel.query.get(j.receiver_id)
-#                     if a:
-#                         detail.update({
-#                             "name": f"{a.first_name} {a.last_name}",
-#                             "bank_name": a.bank,
-#                             "bank_account": a.account_number,
-#                         })
+                elif j.receiver_type in ('agency', 'university'):
+                    a = AgencyModel.query.get(j.receiver_id)
+                    if a:
+                        detail.update({
+                            "name": f"{a.first_name} {a.last_name}",
+                            "bank_name": a.bank,
+                            "bank_account": a.account_number,
+                        })
 
-#                 elif j.receiver_type == 'organization':
-#                     o = OrganizationModel.query.get(j.receiver_id)
-#                     if o:
-#                         detail.update({
-#                             "name": o.account_name,
-#                             "bank_name": o.bank,
-#                             "bank_account": o.account_number,
-#                         })
+                elif j.receiver_type == 'organization':
+                    o = OrganizationModel.query.get(j.receiver_id)
+                    if o:
+                        detail.update({
+                            "name": o.account_name,
+                            "bank_name": o.bank,
+                            "bank_account": o.account_number,
+                        })
 
-#                 receiver_detail.append(detail)
+                receiver_detail.append(detail)
 
         
 
-#     children_item = items[0] if items else None
+    children_item = items[0] if items else None
 
    
     
-#     return render_template('expense/expense_upgrade_claims.html', segment='expense_claims' ,members=members
-#                     , categories=categories, data_supplier=data_supplier, currency=currency , claim=claim,staff_items=items,
-#                     children_item=children_item,receiver_detail=receiver_detail,children_files=children_files, staff_files=staff_files)
+    return render_template('expense/expense_upgrade_claims.html', segment='expense_claims' ,members=members
+                    , categories=categories, data_supplier=data_supplier, currency=currency , claim=claim,staff_items=items,
+                    children_item=children_item,receiver_detail=receiver_detail,children_files=children_files, staff_files=staff_files)
 
 def get_receiver_name(type, id):
 
