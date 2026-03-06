@@ -28,7 +28,7 @@ import json
 import os
 from datetime import datetime
 import uuid
-from sqlalchemy import and_, func, case, asc, or_, cast, Integer
+from sqlalchemy import and_, func, case, asc, or_, cast, Integer,String
 from sqlalchemy.orm import aliased
 from collections import defaultdict
 from sqlalchemy.dialects import postgresql
@@ -447,6 +447,130 @@ def expense_claims_list():
     #     d.to_dict() for d in datas
     # ])
     return render_template('expense/expense_claims_list.html', segment='expense_claims' ,datas=data,datas_json=datas_dict)
+
+@blueprint.route("/get_expense_claims", methods=["POST"])
+@login_required
+@read_permission.require(http_exception=403)
+def get_expense_claims():
+
+    request_data = request.get_json()
+
+    draw = request_data.get("draw")
+    start = request_data.get("start")
+    length = request_data.get("length")
+    search_value = request_data.get("search", {}).get("value")
+
+    
+
+    query = ExpenseClaim.query \
+        .outerjoin(
+            ExpenseClaimStaffModel,
+            ExpenseClaimStaffModel.claim_id == ExpenseClaim.id
+        ) \
+        .outerjoin(
+            ExpenseCategoryModel,
+            ExpenseClaimStaffModel.expense_category_id == ExpenseCategoryModel.id
+        ) \
+        .outerjoin(UserModel, ExpenseClaim.created_by == UserModel.id) \
+        .outerjoin(ProductForSalesModel, ExpenseClaim.product_id == ProductForSalesModel.id)
+    
+    # order_column_index = request_data['order'][0]['column']
+    # order_dir = request_data['order'][0]['dir']
+
+    columns = {
+        0: ExpenseClaim.claim_number,
+        1: UserModel.username,
+        2: ProductForSalesModel.name,
+        3: ExpenseClaim.total_amount,
+        4: ExpenseClaim.date_created,
+        # 5: ExpenseClaim.date_created
+    }
+
+    order_column = ExpenseClaim.id
+    order_dir = "desc"
+    # sort
+    if request_data.get('order') and len(request_data['order']) > 0:
+        order_column_index = int(request_data['order'][0]['column'])
+        order_dir = request_data['order'][0]['dir']
+
+        order_column = columns.get(order_column_index, ExpenseClaim.id)
+
+    if order_dir == 'asc':
+        query = query.order_by(order_column.asc())
+    else:
+        query = query.order_by(order_column.desc())
+    # else:
+    #     query = query.order_by(ExpenseClaim.id.desc())
+
+    # search
+    if search_value:
+        search_value = search_value.replace(",", "")
+        query = query.filter(
+            or_(
+                ExpenseClaim.claim_number.ilike(f"%{search_value}%"),
+                UserModel.username.ilike(f"%{search_value}%"),
+                ProductForSalesModel.name.ilike(f"%{search_value}%"),
+                cast(ExpenseClaim.total_amount, String).ilike(f"%{search_value}%"),
+                func.to_char(ExpenseClaim.date_created,'DD/MM/YYYY').ilike(f"%{search_value}%")
+            )
+        )
+    # count ต้องไม่มี order_by
+    total_records = query.order_by(None).count()
+
+    
+
+    # pagination
+    data = query.offset(start).limit(length).all()
+
+    # filter admin
+    if current_user.role.name != 'Admin':
+        query = query.filter(
+            or_(
+                ExpenseCategoryModel.admin_only == False,
+                ExpenseCategoryModel.admin_only.is_(None)
+            )
+        )
+
+
+    data = query.offset(start).limit(length).all()
+
+    rows = []
+
+    for d in data:
+
+        action = ""
+
+        if current_user.has_permission('write_expense claims'):
+            action += f'''
+            <a class="btn btn-dark btn-icon btn-circle btn-lg"
+               href="/account/expense_upgrade_claims/{d.id}">
+                <i class="fa fa-pencil-alt"></i>
+            </a>
+            '''
+
+        if current_user.has_permission('delete_expense claims'):
+            action += f'''
+            <a onclick="sweetAlertDel({d.id},$(this))"
+               class="btn btn-danger btn-icon btn-circle btn-lg">
+                <i class="fa fa-trash"></i>
+            </a>
+            '''
+
+        rows.append({
+            "claim_number": d.claim_number,
+            "user": d.created_user.username if d.created_user else "-",
+            "project": d.product.name if d.product else "-",
+            "total_amount": f"{(d.total_amount or 0):,.2f}",
+            "paid_date": d.date_created.strftime('%d/%m/%Y') if d.date_created else "-",
+            "action": action
+        })
+
+    return jsonify({
+        "draw": draw,
+        "recordsTotal": total_records,
+        "recordsFiltered": total_records,
+        "data": rows
+    })
 
 @blueprint.route('/expense_create_claims')
 @login_required 

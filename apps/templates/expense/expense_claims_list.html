@@ -10,6 +10,14 @@
 <link href="{{ config.ASSETS_ROOT }}/plugins/select2/dist/css/select2.min.css" rel="stylesheet" />
 <link href="{{ config.ASSETS_ROOT }}/plugins/tag-it/css/jquery.tagit.css" rel="stylesheet" />
 <link href="{{ config.ASSETS_ROOT }}/plugins/select-picker/dist/picker.min.css" rel="stylesheet" />
+
+<style>
+    .text-wrap {
+        white-space: normal !important;
+        word-break: break-word;
+        max-width: 250px;
+    }
+</style>
 {% endblock stylesheets %}
 
 {% block content %}
@@ -75,7 +83,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for data in datas %}
+                            <!-- {% for data in datas %}
                                 <tr class="odd gradeX">
                                     <td width="1%" class="fw-bold text-dark">{{data.claim_number}}</td>
                                     <td >{{ data.created_user.username if data.created_user else '-' }}</td>
@@ -103,7 +111,7 @@
                                         {% endif %}
                                     </td>
                                 </tr>
-                            {% endfor %}
+                            {% endfor %} -->
                         </tbody>
                     </table>
                 </div>
@@ -191,8 +199,35 @@
 <script src="{{ config.ASSETS_ROOT }}/js/account/main_expense_claims_list.js?v={{ config.ASSETS_VERSION }}"></script>
 <script>
     $(document).ready(function() {
-        var table = $('#data-table-responsive').DataTable();
-        table.order([0, 'desc']).draw();
+        if ($.fn.DataTable.isDataTable('#data-table-responsive')) {
+            $('#data-table-responsive').DataTable().destroy();
+        }
+        
+        $('#data-table-responsive').DataTable({
+            processing: true,
+            serverSide: true,
+            searching: true,
+            ordering: true,
+            order: [[0, "desc"]], // เรียงล่าสุดก่อน
+            ajax: {
+                url: "/account/get_expense_claims",
+                type: "POST",
+                contentType: "application/json",
+                data: function (d) {
+                    return JSON.stringify(d);
+                }
+            },
+        
+            columns: [
+                { data: "claim_number", className: "fw-bold text-dark text-center" },
+                { data: "user" },
+                { data: "project" ,className: "text-wrap" },
+                { data: "total_amount", },
+                { data: "paid_date" },
+                { data: "action", orderable: false, searchable: false, className: "text-center" }
+            ]
+        
+        });
     });
 </script>
 
