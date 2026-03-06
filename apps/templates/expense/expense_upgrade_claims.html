@@ -725,9 +725,20 @@ function addExpenseItemWithData(item) {
     $item.find('input[name="expense_item_id[]"]').val(item.id || '');
 // 👉 ต้องประกาศก่อน
     let $select = $item.find('.expense-name-select');
-    
+
     const receiverValue = `${item.receiver_type}:${item.receiver_id}`;
-    $select.val(receiverValue).trigger('change.select2');
+    const receiverText = item.receiver_name || receiverValue;
+
+    // ✅ เพิ่ม option เข้า select ก่อน
+    if ($select.find("option[value='" + receiverValue + "']").length === 0) {
+        let newOption = new Option(receiverText, receiverValue, true, true);
+        $select.append(newOption);
+    }
+
+    // ✅ set ค่า
+    $select.val(receiverValue).trigger('change');
+    //const receiverValue = `${item.receiver_type}:${item.receiver_id}`;
+    //$select.val(receiverValue).trigger('change.select2');
     
     let $currency = $item.find('.currency_id').val(item.currency).trigger('change.select2');
 
@@ -765,7 +776,7 @@ function addExpenseItemWithData(item) {
           <div class="col-md-6">
             <label class="form-label">รายชื่อ Supplier<span class="text-danger">*</span></label>
             <select class="default-select2 form-control expense-name-select" name="receiver[]">
-                <option value="">-- เลือกผู้รับเงิน --</option>
+                <!-- <option value="">-- เลือกผู้รับเงิน --</option>
             
                 {% set groups = data_supplier | groupby('type') %}
                 {% for type, items in groups %}
@@ -776,7 +787,7 @@ function addExpenseItemWithData(item) {
                             </option>
                         {% endfor %}
                     </optgroup>
-                {% endfor %}
+                {% endfor %} -->
             </select>
 
             

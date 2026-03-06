@@ -532,7 +532,9 @@ def expense_create_claims():
 @login_required
 def api_products():
 
-    products = (
+    term = request.args.get("term", "")
+
+    query = (
         db.session.query(
             ProductForSalesModel.id,
             ProductForSalesModel.name,
@@ -543,9 +545,17 @@ def api_products():
             ProductCategoryModel,
             ProductCategoryModel.id == ProductForSalesModel.product_category_id
         )
-        .order_by(ProductCategoryModel.name.asc(), ProductForSalesModel.name.asc())
-        .all()
     )
+
+    if term:
+        query = query.filter(
+            ProductForSalesModel.name.ilike(f"%{term}%")
+        )
+
+    products = query.order_by(
+        ProductCategoryModel.name.asc(),
+        ProductForSalesModel.name.asc()
+    ).limit(50).all()
 
     data = []
 
@@ -557,6 +567,7 @@ def api_products():
         })
 
     return jsonify(data)
+
 
 def get_receiver_detail(receiver_type, receiver_id):
 
@@ -619,194 +630,430 @@ def get_receiver_detail(receiver_type, receiver_id):
 
     return None
 
-
-
 @blueprint.route('/expense_upgrade_claims/<int:claim_id>')
-@login_required 
+@login_required
 @read_permission.require(http_exception=403)
-def expense_upgrade_claims(claim_id):  
-    members = (MemberModel.query.join(MemberModel.orders)
-    .distinct().order_by(MemberModel.first_name.asc())  # 🔤 เรียงตามชื่อ
-    .all())
+def expense_upgrade_claims(claim_id):
 
-    # users = UserModel.query.all()
-    # users =  UserModel.query.filter(
-    #             UserModel.role.has(name='agency')
-    #         ).all()
+    members = (
+        MemberModel.query
+        .join(MemberModel.orders)
+        .distinct()
+        .order_by(MemberModel.first_name.asc())
+        .all()
+    )
+
     categories = ExpenseCategoryModel.query.all()
     currency = CurrencyModel.query.order_by(CurrencyModel.code.asc()).all()
 
-    
-
-    # datas_members_dict = [d.to_dict() for d in members]
-
-    data_supplier = []
-
-    employees = EmployeeModel.query.all()
-    organizations = OrganizationModel.query.all()
-    agencies = AgencyModel.query.filter(AgencyModel.org_type == 'agency').all()
-    university = AgencyModel.query.filter(AgencyModel.org_type == 'university').all()
-    suppliers = SupplierModel.query.all()
-
-    for e in employees:
-        data_supplier.append({
-            "value": f"employee:{e.id}",
-            "name": e.name,
-            "type": "Employee"
-        })
-
-    for o in organizations:
-        data_supplier.append({
-            "value": f"organization:{o.id}",
-            "name": o.name,
-            "type": "Organization"
-        })
-
-    for a in agencies:
-        data_supplier.append({
-            "value": f"agency:{a.id}",
-            "name": f"{a.first_name} {a.last_name}",
-            "type": "Agency"
-        })
-
-    for u in university:
-        data_supplier.append({
-            "value": f"agency:{a.id}",
-            "name": f"{a.first_name} {a.last_name}",
-            "type": "University"
-        })
-
-    for s in suppliers:
-        data_supplier.append({
-            "value": f"supplier:{s.id}",
-            "name": s.name,
-            "type": "Supplier"
-        })
-
-    # 🔤 เรียงตัวอักษร
-    data_supplier = sorted(data_supplier, key=lambda x: x["name"].lower())
-
-    #---- ดึงข้อมูลเดิม ----
     claim = ExpenseClaim.query.get(claim_id)
+
     receiver_detail = []
     children_files = []
     staff_files = []
-
     items = []
 
-    # กรณี STAFF
+    employee_ids = set()
+    supplier_ids = set()
+    agency_ids = set()
+    organization_ids = set()
+
+    # ---------------- STAFF ----------------
     if claim.staff_claim:
-        items = [
-            {
+
+        staff_items = claim.staff_claim.expense_staff_items or []
+
+        for i in staff_items:
+            if i.receiver_type == 'employee':
+                employee_ids.add(i.receiver_id)
+
+            elif i.receiver_type == 'supplier':
+                supplier_ids.add(i.receiver_id)
+
+            elif i.receiver_type in ('agency', 'university'):
+                agency_ids.add(i.receiver_id)
+
+            elif i.receiver_type == 'organization':
+                organization_ids.add(i.receiver_id)
+
+        employees = EmployeeModel.query.filter(EmployeeModel.id.in_(employee_ids)).all()
+        suppliers = SupplierModel.query.filter(SupplierModel.id.in_(supplier_ids)).all()
+        agencies = AgencyModel.query.filter(AgencyModel.id.in_(agency_ids)).all()
+        organizations = OrganizationModel.query.filter(OrganizationModel.id.in_(organization_ids)).all()
+
+        employee_map = {e.id: e for e in employees}
+        supplier_map = {s.id: s for s in suppliers}
+        agency_map = {a.id: a for a in agencies}
+        organization_map = {o.id: o for o in organizations}
+
+        items = []
+
+        for i in staff_items:
+
+            receiver_name = None
+            bank_name = None
+            bank_account = None
+
+            if i.receiver_type == 'employee':
+                e = employee_map.get(i.receiver_id)
+                if e:
+                    receiver_name = e.account_name
+                    bank_name = e.bank
+                    bank_account = e.account_number
+
+            elif i.receiver_type == 'supplier':
+                s = supplier_map.get(i.receiver_id)
+                if s:
+                    receiver_name = s.account_name
+                    bank_name = s.bank
+                    bank_account = s.account_number
+
+            elif i.receiver_type in ('agency', 'university'):
+                a = agency_map.get(i.receiver_id)
+                if a:
+                    receiver_name = f"{a.first_name} {a.last_name}"
+                    bank_name = a.bank
+                    bank_account = a.account_number
+
+            elif i.receiver_type == 'organization':
+                o = organization_map.get(i.receiver_id)
+                if o:
+                    receiver_name = o.account_name
+                    bank_name = o.bank
+                    bank_account = o.account_number
+
+            items.append({
                 "id": i.id,
                 "item_name": i.item_name,
                 "amount": float(i.amount or 0),
                 "receiver_id": i.receiver_id,
                 "receiver_type": i.receiver_type,
-                "receiver_name": get_receiver_name(i.receiver_type, i.receiver_id)
+                "receiver_name": get_receiver_name(i.receiver_type, i.receiver_id),
 
-            }
-            for i in claim.staff_claim.expense_staff_items
-        ]if claim.staff_claim and claim.staff_claim.expense_staff_items else []
+            })
+
+            receiver_detail.append({
+                "receiver_type": i.receiver_type,
+                "receiver_id": i.receiver_id,
+                "name": receiver_name,
+                "bank_name": bank_name,
+                "bank_account": bank_account
+            })
 
         staff_files = ExpenseClaimFileModel.query.filter_by(
             claim_id=claim_id,
             claim_type='staff'
         ).all()
-    # กรณี CHILDREN
+
+    # ---------------- CHILDREN ----------------
     elif claim.children_claim:
+
         children_files = ExpenseClaimFileModel.query.filter_by(
             claim_id=claim_id,
             claim_type='children'
         ).all()
-        items = [
-                    {
-                        "project_name": child.project.name,
-                        "project_id": child.project_id,
-                        "member_id": child.member_id,
-                        "expense_date": child.expense_date,
-                        "description": child.description,
 
-                        "expense_items": [   # 👈 j อยู่ใน list นี้
-                            {
-                                "id": j.id,
-                                "currency": j.currency_id,
-                                "amount": float(j.amount or 0),
-                                "receiver_id": j.receiver_id,
-                                "receiver_type": j.receiver_type,
-                                "ref_amount": j.ref_amount,
-                                "exchange_rate": j.exchange_rate,
-                                "remark": j.remark,
-
-                                # "receiver_detail": get_receiver_detail(
-                                #         j.receiver_type,
-                                #         j.receiver_id
-                                #     )
-                            }
-                            for j in child.expense_children_items
-                        ]
-                        
-                    }
-                    for child in claim.children_claim
-                ]
         for child in claim.children_claim:
             for j in child.expense_children_items:
 
-                detail = {
-                    "receiver_type": j.receiver_type,
-                    "receiver_id": j.receiver_id,
-                    "name": None,
-                    "bank_name": None,
-                    "bank_account": None,
-                }
-
                 if j.receiver_type == 'employee':
-                    e = EmployeeModel.query.get(j.receiver_id)
-                    if e:
-                        detail.update({
-                            "name": e.account_name,
-                            "bank_name": e.bank,
-                            "bank_account": e.account_number,
-                        })
+                    employee_ids.add(j.receiver_id)
 
                 elif j.receiver_type == 'supplier':
-                    s = SupplierModel.query.get(j.receiver_id)
-                    if s:
-                        detail.update({
-                            "name": s.account_name,
-                            "bank_name": s.bank,
-                            "bank_account": s.account_number,
-                        })
+                    supplier_ids.add(j.receiver_id)
 
                 elif j.receiver_type in ('agency', 'university'):
-                    a = AgencyModel.query.get(j.receiver_id)
-                    if a:
-                        detail.update({
-                            "name": f"{a.first_name} {a.last_name}",
-                            "bank_name": a.bank,
-                            "bank_account": a.account_number,
-                        })
+                    agency_ids.add(j.receiver_id)
 
                 elif j.receiver_type == 'organization':
-                    o = OrganizationModel.query.get(j.receiver_id)
+                    organization_ids.add(j.receiver_id)
+
+        employees = EmployeeModel.query.filter(EmployeeModel.id.in_(employee_ids)).all()
+        suppliers = SupplierModel.query.filter(SupplierModel.id.in_(supplier_ids)).all()
+        agencies = AgencyModel.query.filter(AgencyModel.id.in_(agency_ids)).all()
+        organizations = OrganizationModel.query.filter(OrganizationModel.id.in_(organization_ids)).all()
+
+        employee_map = {e.id: e for e in employees}
+        supplier_map = {s.id: s for s in suppliers}
+        agency_map = {a.id: a for a in agencies}
+        organization_map = {o.id: o for o in organizations}
+
+        items = []
+
+        for child in claim.children_claim:
+
+            expense_items = []
+
+            for j in child.expense_children_items:
+
+                receiver_name = None
+                bank_name = None
+                bank_account = None
+
+                if j.receiver_type == 'employee':
+                    e = employee_map.get(j.receiver_id)
+                    if e:
+                        receiver_name = e.account_name
+                        bank_name = e.bank
+                        bank_account = e.account_number
+
+                elif j.receiver_type == 'supplier':
+                    s = supplier_map.get(j.receiver_id)
+                    if s:
+                        receiver_name = s.account_name
+                        bank_name = s.bank
+                        bank_account = s.account_number
+
+                elif j.receiver_type in ('agency', 'university'):
+                    a = agency_map.get(j.receiver_id)
+                    if a:
+                        receiver_name = f"{a.first_name} {a.last_name}"
+                        bank_name = a.bank
+                        bank_account = a.account_number
+
+                elif j.receiver_type == 'organization':
+                    o = organization_map.get(j.receiver_id)
                     if o:
-                        detail.update({
-                            "name": o.account_name,
-                            "bank_name": o.bank,
-                            "bank_account": o.account_number,
-                        })
+                        receiver_name = o.account_name
+                        bank_name = o.bank
+                        bank_account = o.account_number
 
-                receiver_detail.append(detail)
+                expense_items.append({
+                    "id": j.id,
+                    "currency": j.currency_id,
+                    "amount": float(j.amount or 0),
+                    "receiver_id": j.receiver_id,
+                    "receiver_type": j.receiver_type,
+                    "receiver_name": get_receiver_name(j.receiver_type, j.receiver_id),
+                    "ref_amount": j.ref_amount,
+                    "exchange_rate": j.exchange_rate,
+                    "remark": j.remark
+                })
 
-        
+                receiver_detail.append({
+                    "receiver_type": j.receiver_type,
+                    "receiver_id": j.receiver_id,
+                    "name": receiver_name,
+                    "bank_name": bank_name,
+                    "bank_account": bank_account
+                })
+
+            items.append({
+                "project_name": child.project.name,
+                "project_id": child.project_id,
+                "member_id": child.member_id,
+                "expense_date": child.expense_date,
+                "description": child.description,
+                "expense_items": expense_items
+            })
 
     children_item = items[0] if items else None
 
+    return render_template(
+        'expense/expense_upgrade_claims.html',
+        segment='expense_claims',
+        members=members,
+        categories=categories,
+        currency=currency,
+        claim=claim,
+        staff_items=items,
+        children_item=children_item,
+        receiver_detail=receiver_detail,
+        children_files=children_files,
+        staff_files=staff_files
+    )
+
+# @blueprint.route('/expense_upgrade_claims1/<int:claim_id>')
+# @login_required 
+# @read_permission.require(http_exception=403)
+# def expense_upgrade_claims1(claim_id):  
+#     members = (MemberModel.query.join(MemberModel.orders)
+#     .distinct().order_by(MemberModel.first_name.asc())  # 🔤 เรียงตามชื่อ
+#     .all())
+
+#     # users = UserModel.query.all()
+#     # users =  UserModel.query.filter(
+#     #             UserModel.role.has(name='agency')
+#     #         ).all()
+#     categories = ExpenseCategoryModel.query.all()
+#     currency = CurrencyModel.query.order_by(CurrencyModel.code.asc()).all()
+
+    
+
+#     # datas_members_dict = [d.to_dict() for d in members]
+
+#     data_supplier = []
+
+
+#     #---- ดึงข้อมูลเดิม ----
+#     claim = ExpenseClaim.query.get(claim_id)
+#     receiver_detail = []
+#     children_files = []
+#     staff_files = []
+
+#     items = []
+
+#     # กรณี STAFF
+#     if claim.staff_claim:
+#         items = [
+#             {
+#                 "id": i.id,
+#                 "item_name": i.item_name,
+#                 "amount": float(i.amount or 0),
+#                 "receiver_id": i.receiver_id,
+#                 "receiver_type": i.receiver_type,
+#                 "receiver_name": get_receiver_name(i.receiver_type, i.receiver_id)
+
+#             }
+#             for i in claim.staff_claim.expense_staff_items
+#         ]if claim.staff_claim and claim.staff_claim.expense_staff_items else []
+#         # 🔵 เพิ่มตรงนี้
+#         for i in claim.staff_claim.expense_staff_items:
+
+#             detail = {
+#                 "receiver_type": i.receiver_type,
+#                 "receiver_id": i.receiver_id,
+#                 "name": None,
+#                 "bank_name": None,
+#                 "bank_account": None,
+#             }
+
+#             if i.receiver_type == 'employee':
+#                 e = EmployeeModel.query.get(i.receiver_id)
+#                 if e:
+#                     detail.update({
+#                         "name": e.account_name,
+#                         "bank_name": e.bank,
+#                         "bank_account": e.account_number,
+#                     })
+
+#             elif i.receiver_type == 'supplier':
+#                 s = SupplierModel.query.get(i.receiver_id)
+#                 if s:
+#                     detail.update({
+#                         "name": s.account_name,
+#                         "bank_name": s.bank,
+#                         "bank_account": s.account_number,
+#                     })
+
+#             elif i.receiver_type in ('agency', 'university'):
+#                 a = AgencyModel.query.get(i.receiver_id)
+#                 if a:
+#                     detail.update({
+#                         "name": f"{a.first_name} {a.last_name}",
+#                         "bank_name": a.bank,
+#                         "bank_account": a.account_number,
+#                     })
+
+#             elif i.receiver_type == 'organization':
+#                 o = OrganizationModel.query.get(i.receiver_id)
+#                 if o:
+#                     detail.update({
+#                         "name": o.account_name,
+#                         "bank_name": o.bank,
+#                         "bank_account": o.account_number,
+#                     })
+
+#             receiver_detail.append(detail)
+
+#         staff_files = ExpenseClaimFileModel.query.filter_by(
+#             claim_id=claim_id,
+#             claim_type='staff'
+#         ).all()
+#     # กรณี CHILDREN
+#     elif claim.children_claim:
+#         children_files = ExpenseClaimFileModel.query.filter_by(
+#             claim_id=claim_id,
+#             claim_type='children'
+#         ).all()
+#         items = [
+#                     {
+#                         "project_name": child.project.name,
+#                         "project_id": child.project_id,
+#                         "member_id": child.member_id,
+#                         "expense_date": child.expense_date,
+#                         "description": child.description,
+
+#                         "expense_items": [   # 👈 j อยู่ใน list นี้
+#                             {
+#                                 "id": j.id,
+#                                 "currency": j.currency_id,
+#                                 "amount": float(j.amount or 0),
+#                                 "receiver_id": j.receiver_id,
+#                                 "receiver_type": j.receiver_type,
+#                                 "ref_amount": j.ref_amount,
+#                                 "exchange_rate": j.exchange_rate,
+#                                 "remark": j.remark,
+#                                 "receiver_name": get_receiver_name(
+#                                         j.receiver_type,
+#                                         j.receiver_id
+#                                     )
+#                             }
+#                             for j in child.expense_children_items
+#                         ]
+                        
+#                     }
+#                     for child in claim.children_claim
+#                 ]
+        
+#         for child in claim.children_claim:
+#             for j in child.expense_children_items:
+
+#                 detail = {
+#                     "receiver_type": j.receiver_type,
+#                     "receiver_id": j.receiver_id,
+#                     "name": None,
+#                     "bank_name": None,
+#                     "bank_account": None,
+#                 }
+
+#                 if j.receiver_type == 'employee':
+#                     e = EmployeeModel.query.get(j.receiver_id)
+#                     if e:
+#                         detail.update({
+#                             "name": e.account_name,
+#                             "bank_name": e.bank,
+#                             "bank_account": e.account_number,
+#                         })
+
+#                 elif j.receiver_type == 'supplier':
+#                     s = SupplierModel.query.get(j.receiver_id)
+#                     if s:
+#                         detail.update({
+#                             "name": s.account_name,
+#                             "bank_name": s.bank,
+#                             "bank_account": s.account_number,
+#                         })
+
+#                 elif j.receiver_type in ('agency', 'university'):
+#                     a = AgencyModel.query.get(j.receiver_id)
+#                     if a:
+#                         detail.update({
+#                             "name": f"{a.first_name} {a.last_name}",
+#                             "bank_name": a.bank,
+#                             "bank_account": a.account_number,
+#                         })
+
+#                 elif j.receiver_type == 'organization':
+#                     o = OrganizationModel.query.get(j.receiver_id)
+#                     if o:
+#                         detail.update({
+#                             "name": o.account_name,
+#                             "bank_name": o.bank,
+#                             "bank_account": o.account_number,
+#                         })
+
+#                 receiver_detail.append(detail)
+
+        
+
+#     children_item = items[0] if items else None
+
    
     
-    return render_template('expense/expense_upgrade_claims.html', segment='expense_claims' ,members=members
-                    , categories=categories, data_supplier=data_supplier, currency=currency , claim=claim,staff_items=items,
-                    children_item=children_item,receiver_detail=receiver_detail,children_files=children_files, staff_files=staff_files)
+#     return render_template('expense/expense_upgrade_claims.html', segment='expense_claims' ,members=members
+#                     , categories=categories, data_supplier=data_supplier, currency=currency , claim=claim,staff_items=items,
+#                     children_item=children_item,receiver_detail=receiver_detail,children_files=children_files, staff_files=staff_files)
 
 def get_receiver_name(type, id):
 
@@ -970,14 +1217,15 @@ def get_member_orders(member_id):
         ]
     })
 
-
 @blueprint.route('/expense/receivers')
 @login_required
 def get_expense_receivers():
+
+    term = request.args.get("term", "").lower()
+
     data = []
 
     employees = EmployeeModel.query.all()
-    # coordinators = CoordinatorModel.query.all()
     organizations = db.session.query(
         OrganizationModel.id,
         OrganizationModel.name
@@ -986,36 +1234,90 @@ def get_expense_receivers():
     suppliers = SupplierModel.query.all()
 
     for e in employees:
-        data.append({
-            "id": e.id,
-            "name": e.name,
-            "type": "employee"
-        })
-
-
+        name = e.name or ""
+        if term in name.lower():
+            data.append({
+                "id": e.id,
+                "name": name,
+                "type": "employee"
+            })
 
     for o in organizations:
-        data.append({
-            "id": o.id,
-            "name": o.name,
-            "type": "organization"
-        })
+        name = o.name or ""
+        if term in name.lower():
+            data.append({
+                "id": o.id,
+                "name": name,
+                "type": "organization"
+            })
 
     for a in agencies:
-        data.append({
-            "id": a.id,
-            "name": f"{a.first_name or ''} {a.last_name or ''}".strip(), 
-            "type": "agency"
-        })
+        name = f"{a.first_name or ''} {a.last_name or ''}".strip()
+        if term in name.lower():
+            data.append({
+                "id": a.id,
+                "name": name,
+                "type": "agency"
+            })
 
     for s in suppliers:
-        data.append({
-            "id": s.id,
-            "name": s.name,
-            "type": "supplier"
-        })
+        name = s.name or ""
+        if term in name.lower():
+            data.append({
+                "id": s.id,
+                "name": name,
+                "type": "supplier"
+            })
+
     data = sorted(data, key=lambda x: x["name"].lower())
+
     return jsonify(data)
+
+# @blueprint.route('/expense/receivers1')
+# @login_required
+# def get_expense_receivers1():
+#     data = []
+
+#     employees = EmployeeModel.query.all()
+#     # coordinators = CoordinatorModel.query.all()
+#     organizations = db.session.query(
+#         OrganizationModel.id,
+#         OrganizationModel.name
+#     ).all()
+#     agencies = AgencyModel.query.all()
+#     suppliers = SupplierModel.query.all()
+
+#     for e in employees:
+#         data.append({
+#             "id": e.id,
+#             "name": e.name,
+#             "type": "employee"
+#         })
+
+
+
+#     for o in organizations:
+#         data.append({
+#             "id": o.id,
+#             "name": o.name,
+#             "type": "organization"
+#         })
+
+#     for a in agencies:
+#         data.append({
+#             "id": a.id,
+#             "name": f"{a.first_name or ''} {a.last_name or ''}".strip(), 
+#             "type": "agency"
+#         })
+
+#     for s in suppliers:
+#         data.append({
+#             "id": s.id,
+#             "name": s.name,
+#             "type": "supplier"
+#         })
+#     data = sorted(data, key=lambda x: x["name"].lower())
+#     return jsonify(data)
 
 
 def generate_pr_number():

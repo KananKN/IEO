@@ -259,16 +259,20 @@ $(document).ready(function () {
         }
     });
 
-    $('#product_id').select2({
-
-        placeholder: 'เลือกสินค้า',
-        allowClear: true,
-        width: '100%',
     
+    $('#product_id').select2({
+        placeholder: "เลือกสินค้า",
+        width: '100%',
         ajax: {
             url: '/account/api/products',
             dataType: 'json',
             delay: 250,
+    
+            data: function (params) {
+                return {
+                    term: params.term || ''
+                };
+            },
     
             processResults: function (data) {
     
@@ -298,9 +302,9 @@ $(document).ready(function () {
     
                 return { results: results };
     
-            }
+            },
+            cache: true
         }
-    
     });
    
     addExpenseItem(); 
@@ -624,11 +628,16 @@ let treeData = [];
             placeholder: '-- เลือกผู้รับเงิน --',
             allowClear: true,
             width: '100%',
-    
             ajax: {
                 url: '/account/expense/receivers',
                 dataType: 'json',
                 delay: 250,
+                
+                data: function(params){
+                    return {
+                        term: params.term || ''
+                    };
+                },
                 processResults: function (data) {
     
                     let groups = {};

@@ -266,16 +266,20 @@ $(document).ready(function () {
     });
     
     
-    $('#product_id').select2({
-
-        placeholder: 'เลือกสินค้า',
-        allowClear: true,
-        width: '100%',
     
+    $('#product_id').select2({
+        placeholder: "เลือกสินค้า",
+        width: '100%',
         ajax: {
             url: '/account/api/products',
             dataType: 'json',
             delay: 250,
+    
+            data: function (params) {
+                return {
+                    term: params.term || ''
+                };
+            },
     
             processResults: function (data) {
     
@@ -305,11 +309,10 @@ $(document).ready(function () {
     
                 return { results: results };
     
-            }
+            },
+            cache: true
         }
-    
     });
-    
 });
 function toggleClaimSection(value) {
     $('#staffSection').addClass('d-none');
@@ -674,6 +677,12 @@ let treeData = [];
                 url: '/account/expense/receivers',
                 dataType: 'json',
                 delay: 250,
+
+                data: function(params){
+                    return {
+                        term: params.term || ''
+                    };
+                },
                 processResults: function (data) {
     
                     let groups = {};
@@ -1014,7 +1023,7 @@ function check_fail_claim(msg){
     return;
     
 }
-
+/*
 $('.btn-view-bank').on('click', function () {
     const itemId = $(this).data('item-id');
 
@@ -1032,6 +1041,7 @@ $('.btn-view-bank').on('click', function () {
         }
     );
 });
+*/
 
 function sweetAlertDelfile(id_file,type_staff,claim_id) {
     swal({
