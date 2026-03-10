@@ -9,6 +9,14 @@
 <link href="{{ config.ASSETS_ROOT }}/plugins/select2/dist/css/select2.min.css" rel="stylesheet" />
 <link href="{{ config.ASSETS_ROOT }}/plugins/tag-it/css/jquery.tagit.css" rel="stylesheet" />
 <link href="{{ config.ASSETS_ROOT }}/plugins/select-picker/dist/picker.min.css" rel="stylesheet" />
+
+<style>
+    .text-wrap {
+        white-space: normal !important;
+        word-break: break-word;
+        max-width: 350px;
+      }
+</style>
 {% endblock stylesheets %}
 
 {% block content %}
@@ -65,7 +73,7 @@
                                 <th class="text-nowrap ">ชื่อ - นามสกุล</th>
                                 <th class="text-nowrap">อีเมล</th>
                                 <th class="text-nowrap">เบอร์โทร</th>
-                                <th class="text-nowrap w-150px">สนใจโครงการ</th>
+                                <th class="text-nowrap">สนใจโครงการ</th>
                                 <th class="text-nowrap ">ปีที่สนใจ</th>
                                 <th class="text-nowrap">Agency</th>
                                 <th class="text-nowrap">วันที่ลงทะเบียน</th>
@@ -511,9 +519,9 @@ function loadDataTable() {
             },
             { data: "email" },
             { data: "tel" },
-            {data: "product_name"},
-            {data: "data_list.year"},
-            {data: "agency"},
+            { data: "product_name"},
+            { data: "data_list.year"},
+            { data: "agency"},
             {
                 data: "created_at",
                 type: 'timestamp-millis',  // ใช้ custom sorter นี้
@@ -542,6 +550,7 @@ function loadDataTable() {
                     return `<span class="text-${color_text} mb-1">${text}</span>`;
                 }
             },
+            
             { 
                 data: null,  
                 orderable: false, // ปิดการเรียงลำดับในคอลัมน์นี้
@@ -571,6 +580,7 @@ function loadDataTable() {
                     return buttons;
                     
                 }
+
             }
         ],
           order: [[7, "asc"]],  // เรียงลำดับจาก ID

@@ -119,8 +119,14 @@
                     {% endif %}
                 </div>
             </div>
+            
+            {% set can_product_category = current_user.has_permission('read_product category') %}
+            {% set can_country = current_user.has_permission('read_country') %}
+            {% set can_period = current_user.has_permission('read_period') %}
+            {% set can_read_product = current_user.has_permission('read_product for sales') %}
 
-            {% if current_user.has_permission('read_product') %}
+            {% if current_user.has_permission('read_product') or can_product_category or can_country or can_read_product or
+            can_period  %}
             <div
                 class="menu-item has-sub {% if segment in ['product_category', 'country', 'period', 'termOfPayment', 'productSales'] %} active {% endif %}"
             >
@@ -132,6 +138,8 @@
                     <div class="menu-caret"></div>
                 </a>
                 <div class="menu-submenu">
+                    {% if can_product_category %}
+
                     <div
                         class="menu-item {% if segment == 'product_category' %} active {% endif %}"
                     >
@@ -139,20 +147,19 @@
                             ><div class="menu-text">Product Category </div></a
                         >
                     </div>
-                    <div
-                        class="menu-item {% if segment == 'country' %} active {% endif %}"
-                    >
-                        <a href="/product/country" class="menu-link"
-                            ><div class="menu-text">Country </div></a
-                        >
+                    {% endif %} 
+                    {% if can_country %}
+                        <div class="menu-item {% if segment == 'country' %} active {% endif %}" >
+                        <a href="/product/country" class="menu-link">
+                            <div class="menu-text">Country </div>
+                        </a>
                     </div>
-                    <div
-                        class="menu-item {% if segment == 'period' %} active {% endif %}"
-                    >
-                        <a href="/product/period" class="menu-link"
-                            ><div class="menu-text">Period </div></a
-                        >
-                    </div>
+                    {% endif %} 
+                    {% if can_period %}
+                        <div class="menu-item {% if segment == 'period' %} active {% endif %}">
+                            <a href="/product/period" class="menu-link"><div class="menu-text">Period </div></a>
+                        </div>
+                    {% endif %} 
                     <div
                         class="menu-item {% if segment == 'termOfPayment' %} active {% endif %}"
                     >
@@ -170,10 +177,11 @@
                 </div>
             </div>
             {% endif %}
-            {% if current_user.has_permission('read_supplier')  %}
-            <div
-                class="menu-item has-sub {% if segment in ['fees', 'supplier_type', 'supplier_main'] %} active {% endif %}"
-            >
+            {% set can_supplier_type = current_user.has_permission('read_supplier type') %}
+            
+
+            {% if current_user.has_permission('read_supplier')  or can_supplier_type %}
+            <div class="menu-item has-sub {% if segment in ['fees', 'supplier_type', 'supplier_main'] %} active {% endif %}" >
                 <a href="javascript:;" class="menu-link">
                     <div class="menu-icon">
                         <i class="material-icons">description</i>
@@ -194,15 +202,19 @@
                             ><div class="menu-text">Fees</div></a
                         >
                     </div>
-                    <div
-                        class="menu-item {% if segment == 'supplier_type' %} active {% endif %}"
-                    >
+                    {% endif %}
+                    {% if can_supplier_type %}
+                    <div class="menu-item {% if segment == 'supplier_type' %} active {% endif %}" >
                         <a
                             href="/supplier/supplier_type"
                             class="menu-link"
                             ><div class="menu-text">Supplier Type</div></a
                         >
                     </div>
+                    {% endif %}
+                    {% if
+                        current_user.has_permission('read_supplier')
+                        %}
                     <div
                         class="menu-item {% if segment == 'supplier_main' %} active {% endif %}"
                     >
@@ -263,7 +275,10 @@
             </div>  
 
             {% endif %}  
-            {% if current_user.has_permission('read_lead')  %}
+            {% set write_create_lead = current_user.has_permission('write_create lead') %}
+        
+
+            {% if current_user.has_permission('read_lead')  or write_create_lead %}
             <div
                 class="menu-item has-sub {% if segment in ['lead', 'create_lead', 'follow_lead'] %} active {% endif %}"
             >
@@ -275,14 +290,22 @@
                     <div class="menu-caret"></div>
                 </a>
                 <div class="menu-submenu">
+                    {% if current_user.has_permission('read_lead')  %}
+
                     <div class="menu-item {% if segment == 'lead' %} active {% endif %}">
                         <a href="/lead" class="menu-link">
                        <div class="menu-text mt-1">รายชื่อสนใจโครงการ</div></a>
                     </div>
+                    {% endif %}  
+
+                    {% if write_create_lead %}
+
                     <div class="menu-item {% if segment == 'create_lead' %} active {% endif %}">
                         <a href="/lead/create_lead" class="menu-link">
                        <div class="menu-text mt-1">เพิ่ม Lead ใหม่</div></a>
                     </div>
+                    {% endif %}  
+
                     <div class="menu-item {% if segment == 'follow_lead' %} active {% endif %}" >
                         <a href="/lead/follow_lead" class="menu-link"hidden>
                        <div class="menu-text mt-1">ติดตามสถานะ Lead</div></a>
@@ -318,9 +341,14 @@
             </div>
 
             {% endif %}  
-            {% if current_user.has_permission('read_account')  %}
+
+            {% set can_invoice = current_user.has_permission('read_invoice') %}
+            {% set can_receipt = current_user.has_permission('read_receipt') %}
+            
+        
+            {% if current_user.has_permission('read_account')  or can_receipt or can_invoice %}            
             <div
-                class="menu-item has-sub {% if segment in ['account','invoice'] %} active {% endif %}"
+                class="menu-item has-sub {% if segment in ['account','invoice', 'receipt'] %} active {% endif %}"
             >
                 <a href="javascript:;" class="menu-link">
                     <div class="menu-icon">
@@ -330,22 +358,33 @@
                     <div class="menu-caret"></div>
                 </a>
                 <div class="menu-submenu">
+                    {% if can_receipt %}
+
                     <div class="menu-item {% if segment == 'account' %} active {% endif %}">
                         <a href="/order/account" class="menu-link">
                        <div class="menu-text mt-1">Receipt</div></a>
                     </div>
+                    {% endif %}
+                    {% if can_invoice %}
+
                     <div class="menu-item {% if segment == 'invoice' %} active {% endif %}">
                         <a href="/order/invoice" class="menu-link">
                        <div class="menu-text mt-1">Tax Invoice</div></a>
                     </div>
-                    
+                    {% endif %}
                 </div>
                 
                 
             </div>
 
             {% endif %}  
-            {% if current_user.has_permission('read_expense claims')  %}
+            {% set can_expense_categories = current_user.has_permission('read_expense categories') %}
+            {% set can_currencies = current_user.has_permission('read_currencies') %}
+            {% set can_expense_claims = current_user.has_permission('read_expense claims') %}
+
+
+            {% if current_user.has_permission('read_expense claims') or can_expense_categories or can_currencies or can_expense_claims %}
+
             <div
                 class="menu-item has-sub {% if segment in ['expense_categories', 'currencies', 'expense_claims' ] %} active {% endif %}"
             >
@@ -358,19 +397,28 @@
                 </a>
                 <div class="menu-submenu">
 
+                    {% if can_expense_categories %}
                     <div class="menu-item {% if segment == 'expense_categories' %} active {% endif %}">
                         <a href="/account/expense_categories" class="menu-link">
                        <div class="menu-text mt-1">ประเภทค่าใช้จ่าย</div></a>
                     </div>
+                    {% endif %}
+
+                    {% if can_currencies %}
+
+
                     <div class="menu-item {% if segment == 'currencies' %} active {% endif %}">
                         <a href="/account/currencies" class="menu-link">
                        <div class="menu-text mt-1">สกุลเงิน</div></a>
                     </div>
+                    {% endif %}
+
+                    {% if can_expense_claims %}
                     <div class="menu-item {% if segment == 'expense_claims' %} active {% endif %}">
                         <a href="/account/expense_claims_list" class="menu-link">
                        <div class="menu-text mt-1">รายการตั้งเบิกค่าใช้จ่าย</div></a>
                     </div>
-                    
+                    {% endif %}
                 </div>
                 
                 
@@ -378,7 +426,12 @@
 
             {% endif %}  
             
-            {% if current_user.has_permission('read_list project')  %}    
+            {% set can_list_product_supplier= current_user.has_permission('read_list product supplier') %}
+            {% set can_list_product_employee = current_user.has_permission('read_list product employee') %}
+            {% set can_list_product_organization = current_user.has_permission('read_list product organization') %} 
+            {% set can_list_product_agency = current_user.has_permission('read_list product agency') %} 
+            {% if current_user.has_permission('read_list project') or can_list_product_supplier or can_list_product_employee or
+            can_list_product_organization or can_list_product_agency %}    
             <div
                 class="menu-item has-sub {% if segment in ['list_Productsupplier', 'list_ProductEmployee','list_Productorganization','list_ProductAgency'] %} active {% endif %}"
             >
@@ -390,6 +443,7 @@
                     <div class="menu-caret"></div>
                 </a>
                 <div class="menu-submenu">
+                    {% if can_list_product_supplier %}
                     <div
                         class="menu-item {% if segment == 'list_Productsupplier' %} active {% endif %}"
                     >
@@ -399,6 +453,8 @@
                             ><div class="menu-text">รายการโครงการ Supplier</div></a
                         >
                     </div>
+                    {% endif %}
+                    {% if can_list_product_employee %}
                     <div
                         class="menu-item {% if segment == 'list_ProductEmployee' %} active {% endif %}"
                     >
@@ -408,6 +464,8 @@
                             ><div class="menu-text">รายการโครงการ Sponsor</div></a
                         >
                     </div>
+                    {% endif %}
+                    {% if can_list_product_organization %}
                     <div
                         class="menu-item {% if segment == 'list_Productorganization' %} active {% endif %}"
                     >
@@ -417,6 +475,8 @@
                             ><div class="menu-text">รายการโครงการ Sponsor/Organization</div></a
                         >
                     </div>
+                    {% endif %}
+                    {% if can_list_product_agency %}
                     <div
                         class="menu-item {% if segment == 'list_ProductAgency' %} active {% endif %}"
                     >
@@ -426,6 +486,7 @@
                             ><div class="menu-text">รายการโครงการ Agency/University</div></a
                         >
                     </div>
+                    {% endif %}
                 </div>
             </div>
             {% endif %}

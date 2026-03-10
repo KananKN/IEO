@@ -34,6 +34,8 @@ read_permission = Permission(RoleNeed("read_organization"))
 write_permission = Permission(RoleNeed("write_organization"))
 delete_permission = Permission(RoleNeed("delete_organization"))
 
+read_list_product_organization = Permission(RoleNeed("read_list product organization"))
+
 
 # ---------- Fees ------------------------s
 @blueprint.route('/')
@@ -452,7 +454,7 @@ def delete_organization():
 
 @blueprint.route('/list_Productorganization')
 @login_required
-@read_permission.require(http_exception=403)
+@read_list_product_organization.require(http_exception=403)
 def list_Productorganization():
     datas = OrganizationModel.query.all()
     for organization in datas:
@@ -463,7 +465,7 @@ def list_Productorganization():
 
 @blueprint.route("/get_listProductorganization", methods=["POST"])
 @login_required
-@read_permission.require(http_exception=403)
+@read_list_product_organization.require(http_exception=403)
 def get_listProductorganization():
     request_data = request.get_json()
     draw = request_data.get("draw", 1)

@@ -33,6 +33,8 @@ read_permission = Permission(RoleNeed("read_Employee"))
 write_permission = Permission(RoleNeed("write_Employee"))
 delete_permission = Permission(RoleNeed("delete_Employee"))
 
+read_list_product_employee = Permission(RoleNeed("read_list product employee"))
+
 
 # ---------- Fees ------------------------s
 @blueprint.route('/')
@@ -520,7 +522,7 @@ def delete_employee():
 
 @blueprint.route('/list_ProductEmployee')
 @login_required
-@read_permission.require(http_exception=403)
+@read_list_product_employee.require(http_exception=403)
 def list_ProductEmployee():
     datas = EmployeeModel.query.all()
     for employee in datas:
@@ -531,7 +533,7 @@ def list_ProductEmployee():
 
 @blueprint.route("/get_listProductemployee", methods=["POST"])
 @login_required
-@read_permission.require(http_exception=403)
+@read_list_product_employee.require(http_exception=403)
 def get_listProductemployee():
     request_data = request.get_json()
     draw = request_data.get("draw", 1)

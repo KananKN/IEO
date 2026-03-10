@@ -43,6 +43,10 @@ read_permission = Permission(RoleNeed("read_lead"))
 write_permission = Permission(RoleNeed("write_lead"))
 delete_permission = Permission(RoleNeed("delete_lead"))
 
+write_create_lead = Permission(RoleNeed("write_create lead"))
+# write_permission = Permission(RoleNeed("write_lead"))
+# delete_permission = Permission(RoleNeed("delete_lead"))
+
 def model_to_dict(model):
     data = {}
     for c in model.__table__.columns:
@@ -307,7 +311,9 @@ def get_userRequest():
             "draw": draw,
             "recordsTotal": total_records,
             "recordsFiltered": total_records,
-            "data": data
+            "data": data,
+            "can_write": current_user.has_permission("write_lead"),
+            "can_delete": current_user.has_permission("delete_lead")
         }, ensure_ascii=False, default=str),
         content_type="application/json"
     )
@@ -562,7 +568,7 @@ def check_statusLead():
 
 @blueprint.route("/create_lead")
 @login_required
-@read_permission.require(http_exception=403)
+@write_create_lead.require(http_exception=403)
 def create_lead():
     datas = leadModel.query.all()
     category = ProductCategoryModel.query.all()

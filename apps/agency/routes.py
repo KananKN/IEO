@@ -30,6 +30,10 @@ read_permission = Permission(RoleNeed("read_agency"))
 write_permission = Permission(RoleNeed("write_agency"))
 delete_permission = Permission(RoleNeed("delete_agency"))
 
+read_list_product_agency = Permission(RoleNeed("read_list product agency"))
+read_list_product = Permission(RoleNeed("read_list product"))
+
+
 @blueprint.route('/')
 @login_required
 @read_permission.require(http_exception=403)
@@ -393,7 +397,7 @@ def update_agency_api():
 
 @blueprint.route('/list_ProductAgency')
 @login_required
-@read_permission.require(http_exception=403)
+@read_list_product_agency.require(http_exception=403)
 def list_ProductAgency():
     datas = ProductAgencyAssociation.query.all()
     # for agency in datas:
@@ -404,7 +408,8 @@ def list_ProductAgency():
 
 @blueprint.route("/get_list_ProductAgency", methods=["POST"])
 @login_required
-@read_permission.require(http_exception=403)
+
+@read_list_product_agency.require(http_exception=403)
 def get_list_ProductAgency():
     request_data = request.get_json()
     draw = request_data.get("draw", 1)

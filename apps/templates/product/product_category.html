@@ -26,7 +26,7 @@
             <!-- ฝั่งซ้าย: รายการอุปกรณ์ + ปุ่มบวก -->
             <div class="d-flex align-items-center">
                 <h6 class="page-header m-0">Product Category</h6>
-                {% if current_user.has_permission('write_product') %}
+                {% if current_user.has_permission('write_product category') %}
                      <a class="btn btn-success ms-3 shadow-sm  bg-gradient" onclick="func_modal('add')">
                             <i class="fa fa-plus"></i> เพิ่ม
                         </a> 
@@ -67,8 +67,12 @@
                                 <th class="text-center" width="1%"></th>
                                 <th class="text-nowrap"width="40%">Product Category
                                 </th>
-                               
-                                <th class="text-nowrap text-center"  width="10%">Action</th>
+                                
+                                {% set can_write = current_user.has_permission('write_product category') %}
+                                {% set can_delete = current_user.has_permission('delete_product category') %}
+                                {% if can_write or can_delete %}
+                                    <th class="text-nowrap text-center"  width="10%">Action</th>
+                                {% endif %}
                             </tr>
                         </thead>
                         <tbody>
@@ -76,15 +80,16 @@
                                 <tr class="odd gradeX">
                                     <td width="1%" class="fw-bold text-dark">{{loop.index}}</td>
                                     <td width="40%">{{data.name}}</td>
-                                   
+                                    {% if can_write or can_delete %}
+
                                     <td  class="with-btn text-center" width="10%">
-                                        {% if current_user.has_permission('write_product') %}
+                                        {% if current_user.has_permission('write_product category') %}
                                             <a  class=" btn btn-dark btn-icon btn-circle btn-lg" onclick='func_modal("edit",{{data|tojson|safe}})' >
                                                 <i class="fa fa-pencil-alt"></i>
                                             </a>
                                             
                                         {% endif %}
-                                        {% if current_user.has_permission('delete_product') %}
+                                        {% if current_user.has_permission('delete_product category') %}
                                             <a  onclick="sweetAlertDel({{ data.id }})" class=" btn btn-danger btn-icon btn-circle btn-lg">
                                                 <i class="fa fa-trash"></i>
                                             </a>
@@ -93,6 +98,7 @@
                                             </a>
                                         {% endif %}
                                     </td>
+                                    {% endif %}
                                 </tr>
                             {% endfor %}
                         </tbody>

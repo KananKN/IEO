@@ -26,7 +26,7 @@
             <!-- ฝั่งซ้าย: รายการอุปกรณ์ + ปุ่มบวก -->
             <div class="d-flex align-items-center">
                 <h6 class="page-header m-0">Supplier Type</h6>
-                {% if current_user.has_permission('write_supplier') %}
+                {% if current_user.has_permission('write_supplier type') %}
                      <a class="btn btn-success ms-3 shadow-sm  bg-gradient" onclick="func_modal('add')">
                             <i class="fa fa-plus"></i> เพิ่ม
                         </a> 
@@ -67,7 +67,11 @@
                                 <th class="text-center" width="1%">No</th>
                                 <th class="text-nowrap" width="40%">Name</th>
                                 <th class="text-nowrap" width="40%">Description</th>
+                                {% set can_write = current_user.has_permission('write_supplier type') %}
+                                {% set can_delete = current_user.has_permission('delete_supplier type') %}
+                                {% if can_write or can_delete %}
                                 <th class="text-nowrap text-center" width="10%">Action</th>
+                                {% endif %}
                             </tr>
                         </thead>
                         <tbody>
@@ -171,12 +175,26 @@ function loadDataTable() {
     $('#data-table-responsive').DataTable({
         responsive: true,
         processing: true,
-        serverSide: true,
+        serverSide: true,  
         ajax: {
             url: "/supplier/get_supplierType",
             type: "POST",
             data: function(d) { 
                 return JSON.stringify(d); 
+            },
+            dataSrc: function(json) {
+
+                // รับ permission จาก API
+                CAN_WRITE = json.can_write;
+                CAN_DELETE = json.can_delete;
+            
+                const CAN_ACTION = CAN_WRITE || CAN_DELETE;
+            
+                // update column visibility
+                const table = $('#data-table-responsive').DataTable();
+                table.column(3).visible(CAN_ACTION);
+            
+                return json.data;
             },
             contentType: "application/json",
             dataType: "json"
@@ -190,6 +208,33 @@ function loadDataTable() {
                 orderable: false, // ปิดการเรียงลำดับในคอลัมน์นี้
                 className: 'text-center',
                 render: function(data, type, row) {
+                    // ถ้าไม่มีสิทธิ์เลย ไม่ต้องแสดงอะไร
+                    if (!CAN_WRITE && !CAN_DELETE) {
+                        return '';
+                    }
+                    let buttons = '';
+
+                    if (CAN_WRITE) {
+                        buttons += `
+                            <a class="btn btn-dark btn-icon btn-circle btn-lg"
+                            onclick='func_modal("edit",${JSON.stringify(row)})'>
+                                <i class="fa fa-pencil-alt"></i>
+                            </a>
+                        `;
+                    }
+
+                    if (CAN_DELETE) {
+                        buttons += `
+                            <a class="btn btn-danger btn-icon btn-circle btn-lg"
+                            onclick="sweetAlertDel(${row.data_sup.id})">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        `;
+                    }
+
+                    return buttons;
+
+                    /*
                     return `
                         <a class="btn btn-dark btn-icon btn-circle btn-lg" onclick='func_modal("edit",${JSON.stringify(row)})'>
                             <i class="fa fa-pencil-alt"></i>
@@ -198,6 +243,7 @@ function loadDataTable() {
                             <i class="fas fa-trash"></i>
                         </a>
                     `;
+                    */
                 }
             }
         ],

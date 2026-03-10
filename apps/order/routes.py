@@ -43,6 +43,14 @@ read_permission = Permission(RoleNeed("read_order"))
 write_permission = Permission(RoleNeed("write_order"))
 delete_permission = Permission(RoleNeed("delete_order"))
 
+read_receipt = Permission(RoleNeed("read_receipt"))
+write_receipt = Permission(RoleNeed("write_receipt"))
+delete_receipt = Permission(RoleNeed("delete_receipt"))
+
+read_invoice = Permission(RoleNeed("read_invoice"))
+write_invoice = Permission(RoleNeed("write_invoice"))
+delete_invoice = Permission(RoleNeed("delete_invoice"))
+
 def model_to_dict(model):
     data = {}
     for c in model.__table__.columns:
@@ -1454,7 +1462,7 @@ def create_receipt_and_invoice_for_term(term: OrderTermModel, transfer_date=None
 
 @blueprint.route('/account')
 @login_required
-@read_permission.require(http_exception=403)
+@read_receipt.require(http_exception=403)
 def account_list():
     datas = ReceiptModel.query.all()
 
@@ -1485,7 +1493,7 @@ def to_utc(dt):
 
 @blueprint.route("/get_account", methods=["POST"])
 @login_required
-@read_permission.require(http_exception=403)
+@read_receipt.require(http_exception=403)
 def get_account():
     request_data = request.get_json()
     draw = request_data.get("draw", 1)
@@ -1689,7 +1697,7 @@ def get_account():
 
 @blueprint.route('/invoice')
 @login_required
-@read_permission.require(http_exception=403)
+@read_invoice.require(http_exception=403)
 def invoice_list():
     
 
@@ -1712,7 +1720,7 @@ def invoice_list():
                            orderTerms=orderTerms)
 @blueprint.route("/get_invoice", methods=["POST"])
 @login_required
-@read_permission.require(http_exception=403)
+@read_invoice.require(http_exception=403)
 def get_invoice():
     request_data = request.get_json() or {}
     draw = request_data.get("draw", 1)

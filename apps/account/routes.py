@@ -43,9 +43,19 @@ read_permission = Permission(RoleNeed("read_expense claims"))
 write_permission = Permission(RoleNeed("write_expense claims"))
 delete_permission = Permission(RoleNeed("delete_expense claims"))
 
+read_expense_categories = Permission(RoleNeed("read_expense categories"))
+write_expense_categories = Permission(RoleNeed("write_expense categories"))
+delete_expense_categories = Permission(RoleNeed("delete_expense categories"))
+
+
+read_currencies = Permission(RoleNeed("read_currencies"))
+write_currencies = Permission(RoleNeed("write_currencies"))
+delete_currencies = Permission(RoleNeed("delete_currencies"))
+
+
 @blueprint.route('/expense_categories')
 @login_required
-@read_permission.require(http_exception=403)
+@read_expense_categories.require(http_exception=403)
 def expense_categories():
     # datas = ExpenseCategoryModel.query.all()
     if current_user.role.name == 'Admin':
@@ -78,7 +88,7 @@ def model_to_dict(model):
 
 @blueprint.route('/add_expense', methods=['POST'])
 @login_required 
-@write_permission.require(http_exception=403)
+@write_expense_categories.require(http_exception=403)
 def add_expense():
     data = request.get_json()
     print(data)
@@ -103,7 +113,7 @@ def add_expense():
 
 @blueprint.route('/edit_expense', methods=['POST'])
 @login_required
-@write_permission.require(http_exception=403)
+@write_expense_categories.require(http_exception=403)
 def edit_expense():
     data = request.get_json()
     print(data)
@@ -130,7 +140,7 @@ def edit_expense():
     
 @blueprint.route('/delete_expense/<int:expense_id>', methods=['DELETE'])
 @login_required
-@delete_permission.require(http_exception=403)
+@delete_expense_categories.require(http_exception=403)
 def delete_expense(expense_id):
     try:
         expense = ExpenseCategoryModel.query.get(expense_id)
@@ -157,7 +167,7 @@ def delete_expense(expense_id):
 
 @blueprint.route('/subcategory/<int:category_id>')
 @login_required
-@read_permission.require(http_exception=403)
+@read_expense_categories.require(http_exception=403)
 def subcategory(category_id):
     data_cat = ExpenseCategoryModel.query.filter_by(id=category_id).first()
     data_sub = ExpenseSubCategoryModel.query.filter_by(expense_category_id=category_id).all()
@@ -173,7 +183,7 @@ def subcategory(category_id):
     
 @blueprint.route('/add_subexpense', methods=['POST'])
 @login_required 
-@write_permission.require(http_exception=403)   
+@write_expense_categories.require(http_exception=403)   
 def add_subexpense():
     data = request.get_json()
     print(data)
@@ -196,7 +206,7 @@ def add_subexpense():
 
 @blueprint.route('/edit_subexpense', methods=['POST'])
 @login_required
-@write_permission.require(http_exception=403)
+@write_expense_categories.require(http_exception=403)
 def edit_subexpense():
     data = request.get_json()
     print(data)
@@ -219,7 +229,7 @@ def edit_subexpense():
     
 @blueprint.route('/delete_subexpense/<int:expense_id>', methods=['DELETE'])
 @login_required
-@delete_permission.require(http_exception=403)
+@delete_expense_categories.require(http_exception=403)
 def delete_subexpense(expense_id):
     try:
         expense_sub = ExpenseSubCategoryModel.query.get(expense_id)
@@ -246,7 +256,7 @@ def delete_subexpense(expense_id):
 
 @blueprint.route('/currencies')
 @login_required
-@read_permission.require(http_exception=403)
+@read_currencies.require(http_exception=403)
 def currencies():
     data = CurrencyModel.query.all()
     
@@ -261,7 +271,7 @@ def currencies():
 
 @blueprint.route('/add_currencies', methods=['POST'])
 @login_required
-@write_permission.require(http_exception=403)
+@write_currencies.require(http_exception=403)
 def add_currencies():
     data = request.get_json()
     print(data)
@@ -311,7 +321,7 @@ def add_currencies():
 
 @blueprint.route('/edit_currencies', methods=['POST'])
 @login_required
-@write_permission.require(http_exception=403)
+@write_currencies.require(http_exception=403)
 def edit_currencies():
     data = request.get_json()
     print(data)
@@ -369,7 +379,7 @@ def edit_currencies():
 
 @blueprint.route('/delete_currencies/<int:currency_id>', methods=['DELETE'])
 @login_required
-@delete_permission.require(http_exception=403)
+@delete_currencies.require(http_exception=403)
 def delete_currencies(currency_id):
     print(currency_id)
     try:
@@ -1198,45 +1208,7 @@ def get_receiver_name(type, id):
         return f"{a.first_name} {a.last_name}" if a else ""
 
     return ""
-# @blueprint.route('/get_user/<int:user_id>')
-# @login_required
-# def get_user(user_id):
 
-#     # result = (
-#     #     db.session.query(UserModel, UserProfileModel)
-#     #     .outerjoin(UserProfileModel, UserProfileModel.user_id == UserModel.id)
-#     #     .filter(UserModel.id == user_id)
-#     #     .first()
-#     # )
-#     result = (
-#         db.session.query(UserModel, UserProfileModel, AgencyModel)
-#         .outerjoin(UserProfileModel, UserProfileModel.user_id == UserModel.id)
-#         .outerjoin(AgencyModel, AgencyModel.user_id == UserModel.id)
-#         .filter(UserModel.id == user_id)
-#         .first()
-#     )
-
-#     if not result:
-#         return jsonify({'status': 'error', 'message': 'User not found'}), 404
-
-#     user, profile, agency = result   # 👈 สำคัญมาก
-
-#     return jsonify({
-#         'status': 'success',
-#         'data': {
-#             'id': user.id,
-#             'username': user.username,
-#             'email': profile.email if profile and profile.email else '',
-#             'phone': profile.phone if profile and profile.phone else '',
-#             'bank_name': profile.bank_name if profile else '',
-#             'bank_account': profile.bank_account if profile else '',
-#             'full_name': (
-#                 f"{profile.first_name} {profile.last_name}"
-#                 if profile and profile.first_name
-#                 else user.username
-#             )
-#         }
-#     })
 @blueprint.route('/get_user/<int:user_id>')
 @login_required
 def get_user(user_id):

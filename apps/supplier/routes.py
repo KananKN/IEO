@@ -34,6 +34,12 @@ read_permission = Permission(RoleNeed("read_supplier"))
 write_permission = Permission(RoleNeed("write_supplier"))
 delete_permission = Permission(RoleNeed("delete_supplier"))
 
+read_supplier_type = Permission(RoleNeed("read_supplier type"))
+write_supplier_type = Permission(RoleNeed("write_supplier type"))
+delete_supplier_type = Permission(RoleNeed("delete_supplier type"))
+
+read_list_Productsupplier = Permission(RoleNeed("read_list product supplier"))
+
 def model_to_dict(model):
     data = {}
     for c in model.__table__.columns:
@@ -201,7 +207,7 @@ def delete_fees():
 #---------------Supplier Type-------------------------
 @blueprint.route('/supplier_type')
 @login_required
-@read_permission.require(http_exception=403)
+@read_supplier_type.require(http_exception=403)
 def supplier_type():
     datas = SupplierTypeModel.query.all()
     print(datas)
@@ -209,7 +215,7 @@ def supplier_type():
 
 @blueprint.route("/get_supplierType", methods=["POST"])
 @login_required
-@read_permission.require(http_exception=403)
+@read_supplier_type.require(http_exception=403)
 def get_supplierType():
     request_data = request.get_json()
     draw = request_data.get("draw", 1)
@@ -271,7 +277,9 @@ def get_supplierType():
         "draw": draw,
         "recordsTotal": total_records,
         "recordsFiltered": total_records,
-        "data": data
+        "data": data,
+        "can_write": current_user.has_permission("write_supplier type"),
+        "can_delete": current_user.has_permission("delete_supplier type")
     })
 
 @blueprint.route('/addSupplier', methods=['POST'])
@@ -340,7 +348,7 @@ def editSupplier():  # ✅ แก้ไขชื่อฟังก์ชัน�
 @login_required
 def deleteSupplier():
     id_del = request.form["id"]
-    # thisItem = ProductCategoryModel.query.filter_by(id=id_del).first()
+    # print("deleteSupplier", id_del)
     db.session.query(SupplierTypeModel).filter(SupplierTypeModel.id == id_del).delete()
     db.session.commit()
     flash(' Deleted!', 'success')
@@ -454,7 +462,9 @@ def get_supplier():
         "draw": draw,
                 "recordsTotal": total_records,
         "recordsFiltered": total_records,
-        "data": data
+        "data": data,
+        "can_write": current_user.has_permission("write_supplier"),
+        "can_delete": current_user.has_permission("delete_supplier")
     })                  
     
     
@@ -818,7 +828,7 @@ def delete_supplierMain():
 
 @blueprint.route('/list_Productsupplier')
 @login_required
-@read_permission.require(http_exception=403)
+@read_list_Productsupplier.require(http_exception=403)
 def list_Productsupplier():
     datas = SupplierModel.query.all()
     for supplier in datas:
@@ -828,7 +838,7 @@ def list_Productsupplier():
 
 @blueprint.route("/get_Productsupplier", methods=["POST"])
 @login_required
-@read_permission.require(http_exception=403)
+@read_list_Productsupplier.require(http_exception=403)
 def get_Productsupplier():
     request_data = request.get_json()
     draw = request_data.get("draw", 1)

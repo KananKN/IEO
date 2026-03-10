@@ -518,7 +518,7 @@ function loadDataTable() {
                     const termId = row.term_id || '';
                     let buttons = '';
 
-                    {% if current_user.has_permission('write_account') %}
+                    {% if current_user.has_permission('write_receipt') %}
                     buttons += `
                         <a class="btn btn-danger btn-icon btn-circle" onclick="sweetAlertDel(${data.data_user.id})" hidden>
                             <i class="fas fa-trash"></i>
@@ -528,6 +528,7 @@ function loadDataTable() {
                         </a>
                     `;
                     {% endif %}
+                   
 
                     return buttons;
                     

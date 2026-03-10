@@ -57,7 +57,7 @@
                                 <th class="text-nowrap ">รหัส Agency</th>
                                 <!-- <th class="text-nowrap" >คนแนะนำ</th> -->
                                 <th class="text-nowrap ">ลิงก์</th>
-                                
+
                                 <th class="text-nowrap">Action</th>
                             </tr>
                         </thead>
@@ -255,14 +255,31 @@ function loadDataTable() {
                 orderable: false, // ปิดการเรียงลำดับในคอลัมน์นี้
                 className: 'text-center',
                 render: function(data, type, row) {
+                    const rowData = JSON.stringify(row).replace(/"/g, '&quot;'); 
+                    let buttons = ``;
+
+                    {% if current_user.has_permission('write_agency') %}
+                        buttons += `
+                            <a href="/agency/agency_update/${row.data_user.id}" class="btn btn-dark btn-icon btn-circle btn-lg">
+                                <i class="fa fa-pencil-alt"></i>
+                            </a>`;
+                    {% endif %}
+                    {% if current_user.has_permission('delete_agency') %}
+                        buttons += `
+                            <a class="btn btn-danger btn-icon btn-circle btn-lg" onclick="sweetAlertDel(${row.data_user.id})">
+                                <i class="fas fa-trash"></i>
+                            </a>`;
+                        
+                    {% endif %}
+
+  
+                    return buttons;
+                    /*
                     return `
-                        <a href="/agency/agency_update/${row.data_user.id}" class="btn btn-dark btn-icon btn-circle btn-lg">
-                            <i class="fa fa-pencil-alt"></i>
-                        </a>
-                        <a class="btn btn-danger btn-icon btn-circle btn-lg" onclick="sweetAlertDel(${row.data_user.id})">
-                            <i class="fas fa-trash"></i>
-                        </a>
-                    `;
+                        
+                        
+                    `; 
+                    */
                 }
             }                                                                             
             // {

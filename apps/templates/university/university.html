@@ -247,14 +247,26 @@ function loadDataTable() {
                 orderable: false, // ปิดการเรียงลำดับในคอลัมน์นี้
                 className: 'text-center',
                 render: function(data, type, row) {
-                    return `
-                        <a href="/university/university_update/${row.data_user.id}" class="btn btn-dark btn-icon btn-circle btn-lg">
-                            <i class="fa fa-pencil-alt"></i>
-                        </a>
-                        <a class="btn btn-danger btn-icon btn-circle btn-lg" onclick="sweetAlertDel(${row.data_user.id},${row.data_user.user_id})">
-                            <i class="fas fa-trash"></i>
-                        </a>
-                    `;
+                    const rowData = JSON.stringify(row).replace(/"/g, '&quot;'); 
+                    let buttons = ``;
+
+                    {% if current_user.has_permission('write_university') %}
+                        buttons += `
+                            <a href="/university/university_update/${row.data_user.id}" class="btn btn-dark btn-icon btn-circle btn-lg">
+                                <i class="fa fa-pencil-alt"></i>
+                            </a>`;
+                    {% endif %}
+                    {% if current_user.has_permission('delete_university') %}
+                        buttons += `
+                            <a class="btn btn-danger btn-icon btn-circle btn-lg" onclick="sweetAlertDel(${row.data_user.id},${row.data_user.user_id})">
+                                <i class="fas fa-trash"></i>
+                            </a>`;
+                        
+                    {% endif %}
+
+  
+                    return buttons;
+                    
                 }
             }                                                                             
             // {
