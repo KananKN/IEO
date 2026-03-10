@@ -113,6 +113,7 @@ class RoleModel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(), unique=True, nullable=False)
     description = db.Column(db.String(), nullable=False)
+
     permissions = db.relationship(
         "PermissionModel", back_populates="roles", secondary="role_permission", cascade="all, delete"
     )
@@ -139,6 +140,12 @@ class PermissionModel(db.Model):
     created_at = db.Column(db.DateTime,  default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime,  default=db.func.current_timestamp(),
                            onupdate=db.func.current_timestamp())
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name
+        }
 
 @dataclass
 class RolePermissionModel(db.Model):
@@ -170,6 +177,12 @@ class ResourceModel(db.Model):
     created_at = db.Column(db.DateTime,  default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime,  default=db.func.current_timestamp(),
                            onupdate=db.func.current_timestamp())
+
+    parent_id = db.Column(db.Integer, db.ForeignKey("resource.id"))
+    children = db.relationship(
+        "ResourceModel",
+        backref=db.backref("parent", remote_side=[id],lazy="select")
+    )
 
 
 @dataclass
