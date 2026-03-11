@@ -18,7 +18,7 @@ from PIL import Image
 from flask_principal import Permission, RoleNeed
 import json
 from sqlalchemy.orm import joinedload
-from sqlalchemy import not_
+from sqlalchemy import not_, or_
 
 
 read_permission = Permission(RoleNeed("read_user"))
@@ -30,9 +30,13 @@ delete_permission = Permission(RoleNeed("delete_user"))
 @read_permission.require(http_exception=403)
 def index():
     datas = UserModel.query.options(joinedload(UserModel.profile)).join(RoleModel).filter(
+        or_(
+            UserModel.flag_delete.is_(False),
+            UserModel.flag_delete.is_(None)   # 👈 รวม NULL
+        ),
         not_(RoleModel.name.in_(['agency', 'university']))
     ).all()
-    print(datas)
+    # print(datas)
     roles = RoleModel.query.filter(
             not_(RoleModel.name.in_(['agency', 'university']))
         ).all()
@@ -82,9 +86,13 @@ def add():
 def delete():
     id = request.form["id"]
     thisItem = UserModel.query.filter_by(id=id).first()
+    if not thisItem:
+        flash('User not found', 'danger')
+        return redirect(url_for('user_blueprint.index'))
     name = thisItem.username
-    db.session.query(UserModel).filter(
-        UserModel.id == id).delete()
+    thisItem.flag_delete = True
+    # db.session.query(UserModel).filter(
+    #     UserModel.id == id).delete()
     db.session.commit()
     flash(name+' Deleted!', 'success')
     return redirect(url_for('user_blueprint.index'))

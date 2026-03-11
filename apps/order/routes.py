@@ -131,7 +131,16 @@ def order_list():
     memvber = MemberModel.query.all()
     category = ProductCategoryModel.query.all()
     country = CountryModel.query.all()
-    agencies = AgencyModel.query.all()
+    # agencies = AgencyModel.query.all()
+    agencies = AgencyModel.query\
+        .filter(
+            or_(
+                AgencyModel.flag_delete == False,
+                AgencyModel.flag_delete.is_(None)
+            )
+        )\
+        .order_by(AgencyModel.first_name.asc())\
+        .all()
     product = ProductForSalesModel.query.all()
 
     social_channels = [

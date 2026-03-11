@@ -199,7 +199,14 @@ def get_listAgency():
     
     # ดึงข้อมูลไปแสดงตรงนี้
     # query = db.session.query(UserModel).join(Agency, Agency.user_id == UserModel.id).join(Role, UserModel.role_id == Role.id)
-    query = db.session.query(AgencyModel).filter(AgencyModel.org_type.in_(['agency']))
+    # query = db.session.query(AgencyModel).filter(AgencyModel.org_type.in_(['agency']))
+    query = db.session.query(AgencyModel).filter(
+                AgencyModel.org_type == 'agency',
+                or_(
+                    AgencyModel.flag_delete == False,
+                    AgencyModel.flag_delete.is_(None)
+                )
+            )
         # คำค้นหาจาก DataTable
     if search_value:
         search = f"%{search_value}%"
@@ -399,10 +406,16 @@ def update_agency_api():
 @login_required
 @read_list_product_agency.require(http_exception=403)
 def list_ProductAgency():
-    datas = ProductAgencyAssociation.query.all()
+    # datas = ProductAgencyAssociation.query.all()
+    datas = ProductAgencyAssociation.query.filter(
+        or_(
+            ProductAgencyAssociation.flag_delete == False,
+            ProductAgencyAssociation.flag_delete.is_(None)
+        )
+    ).all()
     # for agency in datas:
     #     product_agency = ProductAgencyAssociation.query.filter_by(agency_id=datas.id).first()
-    print(datas)
+    # print(datas)
     # print(datas)
     return render_template('agency/list_ProductAgency.html', segment='list_ProductAgency' ,datas=datas, )
 
@@ -431,9 +444,19 @@ def get_list_ProductAgency():
     }
     
     # Step 1: Base query หาเฉพาะ agency.id (distinct ก่อน)
-    base_query = db.session.query(Agency.id).\
-        outerjoin(ProductAgencyAssociation, Agency.id == ProductAgencyAssociation.agency_id).\
-        outerjoin(Product, Product.id == ProductAgencyAssociation.product_id)
+    # base_query = db.session.query(Agency.id).\
+    #     outerjoin(ProductAgencyAssociation, Agency.id == ProductAgencyAssociation.agency_id).\
+    #     outerjoin(Product, Product.id == ProductAgencyAssociation.product_id)
+
+    base_query = (
+        db.session.query(Agency.id)
+        .outerjoin(ProductAgencyAssociation, Agency.id == ProductAgencyAssociation.agency_id)
+        .outerjoin(Product, Product.id == ProductAgencyAssociation.product_id)
+        .filter(
+            func.coalesce(Agency.flag_delete, False) == False,
+            func.coalesce(ProductAgencyAssociation.flag_delete, False) == False,
+        )
+    )
 
     if search_value:
         search = f"%{search_value}%"
@@ -462,11 +485,22 @@ def get_list_ProductAgency():
     agency_ids = [a.id for a in agency_ids]
 
     # Step 3: ดึงข้อมูลจริง (Agency + Product)
-    query = db.session.query(Agency, Product.name).\
-        filter(Agency.id.in_(agency_ids)).\
-        outerjoin(ProductAgencyAssociation, Agency.id == ProductAgencyAssociation.agency_id).\
-        outerjoin(Product, Product.id == ProductAgencyAssociation.product_id).\
-        order_by(Agency.id)
+    # query = db.session.query(Agency, Product.name).\
+    #     filter(Agency.id.in_(agency_ids)).\
+    #     outerjoin(ProductAgencyAssociation, Agency.id == ProductAgencyAssociation.agency_id).\
+    #     outerjoin(Product, Product.id == ProductAgencyAssociation.product_id).\
+    #     order_by(Agency.id)
+    query = (
+        db.session.query(Agency, Product.name)
+        .outerjoin(ProductAgencyAssociation, Agency.id == ProductAgencyAssociation.agency_id)
+        .outerjoin(Product, Product.id == ProductAgencyAssociation.product_id)
+        .filter(
+            Agency.id.in_(agency_ids),
+            func.coalesce(Agency.flag_delete, False) == False,
+            func.coalesce(ProductAgencyAssociation.flag_delete, False) == False,
+        )
+        .order_by(Agency.id)
+    )
 
     # print("---- SQL FROM final query ----")
     # print(query.statement.compile(dialect=postgresql.dialect(), compile_kwargs={"literal_binds": True}))
@@ -544,11 +578,15 @@ def delete_agency():
     item_Del = AgencyModel.query.get(id_del)
 
     if item_Del:
-        db.session.delete(item_Del)
+        # db.session.delete(item_Del)
+        item_Del.flag_delete = True   # 
         db.session.commit()
     
     # db.session.query(AgencyModel).filter(AgencyModel.id == id_del).delete()
-    ProductAgencyAssociation.query.filter_by(agency_id=id_del).delete()
+    # ProductAgencyAssociation.query.filter_by(agency_id=id_del).delete()
+    assoc_items = ProductAgencyAssociation.query.filter_by(agency_id=id_del).all()
+    for a in assoc_items:
+        a.flag_delete = True
 
     db.session.commit()
         

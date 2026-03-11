@@ -24,6 +24,8 @@ class UserModel(db.Model, UserMixin):
     password = db.Column(db.LargeBinary)
     role_id = db.Column(db.Integer, db.ForeignKey("role.id", ondelete='SET NULL'))
     status = db.Column(db.String(20), default='pending') 
+    flag_delete = db.Column(db.Boolean, default=False)       
+
     
     agency = db.relationship(
     'AgencyModel',
@@ -244,6 +246,8 @@ class AgencyModel(db.Model):
     lead = db.relationship("leadModel", back_populates="agency", lazy=True)
     lead_programs = db.relationship("LeadProgram", back_populates="agency", overlaps="products,agency")
     orders = db.relationship("OrderModel", back_populates="agency", lazy=True, passive_deletes=True)
+    flag_delete = db.Column(db.Boolean, default=False)       
+
 
 
 
@@ -265,6 +269,7 @@ class ProductAgencyAssociation(db.Model):
 
     product = db.relationship('ProductForSalesModel', backref='agency_links')
     employee = db.relationship('AgencyModel', backref='product_links')    
+    flag_delete = db.Column(db.Boolean, default=False)
     
 @dataclass
 class UserProfileModel(db.Model):

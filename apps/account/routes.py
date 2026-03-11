@@ -1326,7 +1326,14 @@ def get_expense_receivers():
         OrganizationModel.id,
         OrganizationModel.name
     ).all()
-    agencies = AgencyModel.query.all()
+    # agencies = AgencyModel.query.all()
+    agencies = AgencyModel.query.filter(
+                or_(
+                    AgencyModel.flag_delete == False,
+                    AgencyModel.flag_delete.is_(None)
+                )
+            ).all()
+    
     suppliers = SupplierModel.query.all()
 
     for e in employees:

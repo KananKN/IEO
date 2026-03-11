@@ -576,7 +576,18 @@ def create_lead():
     
     product = ProductForSalesModel.query.all()
     # agencies = AgencyModel.query.filter_by(org_type='agency').order_by(AgencyModel.first_name.asc()).all()
-    agencies = AgencyModel.query.filter_by(org_type='agency').order_by(AgencyModel.first_name.asc()).all()
+    # agencies = AgencyModel.query.filter_by(org_type='agency').order_by(AgencyModel.first_name.asc()).all()
+    agencies = AgencyModel.query\
+        .filter(
+            AgencyModel.org_type == 'agency',
+            or_(
+                AgencyModel.flag_delete == False,
+                AgencyModel.flag_delete.is_(None)
+            )
+        )\
+        .order_by(AgencyModel.first_name.asc())\
+        .all()
+    
     agencies_with_IEO = [agency.__dict__.copy() for agency in agencies]
     agencies_with_IEO.append({
         'id': None,
