@@ -30,7 +30,7 @@
             <!-- ฝั่งซ้าย: รายการอุปกรณ์ + ปุ่มบวก -->
             <div class="d-flex align-items-center">
                 <h6 class="page-header m-0">หมวดหมู่ย่อย{{data_cat.name}}</h6>
-                {% if current_user.has_permission('write_account') %}
+                {% if current_user.has_permission('write_expense categories') %}
                      <a class="btn btn-success ms-3 shadow-sm  bg-gradient" onclick="func_modal('add')">
                             <i class="fa fa-plus"></i> เพิ่ม
                         </a> 
