@@ -288,10 +288,11 @@
                            <select class="default-select2 form-control"  name="term" id="i_term" >
                                 <option value="">ไม่มี</option>
                                 {% for term in termOfPaymentModels %}
-                                    <option value="{{term.name}}" {% if datas.term_of_payment_id|int == term.name|int %} selected {% endif %}>{{term.name}}</option>
+                                    <option value="{{term.name}}" data-id="{{ term.id }}"  {% if datas.term_of_payment_id|int == term.id|int %} selected {% endif %}>{{term.name}}</option>
                                 {% endfor %}
                             </select>
-                            
+                            <input type="hidden" name="term_of_payment_id" id="term_of_payment_id" value="{{ datas.term_of_payment_id }}" >
+
                         </div>
                     </div>
                     <div class="row mb-15px">
@@ -1331,6 +1332,21 @@ function func_add_payment() {
         updateCurrentYearData();
     });
    */ 
+
+function updateTermId() {
+    let selected = $('#i_term option:selected');
+    let termId = selected.data('id') || '';
+
+    $('#term_of_payment_id').val(termId);
+}
+
+// ตอนโหลดหน้า
+updateTermId();
+
+// ตอนเปลี่ยน select
+$('#i_term').on('change', function () {
+    updateTermId();
+});
 </script>
 
 

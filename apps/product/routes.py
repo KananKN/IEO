@@ -980,7 +980,8 @@ def updateProductSale():
     product_category_id = request.form.get('productCategory') or None
     country_id = request.form.get('country') or None
     period_id = request.form.get('period') or None
-    term_of_payment_id = request.form.get('term') or None
+    # term_of_payment_id = request.form.get('term') or None
+    term_of_payment_id = request.form.get('term_of_payment_id') or None
     organization_ids = request.form.getlist('organization') or None
     employee_ids = request.form.getlist('employee') or None
     university_ids = request.form.getlist('university') or None
