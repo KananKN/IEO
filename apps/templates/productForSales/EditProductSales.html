@@ -284,10 +284,11 @@
                     <div class="row mb-15px">
                         <label class="form-label col-form-label col-md-4">Term Of Payment</label>
                         <div class="col-md-8">
+                            <!-- <input  class="form-control price-input" hidden name="term_id" id="i_term_id" value="{{ term_id }}" oninput="formatNumberWithCommas(this)"  data-parsley-required="true"/> -->
                            <select class="default-select2 form-control"  name="term" id="i_term" >
                                 <option value="">ไม่มี</option>
                                 {% for term in termOfPaymentModels %}
-                                    <option value="{{term.id}}" {% if datas.term_of_payment_id|int == term.name|int %} selected {% endif %}>{{term.name}}</option>
+                                    <option value="{{term.name}}" {% if datas.term_of_payment_id|int == term.name|int %} selected {% endif %}>{{term.name}}</option>
                                 {% endfor %}
                             </select>
                             
