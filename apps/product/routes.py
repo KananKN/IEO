@@ -628,7 +628,7 @@ def addProductSale():
     product_category_id = request.form.get('productCategory') or None
     country_id = request.form.get('country') or None
     period_id = request.form.get('period') or None
-    term_of_payment_id = request.form.get('term') or None
+    term_of_payment_id = request.form.get('term_of_payment_id') or None
     detail = request.form.get('detail') or None
     inputYear = request.form.get('inputYear') or None
     type_select = request.form.get('type_select') or None

@@ -267,10 +267,11 @@
                            <select class="default-select2 form-control"  name="term" id="i_term"  >
                                 <option value="">ไม่มี</option>
                                 {% for term in termOfPaymentModels %}
-                                    <option value="{{term.name}}">{{term.name}}</option>
+                                    <option value="{{term.name}}" data-id="{{ term.id }}" >{{term.name}}</option>
                                 {% endfor %}
                             </select>
-                            
+                            <input type="hidden" name="term_of_payment_id" id="term_of_payment_id"  >
+
                         </div>
                     </div>
                     <div class="row mb-15px">
@@ -1193,6 +1194,22 @@ function formatNumber(input) {
         // รวมค่ากลับ
         input.value = parts.length > 1 ? parts.join('.') : parts[0];
     }
+
+    
+function updateTermId() {
+    let selected = $('#i_term option:selected');
+    let termId = selected.data('id') || '';
+
+    $('#term_of_payment_id').val(termId);
+}
+
+// ตอนโหลดหน้า
+updateTermId();
+
+// ตอนเปลี่ยน select
+$('#i_term').on('change', function () {
+    updateTermId();
+});
 </script>
 <script></script>
 
