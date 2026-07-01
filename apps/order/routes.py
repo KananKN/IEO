@@ -436,7 +436,6 @@ def order_update(id):
     orderTerm = OrderTermModel.query.filter(
                     OrderTermModel.order_id == data.id,
                 ).order_by(OrderTermModel.sequence).all()
-    
     # print("orderTerm", orderTerm)
     # ✅ ถ้าไม่มีงวดผ่อนเลย
     if not orderTerm:
@@ -459,6 +458,19 @@ def order_update(id):
     orderTerm = OrderTermModel.query.filter(
         OrderTermModel.order_id == data.id,
     ).order_by(OrderTermModel.sequence).all()
+
+    installments = installmentsPaymentModel.query.filter_by(
+        product_for_sales_id=data.product_id
+    ).all()
+
+    year_map = {
+        item.term_detail: item.year
+        for item in installments
+    }
+
+    for term in orderTerm:
+        term.year = year_map.get(term.term_detail.strip())
+        # print(term.term_detail, "=>", year_map.get(term.term_detail))
 
     # print("orderTerm after reload", orderTerm)
     
@@ -1476,13 +1488,28 @@ def account_list():
     datas = ReceiptModel.query.all()
 
     # ดึงข้อมูล tax invoice + terms + order + agency
-    receipt = ReceiptModel.query \
-        .options(
-            joinedload(ReceiptModel.terms)
-                .joinedload(OrderTermModel.order)
-                .joinedload(OrderModel.agency),
-            joinedload(ReceiptModel.member)
-        ).all()
+    receipt = ReceiptModel.query.options(
+        joinedload(ReceiptModel.terms)
+            .joinedload(OrderTermModel.order)
+            .joinedload(OrderModel.agency),
+
+        joinedload(ReceiptModel.terms)
+            .joinedload(OrderTermModel.order)
+            .joinedload(OrderModel.product),
+
+        joinedload(ReceiptModel.member)
+    ).all()
+    
+    for inv in receipt:
+        if not inv.terms:
+            continue
+
+        installments = installmentsPaymentModel.query.filter(
+            installmentsPaymentModel.product_for_sales_id == inv.terms.order.product_id,
+            installmentsPaymentModel.term_detail == inv.terms.term_detail
+        ).first()
+
+        inv.terms.year = installments.year if installments else ""
 
     # เอาเฉพาะ term ที่มีใบกำกับภาษี
     orderTerms = [inv.terms for inv in receipt if inv.terms]
@@ -1720,6 +1747,20 @@ def invoice_list():
             joinedload(TaxInvoiceModel.member)
         ).all()
 
+    installments = installmentsPaymentModel.query.all()
+
+    year_map = {
+        (i.product_for_sales_id, i.term_detail): i.year
+        for i in installments
+    }
+
+    # เพิ่ม year ให้แต่ละ term
+    for inv in invoices:
+        if inv.terms and inv.terms.order:
+            inv.terms.year = year_map.get(
+                (inv.terms.order.product_id, inv.terms.term_detail),
+                ""
+            )
     # เอาเฉพาะ term ที่มีใบกำกับภาษี
     orderTerms = [inv.terms for inv in invoices if inv.terms]
 
@@ -1950,6 +1991,9 @@ def update_payment_detail():
     data = request.get_json()
     id = data.get("id")
     pf = PaymentModel.query.filter_by(id=id).first()
+    # existing_receipt = ReceiptModel.query.filter_by(terms_id=term.id).first()
+    #     if not existing_receipt:
+    #         create_receipt_and_invoice_for_term(term,transfer_date=newItem.payment_date)
 
     if not pf:
         return jsonify({"success": False, "message": "ไม่พบข้อมูล"})
